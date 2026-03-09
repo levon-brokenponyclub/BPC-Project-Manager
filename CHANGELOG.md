@@ -13,6 +13,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.3.0] - 2026-03-09
+
+### ✅ Added
+
+#### Inbox — Date Grouping & Hover Quick Actions (2026-03-09)
+
+- **Inbox Date Grouping**: Notification list now grouped into **Today**, **Yesterday**, and **Earlier** sections using calendar-day comparison (`toDateString()`). Sticky section headers keep context as the user scrolls.
+- **Hover Quick Actions**: Each inbox row now reveals three inline action buttons on hover (or when the row is active):
+  - **Mark as read** (`CheckCircle2`) — shown when the notification is unread
+  - **Mark as unread** (`MailOpen`) — shown when the notification is already read
+  - **Delete** (`Trash2`) — always shown; destructive hover colour (`#E05C5C`)
+  - Timestamp fades out and action buttons fade in on hover; both use CSS opacity transitions. Each button calls `e.stopPropagation()` to avoid triggering row selection.
+- **`markNotificationUnread` API function** (`src/api/notifications.ts`): Sets `read_at = null` on a notification row, making it unread again. Exported from `src/api/index.ts` with the standard `isDemoMode` fork.
+- **`unreadMutation`** in `AppShell`: TanStack Query mutation wired to `markNotificationUnread`; invalidates both `notifications` and `unreadNotifications` query keys on success.
+
+### 🔧 Changed
+
+- **`InboxListItem`**: Refactored from `<button>` to `<div role="button">` to allow nested interactive elements (the quick-action buttons). Added `group` Tailwind class for coordinated hover state across children.
+- **Inbox grouping logic**: Replaced the previous rolling 24-hour window with calendar-day `toDateString()` comparison and added a `yesterday` bucket. `groupedInboxItems` memo now returns `{ today, yesterday, earlier }`.
+
+### 🐛 Fixed
+
+- **Build error**: Removed unused `NOTIF_ICON_MAP`, `getNotifIcon`, `ComponentType` import, and stale Lucide icon imports (`Bell`, `Calendar`, `FileText`, `Flag`, `Mail`, `Paperclip`, `PlusCircle`, `UserPlus`) that were only referenced by the deleted icon map. Resolves `TS6133` declared-but-never-read error.
+
+---
+
 ## [1.2.0] - 2026-03-09
 
 ### ✅ Added

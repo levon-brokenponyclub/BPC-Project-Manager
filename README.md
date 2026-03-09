@@ -15,7 +15,7 @@ A multi-workspace project management and client portal built for support agencie
 - **Task Management** — subtasks, status tracking, file attachments, due date colouring, drawer with full activity history
 - **Time Tracking** — start/stop timers per task, view time reports
 - **Support Buckets** — allocated vs used hours with progress bar
-- **Inbox** — Linear-style 3-pane notification inbox with actor avatars and actor-first message formatting
+- **Inbox** — Linear-style 3-pane notification inbox with date-grouped notifications (Today / Yesterday / Earlier), actor avatars, actor-first message formatting, and per-row hover quick actions (mark read/unread, delete)
 - **Admin tools** — invite users (email / magic link), manage clients, create / delete workspaces, role-based access
 - **Dark mode default** — persisted theme preference
 
