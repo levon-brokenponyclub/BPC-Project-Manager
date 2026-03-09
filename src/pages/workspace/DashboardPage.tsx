@@ -30,8 +30,8 @@ import { DataStateWrapper } from "@/components/ui/DataStateWrapper";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { queryKeys } from "@/lib/queryKeys";
 import { getEffectiveRole, type RoleViewMode } from "@/lib/roleView";
+import { notify } from "@/lib/toast";
 import { useAuth } from "@/providers/AuthProvider";
-import { useToast } from "@/providers/ToastProvider";
 import type { Task, TaskPriority, TaskStatus } from "@/types/models";
 
 interface NewTaskInput {
@@ -176,7 +176,6 @@ export function DashboardPage(): React.ReactElement {
   const { workspaceId = "" } = useParams<{ workspaceId: string }>();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { showToast } = useToast();
   const [selectedTask, setSelectedTask] = useState<TaskWithUsers | null>(null);
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
   const [newTaskParentId, setNewTaskParentId] = useState<string | null>(null);
@@ -300,12 +299,15 @@ export function DashboardPage(): React.ReactElement {
         taskTitle: task.title,
       });
       await refreshWorkspaceData();
-      showToast(`Created task \"${taskToastLabel(task.title)}\".`);
+      notify.success(
+        "Task created",
+        `"${taskToastLabel(task.title)}" was added successfully.`,
+      );
     },
     onError: (err: unknown) => {
       const message =
         err instanceof Error ? err.message : "Failed to create task";
-      showToast(message, "error");
+      notify.error("Failed to create task", message);
     },
   });
 
@@ -345,12 +347,15 @@ export function DashboardPage(): React.ReactElement {
         to: task.status,
       });
       await refreshWorkspaceData();
-      showToast(`Updated task \"${taskToastLabel(task.title)}\".`);
+      notify.success(
+        "Task updated",
+        `"${taskToastLabel(task.title)}" was saved.`,
+      );
     },
     onError: (err: unknown) => {
       const message =
         err instanceof Error ? err.message : "Failed to update task";
-      showToast(message, "error");
+      notify.error("Failed to update task", message);
     },
   });
 
@@ -373,12 +378,15 @@ export function DashboardPage(): React.ReactElement {
 
       setSelectedTask(null);
       await refreshWorkspaceData();
-      showToast(`Deleted task \"${taskToastLabel(taskTitle)}\".`);
+      notify.success(
+        "Task deleted",
+        `"${taskToastLabel(taskTitle)}" was removed.`,
+      );
     },
     onError: (err: unknown) => {
       const message =
         err instanceof Error ? err.message : "Failed to delete task";
-      showToast(message, "error");
+      notify.error("Failed to delete task", message);
     },
   });
 
@@ -461,9 +469,7 @@ export function DashboardPage(): React.ReactElement {
       'To confirm deletion, type "DELETE" in all caps:',
     );
     if (confirmation !== "DELETE") {
-      showToast(
-        `Task deletion cancelled for \"${taskToastLabel(taskTitle)}\".`,
-      );
+      notify.info("Deletion cancelled");
       return;
     }
 

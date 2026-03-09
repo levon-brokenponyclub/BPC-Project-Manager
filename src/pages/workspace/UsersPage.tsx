@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { queryKeys } from "@/lib/queryKeys";
-import { useToast } from "@/providers/ToastProvider";
+import { notify } from "@/lib/toast";
 import { invokeAuthedFunction } from "@/lib/invokeAuthedFunction";
 import { supabase } from "@/lib/supabase";
 import { DataStateWrapper } from "@/components/ui/DataStateWrapper";
@@ -83,7 +83,6 @@ export function UsersPage(): React.ReactElement {
   } | null>(null);
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
   const queryClient = useQueryClient();
-  const { showToast } = useToast();
 
   const roleQuery = useQuery({
     queryKey: ["workspace", workspaceId, "myRole"],
@@ -134,7 +133,7 @@ export function UsersPage(): React.ReactElement {
       });
     },
     onSuccess: () => {
-      showToast("User added to workspace successfully!");
+      notify.success("User added", "User added to workspace successfully.");
       setAssignModalOpen(false);
       setSelectedUser(null);
       void queryClient.invalidateQueries({
@@ -145,7 +144,7 @@ export function UsersPage(): React.ReactElement {
       });
     },
     onError: (err: Error) => {
-      showToast(err.message || "Failed to add user", "error");
+      notify.error("Failed to add user", err.message || "Failed to add user");
     },
   });
 
@@ -158,14 +157,17 @@ export function UsersPage(): React.ReactElement {
       });
     },
     onSuccess: () => {
-      showToast("User removed from workspace");
+      notify.success("User removed", "User removed from workspace.");
       setRemovingUserId(null);
       void queryClient.invalidateQueries({
         queryKey: queryKeys.workspaceUsers(workspaceId),
       });
     },
     onError: (err: Error) => {
-      showToast(err.message || "Failed to remove user", "error");
+      notify.error(
+        "Failed to remove user",
+        err.message || "Failed to remove user",
+      );
       setRemovingUserId(null);
     },
   });

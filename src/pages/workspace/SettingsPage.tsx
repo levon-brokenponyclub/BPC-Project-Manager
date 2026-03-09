@@ -13,13 +13,13 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/input";
 import { invokeAuthedFunction } from "@/lib/invokeAuthedFunction";
 import { queryKeys } from "@/lib/queryKeys";
+import { notify } from "@/lib/toast";
 import {
   getEffectiveRole,
   getStoredRoleView,
   type RoleViewMode,
 } from "@/lib/roleView";
 import { isDemoMode, supabase } from "@/lib/supabase";
-import { useToast } from "@/providers/ToastProvider";
 
 // ---------------------------------------------------------------------------
 // File-scoped layout primitives
@@ -63,7 +63,6 @@ interface SupportBucket {
 export function SettingsPage(): React.ReactElement {
   const { workspaceId = "" } = useParams<{ workspaceId: string }>();
   const queryClient = useQueryClient();
-  const { showToast } = useToast();
 
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteFirstName, setInviteFirstName] = useState("");
@@ -160,11 +159,14 @@ export function SettingsPage(): React.ReactElement {
     onSuccess: () => {
       setUpdateNameStatus("Workspace name updated.");
       setEditingName(false);
-      showToast("Workspace name updated.");
+      notify.success("Workspace name updated");
     },
     onError: (err: Error) => {
       setUpdateNameError(err.message || "Update failed");
-      showToast(err.message || "Failed to update workspace name.", "error");
+      notify.error(
+        "Failed to update workspace name",
+        err.message || "Update failed",
+      );
     },
   });
 
@@ -196,11 +198,11 @@ export function SettingsPage(): React.ReactElement {
       setInviteEmail("");
       setInviteFirstName("");
       setInviteSurname("");
-      showToast(statusMessage);
+      notify.success("Invite sent", statusMessage);
     },
     onError: (err: Error) => {
       setInviteError(err.message || "Invite failed");
-      showToast(err.message || "Invite failed", "error");
+      notify.error("Invite failed", err.message || "Invite failed");
     },
   });
 
@@ -237,11 +239,14 @@ export function SettingsPage(): React.ReactElement {
     onSuccess: (data) => {
       setGeneratedMagicLink(data.magicLink ?? null);
       setInviteStatus("Magic link generated. Copy and send it directly.");
-      showToast("Magic link generated.");
+      notify.success("Magic link generated", "Copy and send it directly.");
     },
     onError: (err: Error) => {
       setInviteError(err.message || "Magic link generation failed");
-      showToast(err.message || "Magic link generation failed", "error");
+      notify.error(
+        "Magic link generation failed",
+        err.message || "Magic link generation failed",
+      );
     },
   });
 
@@ -255,11 +260,14 @@ export function SettingsPage(): React.ReactElement {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.workspaces });
-      showToast("Workspace deleted.");
+      notify.success("Workspace deleted");
       navigate("/workspace-select");
     },
     onError: (err: Error) => {
-      showToast(err.message || "Failed to delete workspace.", "error");
+      notify.error(
+        "Failed to delete workspace",
+        err.message || "Failed to delete workspace.",
+      );
     },
   });
 
@@ -282,12 +290,136 @@ export function SettingsPage(): React.ReactElement {
       setCreateWorkspaceStatus(`Workspace created: ${createdName}`);
       setNewWorkspaceName("");
       await queryClient.invalidateQueries({ queryKey: queryKeys.workspaces });
-      showToast(`Workspace created: ${createdName}`);
+      notify.success("Workspace created", createdName);
     },
     onError: (err: Error) => {
       const message = err.message || "Workspace creation failed";
       setCreateWorkspaceError(message);
-      showToast(message, "error");
+      notify.error("Workspace creation failed", message);
+    },
+  });
+
+  const testInboxRefreshMutation = useMutation({
+    mutationFn: async () => {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError) {
+        throw new Error(authError.message);
+      }
+
+      if (!user?.id) {
+        throw new Error("You must be signed in to send a test notification.");
+      }
+
+      const actorName =
+        [user.user_metadata?.first_name, user.user_metadata?.surname]
+          .filter(Boolean)
+          .join(" ")
+          .trim() || user.email || "System";
+
+      const payload = {
+        actor: {
+          id: user.id,
+          name: actorName,
+          avatar_url: user.user_metadata?.avatar_url ?? null,
+        },
+        summary: "Inbox refresh test",
+        description:
+          "This test notification was sent from Workspace Settings to confirm inbox refresh and unread count updates are working.",
+        entity: {
+          type: "workspace",
+          title: workspaceName || "Workspace Settings",
+        },
+        route: workspaceId ? `/w/${workspaceId}/settings` : "/workspace-select",
+      };
+
+      const { error } = await supabase.from("notifications").insert({
+        workspace_id: workspaceId,
+        user_id: user.id,
+        type: "workspace.invite_sent",
+        payload,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+    },
+    onSuccess: () => {
+      notify.success(
+        "Inbox refresh test sent",
+        "The inbox should refresh and the unread count should update.",
+      );
+    },
+    onError: (err: Error) => {
+      notify.error(
+        "Failed to send inbox test",
+        err.message || "Failed to create a realtime inbox test notification.",
+      );
+    },
+  });
+
+  const testRealtimeToastMutation = useMutation({
+    mutationFn: async () => {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError) {
+        throw new Error(authError.message);
+      }
+
+      if (!user?.id) {
+        throw new Error("You must be signed in to send a realtime toast test.");
+      }
+
+      const actorName =
+        [user.user_metadata?.first_name, user.user_metadata?.surname]
+          .filter(Boolean)
+          .join(" ")
+          .trim() || "System Tester";
+
+      const payload = {
+        actor: {
+          id: "system-toast-tester",
+          name: actorName,
+          avatar_url: user.user_metadata?.avatar_url ?? null,
+        },
+        summary: "Realtime toast test",
+        description:
+          "This notification uses a different actor id so the realtime Sonner toast should appear immediately.",
+        entity: {
+          type: "workspace",
+          title: workspaceName || "Workspace Settings",
+        },
+        route: workspaceId ? `/w/${workspaceId}/settings` : "/workspace-select",
+      };
+
+      const { error } = await supabase.from("notifications").insert({
+        workspace_id: workspaceId,
+        user_id: user.id,
+        type: "workspace.invite_sent",
+        payload,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+    },
+    onSuccess: () => {
+      notify.success(
+        "Realtime toast test sent",
+        "A Sonner toast should appear if the realtime subscription is working.",
+      );
+    },
+    onError: (err: Error) => {
+      notify.error(
+        "Failed to send realtime toast test",
+        err.message || "Failed to create a realtime toast test notification.",
+      );
     },
   });
 
@@ -298,9 +430,9 @@ export function SettingsPage(): React.ReactElement {
 
     try {
       await navigator.clipboard.writeText(generatedMagicLink);
-      showToast("Magic link copied to clipboard.");
+      notify.success("Copied", "Magic link copied to clipboard.");
     } catch {
-      showToast("Failed to copy link. Please copy manually.", "error");
+      notify.error("Copy failed", "Please copy the link manually.");
     }
   };
 
@@ -445,6 +577,42 @@ export function SettingsPage(): React.ReactElement {
                 title="Client Access"
                 description="Invite a client to this workspace. Send an email invite or generate a magic link to share directly."
               />
+              <div className="mb-5 rounded-lg border border-[#292B38] bg-[#191A22] p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      Realtime Notification Test
+                    </p>
+                    <p className="mt-1 text-xs text-muted">
+                      Use these controls to validate inbox refresh behavior and
+                      realtime Sonner toast delivery from this workspace.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      disabled={testInboxRefreshMutation.isPending || !workspaceId}
+                      onClick={() => testInboxRefreshMutation.mutate()}
+                    >
+                      {testInboxRefreshMutation.isPending
+                        ? "Sending..."
+                        : "Test Inbox Refresh"}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={testRealtimeToastMutation.isPending || !workspaceId}
+                      onClick={() => testRealtimeToastMutation.mutate()}
+                    >
+                      {testRealtimeToastMutation.isPending
+                        ? "Sending..."
+                        : "Test Realtime Toast"}
+                    </Button>
+                  </div>
+                </div>
+              </div>
               <form
                 onSubmit={(event) => {
                   event.preventDefault();
@@ -545,6 +713,24 @@ export function SettingsPage(): React.ReactElement {
               {inviteError ? (
                 <p className="mt-3 text-xs text-red-400">{inviteError}</p>
               ) : null}
+              <div className="mt-3 space-y-1 text-[11px] text-muted">
+                <p>
+                  <span className="font-medium text-foreground">
+                    Test Inbox Refresh:
+                  </span>{" "}
+                  creates a notification using the current user as the actor, so
+                  the inbox should refresh and the unread count should update,
+                  but the realtime toast may be skipped by self-action dedup.
+                </p>
+                <p>
+                  <span className="font-medium text-foreground">
+                    Test Realtime Toast:
+                  </span>{" "}
+                  creates a notification for the current user with a different
+                  actor id so the realtime Sonner toast should appear
+                  immediately.
+                </p>
+              </div>
             </SettingsSection>
 
             {/* ── 3. Workspace Management ── */}

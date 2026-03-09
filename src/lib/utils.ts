@@ -27,6 +27,15 @@ export function formatDurationHours(totalSeconds: number): string {
   return (totalSeconds / 3600).toFixed(2);
 }
 
+export function getInitials(name?: string | null): string {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  return parts
+    .slice(0, 2)
+    .map((p) => p.charAt(0).toUpperCase())
+    .join("");
+}
+
 export function toIsoNow(): string {
   return new Date().toISOString();
 }

@@ -7,11 +7,10 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { isDemoMode, isSupabaseConfigured } from "@/lib/supabase";
 import { useAuth } from "@/providers/AuthProvider";
-import { useToast } from "@/providers/ToastProvider";
+import { notify } from "@/lib/toast";
 
 export function LoginPage(): React.ReactElement {
   const { loginForDev, loginWithPassword, signUpWithPassword } = useAuth();
-  const { showToast } = useToast();
   const navigate = useNavigate();
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
@@ -109,7 +108,7 @@ export function LoginPage(): React.ReactElement {
               try {
                 if (isDemoMode) {
                   await loginForDev(email || "dev@localhost");
-                  showToast("Logged in successfully.");
+                  notify.success("Logged in");
                   navigate("/workspaces");
                   return;
                 }
@@ -123,13 +122,16 @@ export function LoginPage(): React.ReactElement {
                   setMessage(
                     "Account created. You can now access your workspaces.",
                   );
-                  showToast("Account created successfully.");
+                  notify.success(
+                    "Account created",
+                    "You can now access your workspaces.",
+                  );
                   navigate("/workspaces");
                   return;
                 }
 
                 await loginWithPassword(email, password);
-                showToast("Logged in successfully.");
+                notify.success("Logged in");
                 navigate("/workspaces");
               } catch (err) {
                 setError(

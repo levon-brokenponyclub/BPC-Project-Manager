@@ -51,17 +51,15 @@ import {
 import { getMyWorkspaceRole } from "@/api/workspaces";
 import { ProfileEditModal } from "@/components/profile/ProfileEditModal";
 import { Button } from "@/components/ui/button";
-import {
-  formatNotification,
-  getNotificationDefinition,
-} from "@/lib/notifications/notificationCatalog";
-import { normalizeNotificationPayloadV2 } from "@/lib/notifications/notificationTypes";
+import { formatNotificationMessage } from "@/lib/notifications/formatNotificationMessage";
+import { getNotificationDefinition } from "@/lib/notifications/notificationCatalog";
 import { timeAgo } from "@/lib/notifications/timeAgo";
 import { queryKeys } from "@/lib/queryKeys";
+import { notify } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/AuthProvider";
 import { useTheme } from "@/providers/ThemeProvider";
-import { useToast } from "@/providers/ToastProvider";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import type { Notification } from "@/types/models";
 
 type AppShellProps = {
@@ -160,8 +158,7 @@ function InboxPropertyRow({
 
 interface InboxListItemMsg {
   title: string;
-  subtitle?: string;
-  icon: string;
+  description?: string;
   entity: string;
   actor: string;
   actorAvatarUrl: string | null;
@@ -180,7 +177,6 @@ function InboxListItem({
   msg: InboxListItemMsg;
   onSelect: () => void;
 }): ReactElement {
-  const IconComponent = getNotifIcon(msg.icon);
   return (
     <button
       type="button"
@@ -191,16 +187,22 @@ function InboxListItem({
       )}
     >
       {!notification.read_at ? (
-        <span className="absolute left-2 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-primary" />
+        <span className="absolute left-1.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-primary" />
       ) : null}
       <div className="flex items-start gap-2.5 pl-2">
-        <div
-          className={cn(
-            "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-[6px]",
-            isActive ? "bg-[#2A2B3D]" : "bg-[#1F2030]",
+        {/* Actor avatar */}
+        <div className="mt-0.5 shrink-0">
+          {msg.actorAvatarUrl ? (
+            <img
+              src={msg.actorAvatarUrl}
+              alt={msg.actor}
+              className="h-7 w-7 rounded-full object-cover"
+            />
+          ) : (
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#2A2C38] bg-[#191A22] text-[10px] font-medium text-[#8B8C9E]">
+              {getInboxInitials(msg.actor)}
+            </span>
           )}
-        >
-          <IconComponent className="h-3.5 w-3.5 text-[#8B8C9E]" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-1">
@@ -218,11 +220,11 @@ function InboxListItem({
               {timeAgo(notification.created_at)}
             </span>
           </div>
-          <p className="mt-0.5 truncate text-[12px] leading-[17px] text-[#5F6272]">
-            {msg.entity !== "General update"
-              ? msg.entity
-              : (msg.subtitle ?? "")}
-          </p>
+          {msg.description ? (
+            <p className="mt-0.5 truncate text-[12px] leading-[17px] text-[#5F6272]">
+              {msg.description}
+            </p>
+          ) : null}
         </div>
       </div>
     </button>
@@ -237,11 +239,13 @@ export default function AppShell({
   const queryClient = useQueryClient();
   const { user, signOut } = useAuth();
   const { mode, setMode } = useTheme();
-  const { showToast } = useToast();
   const { workspaceId = "" } = useParams<{ workspaceId: string }>();
   const { pathname } = useLocation();
   const isDashboardRoute = pathname.includes("/dashboard");
   const navigate = useNavigate();
+
+  useRealtimeNotifications({ userId: user?.id, workspaceId });
+
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem("sidebarCollapsed") === "1";
@@ -409,12 +413,12 @@ export default function AppShell({
       await queryClient.invalidateQueries({
         queryKey: queryKeys.unreadNotifications(workspaceId),
       });
-      showToast("Notification deleted.");
+      notify.info("Notification deleted");
     },
     onError: (err: unknown) => {
       const message =
         err instanceof Error ? err.message : "Failed to delete notification.";
-      showToast(message, "error");
+      notify.error("Could not delete notification", message);
     },
   });
 
@@ -427,7 +431,7 @@ export default function AppShell({
       await queryClient.invalidateQueries({
         queryKey: queryKeys.unreadNotifications(workspaceId),
       });
-      showToast("Inbox marked as read.");
+      notify.success("Inbox cleared", "All notifications marked as read.");
     },
   });
 
@@ -479,7 +483,7 @@ export default function AppShell({
       }
       return [...previous, activeNotification.id];
     });
-    showToast("Notification snoozed for this session.");
+    notify.info("Snoozed", "Notification hidden for this session.");
   };
 
   const handleSignOut = async (): Promise<void> => {
@@ -490,32 +494,19 @@ export default function AppShell({
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to log out.";
-      showToast(message, "error");
+      notify.error("Sign out failed", message);
     }
   };
 
-  const renderInboxMessage = (notification: Notification) => {
-    const payload = normalizeNotificationPayloadV2(
-      notification.type,
-      notification.payload ?? {},
-      notification.workspace_id,
-    );
-
-    const actorName = payload.actor.name?.trim();
-    const actorFromEmail = payload.actor.email
-      ?.split("@")[0]
-      ?.split(/[._-]+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(" ");
-
+  const renderInboxMessage = (notification: Notification): InboxListItemMsg => {
+    const formatted = formatNotificationMessage(notification);
     return {
-      ...formatNotification(notification.type, payload),
-      route: payload.target?.route ?? null,
-      entity: payload.entity.name ?? "General update",
-      actor: actorName || actorFromEmail || "Workspace update",
-      actorAvatarUrl: payload.actor.avatar_url ?? null,
+      title: formatted.title,
+      description: formatted.description,
+      entity: formatted.entity,
+      actor: formatted.actor,
+      actorAvatarUrl: formatted.actorAvatarUrl,
+      route: formatted.route,
       status: notification.read_at ? "Done" : "Unread",
     };
   };
@@ -1016,16 +1007,8 @@ export default function AppShell({
                       const typeLabel = getNotificationTypeLabel(
                         activeNotification.type,
                       );
-
-                      // Parse "entity -- change" from subtitle when present
-                      const changeMatch =
-                        message.subtitle?.match(/^(.+?)\s*--\s*(.+)$/);
-                      const entityPart = changeMatch
-                        ? changeMatch[1].trim()
-                        : null;
-                      const changePart = changeMatch
-                        ? changeMatch[2].trim()
-                        : null;
+                      const isChangedField =
+                        activeNotification.type.endsWith("_changed");
 
                       return (
                         <div className="flex-1 space-y-6 px-6 py-6">
@@ -1052,7 +1035,7 @@ export default function AppShell({
                           <div className="border-t border-[#222330]" />
 
                           {/* Content block */}
-                          {isComment && message.subtitle ? (
+                          {isComment && message.description ? (
                             /* Comment card */
                             <div className="flex gap-3">
                               {message.actorAvatarUrl ? (
@@ -1071,7 +1054,7 @@ export default function AppShell({
                                   {message.actor}
                                 </p>
                                 <p className="text-[14px] leading-[22px] text-[#D4D5DE]">
-                                  {message.subtitle}
+                                  {message.description}
                                 </p>
                               </div>
                             </div>
@@ -1089,26 +1072,17 @@ export default function AppShell({
                                       : "Task"}
                                   </div>
                                   <div className="px-3 py-2.5 text-[13px] font-medium text-white">
-                                    {entityPart ?? message.entity}
+                                    {message.entity}
                                   </div>
                                 </div>
                               ) : null}
-                              {changePart ? (
+                              {message.description ? (
                                 <div className="grid grid-cols-[120px_1fr] border-b border-[#292B38]">
                                   <div className="px-3 py-2.5 text-[13px] font-medium text-[#6B6D7A]">
-                                    Change
+                                    {isChangedField ? "Change" : "Detail"}
                                   </div>
                                   <div className="px-3 py-2.5 text-[13px] font-medium text-white">
-                                    {changePart}
-                                  </div>
-                                </div>
-                              ) : message.subtitle ? (
-                                <div className="grid grid-cols-[120px_1fr] border-b border-[#292B38]">
-                                  <div className="px-3 py-2.5 text-[13px] font-medium text-[#6B6D7A]">
-                                    Detail
-                                  </div>
-                                  <div className="px-3 py-2.5 text-[13px] text-[#D4D5DE]">
-                                    {message.subtitle}
+                                    {message.description}
                                   </div>
                                 </div>
                               ) : null}

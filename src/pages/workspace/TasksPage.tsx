@@ -31,13 +31,13 @@ import { Card } from "@/components/ui/card";
 import { DataStateWrapper } from "@/components/ui/DataStateWrapper";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { queryKeys } from "@/lib/queryKeys";
+import { notify } from "@/lib/toast";
 import {
   getEffectiveRole,
   getStoredRoleView,
   type RoleViewMode,
 } from "@/lib/roleView";
 import { useAuth } from "@/providers/AuthProvider";
-import { useToast } from "@/providers/ToastProvider";
 import type { Task, TaskPriority, TaskStatus } from "@/types/models";
 
 interface NewTaskInput {
@@ -59,7 +59,6 @@ export function TasksPage(): React.ReactElement {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { showToast } = useToast();
 
   const [selectedTask, setSelectedTask] = useState<TaskWithUsers | null>(null);
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
@@ -212,12 +211,15 @@ export function TasksPage(): React.ReactElement {
         taskTitle: task.title,
       });
       await refreshWorkspaceData();
-      showToast(`Created task \"${taskToastLabel(task.title)}\".`);
+      notify.success(
+        "Task created",
+        `"${taskToastLabel(task.title)}" was added successfully.`,
+      );
     },
     onError: (err: unknown) => {
       const message =
         err instanceof Error ? err.message : "Failed to create task";
-      showToast(message, "error");
+      notify.error("Failed to create task", message);
     },
   });
 
@@ -289,12 +291,15 @@ export function TasksPage(): React.ReactElement {
       }
 
       await refreshWorkspaceData();
-      showToast(`Updated task \"${taskToastLabel(task.title)}\".`);
+      notify.success(
+        "Task updated",
+        `"${taskToastLabel(task.title)}" was saved.`,
+      );
     },
     onError: (err: unknown) => {
       const message =
         err instanceof Error ? err.message : "Failed to update task";
-      showToast(message, "error");
+      notify.error("Failed to update task", message);
     },
   });
 
@@ -325,6 +330,12 @@ export function TasksPage(): React.ReactElement {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.unreadNotifications(workspaceId),
       });
+      notify.success("Comment added");
+    },
+    onError: (err: unknown) => {
+      const message =
+        err instanceof Error ? err.message : "Failed to add comment";
+      notify.error("Failed to add comment", message);
     },
   });
 
@@ -335,6 +346,12 @@ export function TasksPage(): React.ReactElement {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.taskFiles(workspaceId, vars.taskId),
       });
+      notify.success("File uploaded");
+    },
+    onError: (err: unknown) => {
+      const message =
+        err instanceof Error ? err.message : "Failed to upload file";
+      notify.error("Upload failed", message);
     },
   });
 
@@ -421,11 +438,14 @@ export function TasksPage(): React.ReactElement {
     try {
       await deleteTaskMutation.mutateAsync({ taskId, taskTitle });
       setSelectedTask(null);
-      showToast(`Deleted task \"${taskToastLabel(taskTitle)}\".`);
+      notify.success(
+        "Task deleted",
+        `"${taskToastLabel(taskTitle)}" was removed.`,
+      );
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to delete task";
-      showToast(message, "error");
+      notify.error("Failed to delete task", message);
     }
   };
 

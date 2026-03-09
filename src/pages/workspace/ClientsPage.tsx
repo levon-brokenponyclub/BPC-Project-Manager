@@ -5,11 +5,11 @@ import { useEffect, useMemo, useState, Fragment } from "react";
 
 import { getAllSystemUsers, type SystemUser } from "@/api/clients";
 import { timeAgo } from "@/lib/notifications/timeAgo";
+import { notify } from "@/lib/toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/providers/ToastProvider";
 import { invokeAuthedFunction } from "@/lib/invokeAuthedFunction";
 import { isDemoMode, supabase } from "@/lib/supabase";
 import { DataStateWrapper } from "@/components/ui/DataStateWrapper";
@@ -84,7 +84,6 @@ function UserAvatar({
 export function ClientsPage(): React.ReactElement {
   const { workspaceId = "" } = useParams<{ workspaceId: string }>();
   const queryClient = useQueryClient();
-  const { showToast } = useToast();
 
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
@@ -176,10 +175,13 @@ export function ClientsPage(): React.ReactElement {
     onSuccess: (data: { warning?: string; magicLink?: string }) => {
       if (deliveryMode === "magic_link" && data?.magicLink) {
         setGeneratedMagicLink(data.magicLink);
-        showToast("Magic link generated successfully!");
+        notify.success(
+          "Magic link generated",
+          "Copy and send it to the client.",
+        );
       } else {
         const statusMessage = data?.warning || "Invite sent successfully.";
-        showToast(statusMessage);
+        notify.success("Invite sent", statusMessage);
         setInviteEmail("");
         setInviteFirstName("");
         setInviteSurname("");
@@ -193,7 +195,7 @@ export function ClientsPage(): React.ReactElement {
       });
     },
     onError: (err: Error) => {
-      showToast(err.message || "Invite failed", "error");
+      notify.error("Invite failed", err.message || "Invite failed");
     },
   });
 
@@ -208,11 +210,11 @@ export function ClientsPage(): React.ReactElement {
       await queryClient.invalidateQueries({
         queryKey: ["all-system-users", workspaceId],
       });
-      showToast("Client deleted.");
+      notify.success("Client deleted");
     },
     onError: (err: unknown) => {
       const message = err instanceof Error ? err.message : "Delete failed";
-      showToast(message, "error");
+      notify.error("Delete failed", message);
     },
   });
 
@@ -233,13 +235,13 @@ export function ClientsPage(): React.ReactElement {
       await queryClient.invalidateQueries({
         queryKey: ["all-system-users", workspaceId],
       });
-      showToast("Client profile updated.");
+      notify.success("Profile updated");
       setEditingUser(null);
     },
     onError: (err: unknown) => {
       const message =
         err instanceof Error ? err.message : "Profile update failed";
-      showToast(message, "error");
+      notify.error("Profile update failed", message);
     },
   });
 
@@ -407,11 +409,17 @@ export function ClientsPage(): React.ReactElement {
                         </td>
                         <td className="px-6 py-3.5 text-xs text-[#7B7D85]">
                           {isVerified && user.last_sign_in_at ? (
-                            <span title={new Date(user.last_sign_in_at).toLocaleString()}>
+                            <span
+                              title={new Date(
+                                user.last_sign_in_at,
+                              ).toLocaleString()}
+                            >
                               Last seen {timeAgo(user.last_sign_in_at)}
                             </span>
                           ) : user.created_at ? (
-                            <span title={new Date(user.created_at).toLocaleString()}>
+                            <span
+                              title={new Date(user.created_at).toLocaleString()}
+                            >
                               Invited {timeAgo(user.created_at)}
                             </span>
                           ) : (
@@ -513,11 +521,17 @@ export function ClientsPage(): React.ReactElement {
                         </td>
                         <td className="px-6 py-3.5 text-xs text-[#7B7D85]">
                           {isVerified && user.last_sign_in_at ? (
-                            <span title={new Date(user.last_sign_in_at).toLocaleString()}>
+                            <span
+                              title={new Date(
+                                user.last_sign_in_at,
+                              ).toLocaleString()}
+                            >
                               Last seen {timeAgo(user.last_sign_in_at)}
                             </span>
                           ) : user.created_at ? (
-                            <span title={new Date(user.created_at).toLocaleString()}>
+                            <span
+                              title={new Date(user.created_at).toLocaleString()}
+                            >
                               Invited {timeAgo(user.created_at)}
                             </span>
                           ) : (
@@ -767,7 +781,10 @@ export function ClientsPage(): React.ReactElement {
                         type="button"
                         onClick={() => {
                           navigator.clipboard.writeText(generatedMagicLink);
-                          showToast("Magic link copied to clipboard!");
+                          notify.success(
+                            "Copied",
+                            "Magic link copied to clipboard.",
+                          );
                         }}
                       >
                         Copy

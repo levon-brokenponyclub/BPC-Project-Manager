@@ -32,13 +32,12 @@ import { DataStateWrapper } from "@/components/ui/DataStateWrapper";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { timeAgo } from "@/lib/notifications/timeAgo";
 import { queryKeys } from "@/lib/queryKeys";
+import { notify } from "@/lib/toast";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "@/providers/ToastProvider";
 
 export function ProjectOverviewPage(): React.ReactElement {
   const { workspaceId = "" } = useParams<{ workspaceId: string }>();
   const navigate = useNavigate();
-  const { showToast } = useToast();
   const [isTopUpModalOpen, setIsTopUpModalOpen] = useState(false);
   const [topUpHours, setTopUpHours] = useState<string>("");
 
@@ -83,7 +82,10 @@ export function ProjectOverviewPage(): React.ReactElement {
   const totalInclVat = subtotal + vatAmount;
 
   const handleRequestSupport = () => {
-    showToast(`Request for ${topUpHours} hours submitted successfully.`);
+    notify.success(
+      "Request submitted",
+      `${topUpHours} hours request sent successfully.`,
+    );
     setIsTopUpModalOpen(false);
     setTopUpHours("");
   };
