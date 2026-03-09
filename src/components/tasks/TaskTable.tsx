@@ -176,15 +176,15 @@ type EditorTarget = {
 
 // ─── Status popover ───────────────────────────────────────────────────────────
 
-const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
-  { value: "Todo", label: "Todo" },
-  { value: "Upcoming", label: "Upcoming" },
-  { value: "In Progress", label: "In Progress" },
-  { value: "In Review", label: "In Review" },
-  { value: "Awaiting Client", label: "Awaiting Client" },
-  { value: "On Hold", label: "On Hold" },
-  { value: "Complete", label: "Complete" },
-  { value: "Cancelled", label: "Cancelled" },
+const STATUS_OPTIONS: { value: TaskStatus; label: string; color: string }[] = [
+  { value: "Todo", label: "Todo", color: "#EAB308" },
+  { value: "Upcoming", label: "Upcoming", color: "#6366F1" },
+  { value: "In Progress", label: "In Progress", color: "#F97316" },
+  { value: "In Review", label: "In Review", color: "#EC4899" },
+  { value: "Awaiting Client", label: "Awaiting Client", color: "#A855F7" },
+  { value: "On Hold", label: "On Hold", color: "#94A3B8" },
+  { value: "Complete", label: "Complete", color: "#22C55E" },
+  { value: "Cancelled", label: "Cancelled", color: "#94A3B8" },
 ];
 
 function InlineStatusEditor({
@@ -225,14 +225,17 @@ function InlineStatusEditor({
       }}
       className="w-[200px] overflow-hidden rounded-[6px] border border-[#2A2C3A] bg-[#1B1C28] py-1 shadow-[0px_8px_24px_rgba(0,0,0,0.4)]"
     >
-      {STATUS_OPTIONS.map(({ value, label }) => (
+      {STATUS_OPTIONS.map(({ value, label, color }) => (
         <button
           key={value}
           type="button"
           className="flex w-full items-center gap-2.5 px-3 py-1.5 text-[13px] text-[#C4C5D0] transition-colors hover:bg-[#252636]"
           onClick={() => onSelect(value)}
         >
-          <StatusGroupMarker status={value} />
+          <span
+            className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+            style={{ backgroundColor: color }}
+          />
           <span className="flex-1 text-left">{label}</span>
           {value === current && (
             <Check className="h-3.5 w-3.5 text-[#5E6AD2]" />
