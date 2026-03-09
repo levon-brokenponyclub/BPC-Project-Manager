@@ -629,8 +629,8 @@ export function TasksPage(): React.ReactElement {
           />
         }
       >
-        <Card className="relative overflow-visible border-[#222330] bg-[#191A22]">
-          <div className="flex h-13 items-center justify-between border-b border-[#222330] px-6 py-2">
+        <Card className="relative overflow-visible border-border bg-card">
+          <div className="flex h-13 items-center justify-between border-b border-border px-6 py-2">
             <div className="relative">
               <button
                 ref={filterButtonRef}
@@ -669,12 +669,12 @@ export function TasksPage(): React.ReactElement {
               {filterOpen ? (
                 <div
                   ref={filterPanelRef}
-                  className="absolute left-0 top-full z-50 mt-2 min-w-[280px] rounded-[8px] border border-[#333541] bg-[#1B1C23] p-[0.5px] shadow-[0px_3px_8px_rgba(0,0,0,0.12),0px_2px_5px_rgba(0,0,0,0.12),0px_1px_1px_rgba(0,0,0,0.12)]"
+                  className="absolute left-0 top-full z-50 mt-2 min-w-[280px] rounded-[8px] border border-border bg-popover p-[0.5px] shadow-[0px_3px_8px_rgba(0,0,0,0.12),0px_2px_5px_rgba(0,0,0,0.12),0px_1px_1px_rgba(0,0,0,0.12)]"
                 >
                   <div className="flex flex-col py-1">
                     {/* Status Filter */}
                     <div className="mb-3">
-                      <div className="mb-1 px-[14px] text-[11px] font-medium uppercase tracking-wide text-[#9A9BA2]">
+                      <div className="mb-1 px-[14px] text-[11px] font-medium uppercase tracking-wide text-muted">
                         Status
                       </div>
                       <div className="space-y-1">
@@ -698,10 +698,10 @@ export function TasksPage(): React.ReactElement {
                               setStatusFilter(status);
                               setFilterOpen(false);
                             }}
-                            className={`focus-ring mx-1.5 block h-8 w-[calc(100%-12px)] rounded-[6px] px-[14px] text-left text-[13px] leading-4 transition-colors hover:bg-[#2B2C34] ${
+                            className={`focus-ring mx-1.5 block h-8 w-[calc(100%-12px)] rounded-[6px] px-[14px] text-left text-[13px] leading-4 transition-colors hover:bg-surface ${
                               statusFilter === status
-                                ? "bg-[#2B2C34] text-white"
-                                : "text-[#E4E4EC]"
+                                ? "bg-surface text-foreground font-medium"
+                                : "text-foreground/80"
                             }`}
                           >
                             {status}
@@ -711,8 +711,8 @@ export function TasksPage(): React.ReactElement {
                     </div>
 
                     {/* Assignee Filter */}
-                    <div className="mb-3 mt-1 border-t border-[#2E2F3B] pt-2">
-                      <div className="mb-1 px-[14px] text-[11px] font-medium uppercase tracking-wide text-[#9A9BA2]">
+                    <div className="mb-3 mt-1 border-t border-border pt-2">
+                      <div className="mb-1 px-[14px] text-[11px] font-medium uppercase tracking-wide text-muted">
                         Assignee
                       </div>
                       <div className="max-h-[200px] space-y-1 overflow-y-auto">
@@ -722,10 +722,10 @@ export function TasksPage(): React.ReactElement {
                             setAssigneeFilter("All");
                             setFilterOpen(false);
                           }}
-                          className={`focus-ring mx-1.5 block h-8 w-[calc(100%-12px)] rounded-[6px] px-[14px] text-left text-[13px] leading-4 transition-colors hover:bg-[#2B2C34] ${
+                          className={`focus-ring mx-1.5 block h-8 w-[calc(100%-12px)] rounded-[6px] px-[14px] text-left text-[13px] leading-4 transition-colors hover:bg-surface ${
                             assigneeFilter === "All"
-                              ? "bg-[#2B2C34] text-white"
-                              : "text-[#E4E4EC]"
+                              ? "bg-surface text-foreground font-medium"
+                              : "text-foreground/80"
                           }`}
                         >
                           All
@@ -738,10 +738,10 @@ export function TasksPage(): React.ReactElement {
                               setAssigneeFilter(user.user_id);
                               setFilterOpen(false);
                             }}
-                            className={`focus-ring mx-1.5 block h-8 w-[calc(100%-12px)] rounded-[6px] px-[14px] text-left text-[13px] leading-4 transition-colors hover:bg-[#2B2C34] ${
+                            className={`focus-ring mx-1.5 block h-8 w-[calc(100%-12px)] rounded-[6px] px-[14px] text-left text-[13px] leading-4 transition-colors hover:bg-surface ${
                               assigneeFilter === user.user_id
-                                ? "bg-[#2B2C34] text-white"
-                                : "text-[#E4E4EC]"
+                                ? "bg-surface text-foreground font-medium"
+                                : "text-foreground/80"
                             }`}
                           >
                             {formatUserDisplayName(user.email)}
@@ -751,8 +751,8 @@ export function TasksPage(): React.ReactElement {
                     </div>
 
                     {/* Priority Filter */}
-                    <div className="mb-3 mt-1 border-t border-[#2E2F3B] pt-2">
-                      <div className="mb-1 px-[14px] text-[11px] font-medium uppercase tracking-wide text-[#9A9BA2]">
+                    <div className="mb-3 mt-1 border-t border-border pt-2">
+                      <div className="mb-1 px-[14px] text-[11px] font-medium uppercase tracking-wide text-muted">
                         Priority
                       </div>
                       <div className="space-y-1">
@@ -766,10 +766,10 @@ export function TasksPage(): React.ReactElement {
                               setPriorityFilter(priority);
                               setFilterOpen(false);
                             }}
-                            className={`focus-ring mx-1.5 block h-8 w-[calc(100%-12px)] rounded-[6px] px-[14px] text-left text-[13px] leading-4 transition-colors hover:bg-[#2B2C34] ${
+                            className={`focus-ring mx-1.5 block h-8 w-[calc(100%-12px)] rounded-[6px] px-[14px] text-left text-[13px] leading-4 transition-colors hover:bg-surface ${
                               priorityFilter === priority
-                                ? "bg-[#2B2C34] text-white"
-                                : "text-[#E4E4EC]"
+                                ? "bg-surface text-foreground font-medium"
+                                : "text-foreground/80"
                             }`}
                           >
                             {priority}
@@ -780,14 +780,14 @@ export function TasksPage(): React.ReactElement {
 
                     {/* Clear Filters */}
                     {hasActiveFilters ? (
-                      <div className="mt-1 border-t border-[#2E2F3B] pt-2">
+                      <div className="mt-1 border-t border-border pt-2">
                         <button
                           type="button"
                           onClick={() => {
                             clearAllFilters();
                             setFilterOpen(false);
                           }}
-                          className="focus-ring mx-1.5 block h-8 w-[calc(100%-12px)] rounded-[6px] px-[14px] text-left text-[13px] leading-4 text-[#E4E4EC] transition-colors hover:bg-[#2B2C34]"
+                          className="focus-ring mx-1.5 block h-8 w-[calc(100%-12px)] rounded-[6px] px-[14px] text-left text-[13px] leading-4 text-foreground/80 transition-colors hover:bg-surface"
                         >
                           Clear all filters
                         </button>
@@ -808,7 +808,7 @@ export function TasksPage(): React.ReactElement {
                     setSortOpen((previous) => !previous);
                     setFilterOpen(false);
                   }}
-                  className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-sm border border-[#313339] bg-[#15161D] px-3 text-[13px] font-medium text-white transition-colors hover:bg-[#1C1E26] active:bg-[#20222B] disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50"
+                  className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-sm border border-border bg-card px-3 text-[13px] font-medium text-foreground transition-colors hover:bg-surface active:bg-surface disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50"
                 >
                   <svg
                     viewBox="0 0 16 16"
@@ -843,10 +843,10 @@ export function TasksPage(): React.ReactElement {
                 {sortOpen ? (
                   <div
                     ref={sortPanelRef}
-                    className="absolute right-0 top-full z-50 mt-2 min-w-[220px] rounded-[8px] border border-[#333541] bg-[#1B1C23] p-[0.5px] shadow-[0px_3px_8px_rgba(0,0,0,0.12),0px_2px_5px_rgba(0,0,0,0.12),0px_1px_1px_rgba(0,0,0,0.12)]"
+                    className="absolute right-0 top-full z-50 mt-2 min-w-[220px] rounded-[8px] border border-border bg-popover p-[0.5px] shadow-[0px_3px_8px_rgba(0,0,0,0.12),0px_2px_5px_rgba(0,0,0,0.12),0px_1px_1px_rgba(0,0,0,0.12)]"
                   >
                     <div className="flex flex-col py-1">
-                      <div className="mb-1 px-[14px] text-[11px] font-medium uppercase tracking-wide text-[#9A9BA2]">
+                      <div className="mb-1 px-[14px] text-[11px] font-medium uppercase tracking-wide text-muted">
                         Sort by
                       </div>
                       <div className="space-y-1">
@@ -861,15 +861,15 @@ export function TasksPage(): React.ReactElement {
                             );
                             setSortOpen(false);
                           }}
-                          className={`focus-ring mx-1.5 inline-flex h-8 w-[calc(100%-12px)] items-center justify-between rounded-[6px] px-[14px] text-[13px] leading-4 transition-colors hover:bg-[#2B2C34] ${
+                          className={`focus-ring mx-1.5 inline-flex h-8 w-[calc(100%-12px)] items-center justify-between rounded-[6px] px-[14px] text-[13px] leading-4 transition-colors hover:bg-surface ${
                             sortBy === "status"
-                              ? "bg-[#2B2C34] text-white"
-                              : "text-[#E4E4EC]"
+                              ? "bg-surface text-foreground font-medium"
+                              : "text-foreground/80"
                           }`}
                         >
                           <span>Status</span>
                           {sortBy === "status" ? (
-                            <span className="text-[11px] leading-[13px] text-[#9A9BA2]">
+                            <span className="text-[11px] leading-[13px] text-muted">
                               {sortOrder === "asc" ? "↑" : "↓"}
                             </span>
                           ) : null}
@@ -885,15 +885,15 @@ export function TasksPage(): React.ReactElement {
                             );
                             setSortOpen(false);
                           }}
-                          className={`focus-ring mx-1.5 inline-flex h-8 w-[calc(100%-12px)] items-center justify-between rounded-[6px] px-[14px] text-[13px] leading-4 transition-colors hover:bg-[#2B2C34] ${
+                          className={`focus-ring mx-1.5 inline-flex h-8 w-[calc(100%-12px)] items-center justify-between rounded-[6px] px-[14px] text-[13px] leading-4 transition-colors hover:bg-surface ${
                             sortBy === "assignee"
-                              ? "bg-[#2B2C34] text-white"
-                              : "text-[#E4E4EC]"
+                              ? "bg-surface text-foreground font-medium"
+                              : "text-foreground/80"
                           }`}
                         >
                           <span>Assignee</span>
                           {sortBy === "assignee" ? (
-                            <span className="text-[11px] leading-[13px] text-[#9A9BA2]">
+                            <span className="text-[11px] leading-[13px] text-muted">
                               {sortOrder === "asc" ? "↑" : "↓"}
                             </span>
                           ) : null}
@@ -909,15 +909,15 @@ export function TasksPage(): React.ReactElement {
                             );
                             setSortOpen(false);
                           }}
-                          className={`focus-ring mx-1.5 inline-flex h-8 w-[calc(100%-12px)] items-center justify-between rounded-[6px] px-[14px] text-[13px] leading-4 transition-colors hover:bg-[#2B2C34] ${
+                          className={`focus-ring mx-1.5 inline-flex h-8 w-[calc(100%-12px)] items-center justify-between rounded-[6px] px-[14px] text-[13px] leading-4 transition-colors hover:bg-surface ${
                             sortBy === "due_date"
-                              ? "bg-[#2B2C34] text-white"
-                              : "text-[#E4E4EC]"
+                              ? "bg-surface text-foreground font-medium"
+                              : "text-foreground/80"
                           }`}
                         >
                           <span>Due Date</span>
                           {sortBy === "due_date" ? (
-                            <span className="text-[11px] leading-[13px] text-[#9A9BA2]">
+                            <span className="text-[11px] leading-[13px] text-muted">
                               {sortOrder === "asc" ? "↑" : "↓"}
                             </span>
                           ) : null}
@@ -933,29 +933,29 @@ export function TasksPage(): React.ReactElement {
                             );
                             setSortOpen(false);
                           }}
-                          className={`focus-ring mx-1.5 inline-flex h-8 w-[calc(100%-12px)] items-center justify-between rounded-[6px] px-[14px] text-[13px] leading-4 transition-colors hover:bg-[#2B2C34] ${
+                          className={`focus-ring mx-1.5 inline-flex h-8 w-[calc(100%-12px)] items-center justify-between rounded-[6px] px-[14px] text-[13px] leading-4 transition-colors hover:bg-surface ${
                             sortBy === "priority"
-                              ? "bg-[#2B2C34] text-white"
-                              : "text-[#E4E4EC]"
+                              ? "bg-surface text-foreground font-medium"
+                              : "text-foreground/80"
                           }`}
                         >
                           <span>Priority</span>
                           {sortBy === "priority" ? (
-                            <span className="text-[11px] leading-[13px] text-[#9A9BA2]">
+                            <span className="text-[11px] leading-[13px] text-muted">
                               {sortOrder === "asc" ? "↑" : "↓"}
                             </span>
                           ) : null}
                         </button>
                       </div>
                       {sortBy !== "none" ? (
-                        <div className="mt-1 border-t border-[#2E2F3B] pt-2">
+                        <div className="mt-1 border-t border-border pt-2">
                           <button
                             type="button"
                             onClick={() => {
                               setSortBy("none");
                               setSortOpen(false);
                             }}
-                            className="focus-ring mx-1.5 block h-8 w-[calc(100%-12px)] rounded-[6px] px-[14px] text-left text-[13px] leading-4 text-[#E4E4EC] transition-colors hover:bg-[#2B2C34]"
+                            className="focus-ring mx-1.5 block h-8 w-[calc(100%-12px)] rounded-[6px] px-[14px] text-left text-[13px] leading-4 text-foreground/80 transition-colors hover:bg-surface"
                           >
                             Clear sort
                           </button>
