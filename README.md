@@ -11,7 +11,7 @@ A multi-workspace project management and client portal built for support agencie
 ## Features
 
 - **Multi-workspace** — each client maps to a workspace with its own tasks, team and support bucket
-- **Project Overview** — real-time health dashboard (KPI cards, phase board, activity feed)
+- **Project Overview** — premium real-time dashboard: hero status strip with radial glow, KPI metric cards with trend badges, 7-bar sparkline, progress cards with inline % labels, phase board with active-phase glow dot, activity feed, and an editorial dark-ink visual system (no orange)
 - **Task Management** — subtasks, inline status / due date / priority editing (ClickUp-style popovers), file attachments, due date colouring, drawer with full activity history
 - **Time Tracking** — start/stop timers per task, view time reports
 - **Support Buckets** — allocated vs used hours with progress bar

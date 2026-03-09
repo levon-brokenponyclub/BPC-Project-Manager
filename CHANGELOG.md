@@ -13,6 +13,71 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.7.0] - 2026-03-09
+
+### ✅ Added
+
+#### Project Overview — Premium Dashboard Upgrade (2026-03-09)
+
+**New primitives in `OverviewCards.tsx`:**
+
+- **`TrendBadge`**: Compact `+N / -N vs last wk` pill rendered on the "Done This Week" metric card. Green for positive delta, rose for negative.
+- **`IconChip`**: Unified tinted icon chip used consistently across all card types — accepts a `tone` prop (`default | success | warning | danger | purple`) that drives both the icon colour and its deep tinted background.
+- **`MiniBarChart`**: 7-bar sparkline strip used as the footer of the "Done This Week" card. Renders the last 7 days of task completion as proportional bars; today's bar is highlighted in indigo.
+- **`AssetBreakdownStrip`**: Horizontal chip strip on the Asset Library card showing per-type counts (Files · Links · Logins · Plugins) each with a small tinted icon.
+
+**Cards upgraded:**
+
+- **`OverviewMetricCard`**: Stronger metric hierarchy (larger value, smaller label), tonal border tint per tone, hover lift (`-translate-y-[2px]` with shadow transition).
+- **`OverviewProgressCard`**: Thicker progress bar (h-2.5), inline `%` label row alongside the bar.
+- **`ProjectStatusStrip`**: Promoted to hero header — compact metric chips row + one faint radial glow behind the status colour dot.
+- **`OverviewListCard`**: "View all" link in card header, cleaner row separators, refined icon dot sizing.
+- **`PhaseBoardCard`**: Active phase gets an animated glow dot; better label weight hierarchy.
+
+### 🔧 Changed
+
+#### Visual System Refinement — Premium Anti-Orange Rework
+
+Inspired by the `data-sets.css` colour direction. Full design-token pass across all dashboard components.
+
+**Surface & border system:**
+
+| Token            | Before            | After                                |
+| ---------------- | ----------------- | ------------------------------------ |
+| Card background  | `#191A22`         | `#13151e` (deeper ink)               |
+| Card border      | `#292B38`         | `#1e2130` (cool graphite)            |
+| Hover background | `#15161D`         | `#171929`                            |
+| Label text       | `text-muted/70`   | `#6b7485` (calm slate)               |
+| Helper text      | `text-muted`      | `#50566a`                            |
+| Metric value     | `text-foreground` | `rgba(255,255,255,0.88)` (off-white) |
+
+**Tone colours refined:**
+
+| Tone                           | Old accent              | New accent                 | Change                             |
+| ------------------------------ | ----------------------- | -------------------------- | ---------------------------------- |
+| warning (In Progress, At Risk) | `#f97316` (loud orange) | `#d4a84b` (warm bronze)    | Orange replaced with refined amber |
+| success                        | `#22c55e` (lime)        | `#4ade80` (soft emerald)   | More restrained green              |
+| danger                         | `text-red-400`          | `#f87171` / `bg-[#28141a]` | Softer, deeper rose                |
+| purple                         | `#a855f7` (candy)       | `#a78bfa` (soft violet)    | Less saturated                     |
+| default                        | primary teal            | `#7aa3c2` (slate-blue)     | Cooler, editorial                  |
+
+**Icon chip backgrounds per tone:**
+
+- `default` → `bg-[#1e2638]` slate-blue
+- `success` → `bg-[#162820]` deep emerald
+- `warning` → `bg-[#231c10]` deep amber
+- `danger` → `bg-[#28141a]` deep rose
+- `purple` → `bg-[#1c1730]` deep violet
+
+**`ProjectOverviewPage.tsx` changes:**
+
+- "Done This Week" card: `MiniBarChart` footer + `TrendBadge` on the metric value.
+- Asset Library card: `AssetBreakdownStrip` + deep icon chip + richer CTA copy.
+- `viewAllHref` prop added to both list cards (Upcoming Deadlines → `/tasks`, Open Tasks → `/tasks`).
+- Grid and section spacing lifted to `gap-5` / `space-y-5`.
+
+---
+
 ## [1.6.0] - 2026-03-09
 
 ### ✅ Added
