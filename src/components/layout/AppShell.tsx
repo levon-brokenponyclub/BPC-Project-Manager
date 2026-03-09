@@ -33,18 +33,21 @@ import { NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
+  addComment,
   deleteNotification,
   getMyWorkspaces,
   getUnreadNotificationCount,
+  listComments,
   listNotifications,
   markAllNotificationsRead,
   markNotificationRead,
   markNotificationUnread,
 } from "@/api";
-import { getMyWorkspaceRole } from "@/api/workspaces";
+import { getMyWorkspaceRole, getWorkspaceUsers } from "@/api/workspaces";
 import { ProfileEditModal } from "@/components/profile/ProfileEditModal";
 import { Button } from "@/components/ui/button";
 import { formatNotificationMessage } from "@/lib/notifications/formatNotificationMessage";
+import { normalizeNotificationPayloadV2 } from "@/lib/notifications/notificationTypes";
 import { getNotificationDefinition } from "@/lib/notifications/notificationCatalog";
 import { timeAgo } from "@/lib/notifications/timeAgo";
 import { queryKeys } from "@/lib/queryKeys";
@@ -53,7 +56,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/AuthProvider";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
-import type { Notification } from "@/types/models";
+import type { Comment, Notification } from "@/types/models";
 
 type AppShellProps = {
   children: ReactNode;
@@ -257,6 +260,302 @@ function InboxListItem({
               {msg.description}
             </p>
           ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Comment-type detection ───────────────────────────────────────────────────
+
+const COMMENT_NOTIFICATION_TYPES = new Set([
+  "comment.created",
+  "comment.assigned",
+  "comment.reaction_added",
+]);
+
+// ─── InboxCommentThread ───────────────────────────────────────────────────────
+
+/**
+ * Renders the full comment thread + composer for a comment-type inbox
+ * notification. Replicates the TaskDrawer Activity tab experience inline.
+ */
+function InboxCommentThread({
+  taskId,
+  workspaceId,
+  currentUserAvatar,
+  currentUserName,
+}: {
+  taskId: string;
+  workspaceId: string;
+  currentUserAvatar?: string;
+  currentUserName: string;
+}): ReactElement {
+  const queryClient = useQueryClient();
+  const threadScrollRef = useRef<HTMLDivElement | null>(null);
+  const composerRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const commentsQuery = useQuery({
+    queryKey: queryKeys.taskComments(taskId),
+    queryFn: () => listComments(taskId),
+    enabled: Boolean(taskId),
+  });
+
+  const workspaceUsersQuery = useQuery({
+    queryKey: queryKeys.workspaceUsers(workspaceId),
+    queryFn: () => getWorkspaceUsers(workspaceId),
+    enabled: Boolean(workspaceId),
+  });
+
+  const [composerBody, setComposerBody] = useState("");
+
+  const addCommentMutation = useMutation({
+    mutationFn: (body: string) => addComment(taskId, body),
+    onSuccess: async () => {
+      setComposerBody("");
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.taskComments(taskId),
+      });
+      setTimeout(() => {
+        if (threadScrollRef.current) {
+          threadScrollRef.current.scrollTo({
+            top: threadScrollRef.current.scrollHeight,
+            behavior: "smooth",
+          });
+        }
+      }, 50);
+    },
+    onError: (err: unknown) => {
+      const msg =
+        err instanceof Error ? err.message : "Failed to post comment.";
+      notify.error("Comment failed", msg);
+    },
+  });
+
+  // Scroll to bottom on first comment load
+  useEffect(() => {
+    const comments = commentsQuery.data;
+    if (comments && comments.length > 0) {
+      setTimeout(() => {
+        if (threadScrollRef.current) {
+          threadScrollRef.current.scrollTop =
+            threadScrollRef.current.scrollHeight;
+        }
+      }, 50);
+    }
+  }, [commentsQuery.data]);
+
+  const comments = commentsQuery.data ?? [];
+  const workspaceUsers = workspaceUsersQuery.data ?? [];
+  const usersById = new Map(workspaceUsers.map((u) => [u.user_id, u]));
+
+  const resolveCommentActor = (
+    userId: string,
+  ): { name: string; avatar: string | null } => {
+    const u = usersById.get(userId);
+    if (!u) return { name: "Team member", avatar: null };
+    const name =
+      `${u.first_name ?? ""} ${u.surname ?? ""}`.trim() ||
+      u.email?.split("@")[0] ||
+      "Team member";
+    return { name, avatar: u.avatar_url ?? null };
+  };
+
+  const submitComment = (): void => {
+    const body = composerBody.trim();
+    if (!body || addCommentMutation.isPending) return;
+    addCommentMutation.mutate(body);
+  };
+
+  const handleReply = (comment: Comment): void => {
+    const dateLabel = new Date(comment.created_at).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+    const normalised = comment.body.replace(/\s+/g, " ").trim();
+    const excerpt =
+      normalised.length > 120 ? `${normalised.slice(0, 120)}…` : normalised;
+    const quote = `Replying to (${dateLabel}): "${excerpt}"\n`;
+    setComposerBody((prev) => {
+      const existing = prev.trim();
+      return existing ? `${existing}\n\n${quote}` : quote;
+    });
+    setTimeout(() => composerRef.current?.focus(), 0);
+  };
+
+  const formatRelTime = (iso: string): string => {
+    const seconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
+    const abs = Math.abs(seconds);
+    const units = [
+      { threshold: 60, unit: "second" as const, div: 1 },
+      { threshold: 3600, unit: "minute" as const, div: 60 },
+      { threshold: 86400, unit: "hour" as const, div: 3600 },
+      { threshold: 604800, unit: "day" as const, div: 86400 },
+      { threshold: 2629800, unit: "week" as const, div: 604800 },
+      { threshold: 31557600, unit: "month" as const, div: 2629800 },
+      {
+        threshold: Number.POSITIVE_INFINITY,
+        unit: "year" as const,
+        div: 31557600,
+      },
+    ];
+    const sel = units.find((u) => abs < u.threshold) ?? units[0];
+    const fmt = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+    return fmt.format(-Math.round(seconds / sel.div), sel.unit);
+  };
+
+  if (commentsQuery.isLoading) {
+    return (
+      <div className="flex flex-1 items-center justify-center py-12">
+        <p className="text-[13px] text-[#5F6272]">Loading comments…</p>
+      </div>
+    );
+  }
+
+  if (commentsQuery.isError) {
+    return (
+      <div className="flex flex-1 items-center justify-center py-12">
+        <p className="text-[13px] text-[#E05C5C]">
+          Could not load comments for this task.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      {/* Thread */}
+      <div
+        ref={threadScrollRef}
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4"
+      >
+        {comments.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <MessageSquare className="mb-2 h-7 w-7 text-[#2E3040]" />
+            <p className="text-[13px] text-[#5F6272]">
+              No comments yet. Be the first to reply.
+            </p>
+          </div>
+        ) : (
+          <ul role="list" className="space-y-4 pb-4">
+            {comments.map((comment, index) => {
+              const actor = resolveCommentActor(comment.user_id);
+              const isLast = index === comments.length - 1;
+              const relTime = formatRelTime(comment.created_at);
+              const absTime = new Date(comment.created_at).toLocaleString(
+                undefined,
+                {
+                  month: "short",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit",
+                },
+              );
+
+              return (
+                <li
+                  key={comment.id}
+                  className="relative grid grid-cols-[30px_minmax(0,1fr)] items-start gap-3"
+                >
+                  {/* connector line */}
+                  <div className="relative flex justify-center">
+                    {!isLast ? (
+                      <span className="absolute bottom-[-16px] top-8 w-px bg-[#222330]" />
+                    ) : null}
+                    {actor.avatar ? (
+                      <img
+                        src={actor.avatar}
+                        alt={actor.name}
+                        className="relative z-10 mt-0.5 h-7 w-7 rounded-full border border-[#2c2e42] bg-[#191A22] object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span className="relative z-10 mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#2A2C38] bg-[#191A22] text-[10px] font-medium text-[#8B8C9E]">
+                        {getInboxInitials(actor.name)}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Comment card */}
+                  <div className="rounded-2xl border border-[#2c2e42] bg-[#1A1B25] px-4 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm leading-5 text-white">
+                        <span className="font-semibold">{actor.name}</span>{" "}
+                        <span className="text-[#5F6272]">commented</span>
+                      </p>
+                      <time
+                        dateTime={comment.created_at}
+                        title={absTime}
+                        className="shrink-0 text-xs text-[#5F6272]"
+                      >
+                        {relTime}
+                      </time>
+                    </div>
+                    <p className="mt-2 whitespace-pre-wrap text-[14px] leading-[22px] text-[#D4D5DE]">
+                      {comment.body}
+                    </p>
+                    <div className="mt-2 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => handleReply(comment)}
+                        className="text-[12px] text-[#5F6272] transition-colors hover:text-[#B0B1BC]"
+                      >
+                        Reply
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      {/* Composer */}
+      <div className="shrink-0 border-t border-[#222330] bg-[#1A1B25] px-5 py-4">
+        <div className="flex items-start gap-3 rounded-2xl border border-[#2c2e42] bg-[#191A22] p-3">
+          {currentUserAvatar ? (
+            <img
+              src={currentUserAvatar}
+              alt={currentUserName}
+              className="mt-0.5 h-8 w-8 shrink-0 rounded-full border border-[#2A2C38] object-cover"
+            />
+          ) : (
+            <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#2A2C38] bg-[#191A22] text-[10px] font-semibold text-[#8B8C9E]">
+              {getInboxInitials(currentUserName)}
+            </span>
+          )}
+          <div className="min-w-0 flex-1">
+            <label htmlFor="inbox-comment-composer" className="sr-only">
+              Add your comment
+            </label>
+            <textarea
+              id="inbox-comment-composer"
+              ref={composerRef}
+              value={composerBody}
+              onChange={(e) => setComposerBody(e.target.value)}
+              placeholder="Add your comment…"
+              rows={3}
+              className="w-full resize-none bg-transparent px-0 py-0 text-[14px] leading-[22px] text-white outline-none placeholder:text-[#5F6272]"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                  e.preventDefault();
+                  submitComment();
+                }
+              }}
+            />
+            <div className="mt-3 flex items-center justify-between border-t border-[#222330] pt-3">
+              <span className="text-[11px] text-[#3E3F50]">⌘↵ to submit</span>
+              <button
+                type="button"
+                onClick={submitComment}
+                disabled={!composerBody.trim() || addCommentMutation.isPending}
+                className="focus-ring inline-flex h-8 items-center rounded-[5px] bg-primary px-3 text-[13px] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+              >
+                {addCommentMutation.isPending ? "Sending…" : "Comment"}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1061,117 +1360,172 @@ export default function AppShell({
                 </header>
 
                 {/* Middle: task-drawer-style content pane */}
-                <div className="flex min-h-0 flex-col overflow-y-auto border-r border-[#222330]">
+                <div className="flex min-h-0 flex-col border-r border-[#222330]">
                   {activeNotification ? (
                     (() => {
                       const message = renderInboxMessage(activeNotification);
-                      const isComment =
-                        activeNotification.type === "comment.created";
                       const typeLabel = getNotificationTypeLabel(
                         activeNotification.type,
                       );
                       const isChangedField =
                         activeNotification.type.endsWith("_changed");
+                      const isCommentType = COMMENT_NOTIFICATION_TYPES.has(
+                        activeNotification.type,
+                      );
 
-                      return (
-                        <div className="flex-1 space-y-6 px-6 py-6">
-                          {/* Title block */}
-                          <div>
-                            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5F6272]">
-                              {typeLabel}
-                            </p>
-                            <h2 className="text-[22px] font-medium leading-[28px] tracking-[-0.3px] text-white">
-                              {message.title}
-                            </h2>
-                            <div className="mt-2 flex items-center gap-2 text-[12px] text-[#6B6D7A]">
-                              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#2A2C3A] text-[9px] font-bold text-[#A0A2B0]">
-                                {getInboxInitials(message.actor)}
-                              </span>
-                              <span>{message.actor}</span>
-                              <span>·</span>
-                              <span>
-                                {timeAgo(activeNotification.created_at)}
-                              </span>
+                      // Resolve task ID for comment thread experience
+                      const taskIdForThread = isCommentType
+                        ? (normalizeNotificationPayloadV2(
+                            activeNotification.type,
+                            activeNotification.payload,
+                            activeNotification.workspace_id,
+                          ).target?.task_id ?? null)
+                        : null;
+
+                      // ── Comment-notification branch: thread + composer ──
+                      if (isCommentType && taskIdForThread) {
+                        return (
+                          <>
+                            {/* Compact context header */}
+                            <div className="shrink-0 border-b border-[#222330] px-6 py-5">
+                              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5F6272]">
+                                {typeLabel}
+                              </p>
+                              <h2 className="text-[18px] font-medium leading-[24px] tracking-[-0.2px] text-white">
+                                {message.title}
+                              </h2>
+                              <div className="mt-2 flex items-center gap-2 text-[12px] text-[#6B6D7A]">
+                                {message.actorAvatarUrl ? (
+                                  <img
+                                    src={message.actorAvatarUrl}
+                                    alt={message.actor}
+                                    className="h-5 w-5 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#2A2C3A] text-[9px] font-bold text-[#A0A2B0]">
+                                    {getInboxInitials(message.actor)}
+                                  </span>
+                                )}
+                                <span>{message.actor}</span>
+                                <span>·</span>
+                                <span>
+                                  {timeAgo(activeNotification.created_at)}
+                                </span>
+                              </div>
                             </div>
-                          </div>
+                            {/* Full comment thread with composer */}
+                            <InboxCommentThread
+                              taskId={taskIdForThread}
+                              workspaceId={workspaceId}
+                              currentUserAvatar={profileAvatarUrl}
+                              currentUserName={profileName}
+                            />
+                          </>
+                        );
+                      }
 
-                          <div className="border-t border-[#222330]" />
-
-                          {/* Content block */}
-                          {isComment && message.description ? (
-                            /* Comment card */
-                            <div className="flex gap-3">
-                              {message.actorAvatarUrl ? (
-                                <img
-                                  src={message.actorAvatarUrl}
-                                  alt={message.actor}
-                                  className="mt-0.5 h-7 w-7 shrink-0 rounded-full object-cover"
-                                />
-                              ) : (
-                                <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#252636] text-[10px] font-bold text-[#8B8C9E]">
+                      // ── All other notification types: original rendering ──
+                      return (
+                        <div className="flex-1 overflow-y-auto">
+                          <div className="space-y-6 px-6 py-6">
+                            {/* Title block */}
+                            <div>
+                              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5F6272]">
+                                {typeLabel}
+                              </p>
+                              <h2 className="text-[22px] font-medium leading-[28px] tracking-[-0.3px] text-white">
+                                {message.title}
+                              </h2>
+                              <div className="mt-2 flex items-center gap-2 text-[12px] text-[#6B6D7A]">
+                                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#2A2C3A] text-[9px] font-bold text-[#A0A2B0]">
                                   {getInboxInitials(message.actor)}
                                 </span>
-                              )}
-                              <div className="flex-1 rounded-[6px] border border-[#292B38] bg-[#1E1F2D] px-4 py-3">
-                                <p className="mb-1.5 text-[12px] font-medium text-[#A0A2B0]">
-                                  {message.actor}
-                                </p>
-                                <p className="text-[14px] leading-[22px] text-[#D4D5DE]">
-                                  {message.description}
-                                </p>
+                                <span>{message.actor}</span>
+                                <span>·</span>
+                                <span>
+                                  {timeAgo(activeNotification.created_at)}
+                                </span>
                               </div>
                             </div>
-                          ) : (
-                            /* Fields block — TaskDrawer-style rows */
-                            <div className="overflow-hidden rounded-[4px] border border-[#292B38] bg-[#191A22]">
-                              {message.entity &&
-                              message.entity !== "General update" ? (
-                                <div className="grid grid-cols-[120px_1fr] border-b border-[#292B38]">
-                                  <div className="px-3 py-2.5 text-[13px] font-medium text-[#6B6D7A]">
-                                    {activeNotification.type.startsWith(
-                                      "comment.",
-                                    )
-                                      ? "Comment on"
-                                      : "Task"}
-                                  </div>
-                                  <div className="px-3 py-2.5 text-[13px] font-medium text-white">
-                                    {message.entity}
-                                  </div>
-                                </div>
-                              ) : null}
-                              {message.description ? (
-                                <div className="grid grid-cols-[120px_1fr] border-b border-[#292B38]">
-                                  <div className="px-3 py-2.5 text-[13px] font-medium text-[#6B6D7A]">
-                                    {isChangedField ? "Change" : "Detail"}
-                                  </div>
-                                  <div className="px-3 py-2.5 text-[13px] font-medium text-white">
-                                    {message.description}
-                                  </div>
-                                </div>
-                              ) : null}
-                              <div className="grid grid-cols-[120px_1fr]">
-                                <div className="px-3 py-2.5 text-[13px] font-medium text-[#6B6D7A]">
-                                  From
-                                </div>
-                                <div className="flex items-center gap-1.5 px-3 py-2.5">
-                                  {message.actorAvatarUrl ? (
-                                    <img
-                                      src={message.actorAvatarUrl}
-                                      alt={message.actor}
-                                      className="h-4 w-4 rounded-full object-cover"
-                                    />
-                                  ) : (
-                                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#252636] text-[8px] font-bold text-[#8B8C9E]">
-                                      {getInboxInitials(message.actor)}
-                                    </span>
-                                  )}
-                                  <span className="text-[13px] font-medium text-white">
-                                    {message.actor}
+
+                            <div className="border-t border-[#222330]" />
+
+                            {/* Content block — comment fallback (no task ID) or fields */}
+                            {isCommentType && message.description ? (
+                              /* Comment card (fallback: no task ID resolvable) */
+                              <div className="flex gap-3">
+                                {message.actorAvatarUrl ? (
+                                  <img
+                                    src={message.actorAvatarUrl}
+                                    alt={message.actor}
+                                    className="mt-0.5 h-7 w-7 shrink-0 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#252636] text-[10px] font-bold text-[#8B8C9E]">
+                                    {getInboxInitials(message.actor)}
                                   </span>
+                                )}
+                                <div className="flex-1 rounded-[6px] border border-[#292B38] bg-[#1E1F2D] px-4 py-3">
+                                  <p className="mb-1.5 text-[12px] font-medium text-[#A0A2B0]">
+                                    {message.actor}
+                                  </p>
+                                  <p className="text-[14px] leading-[22px] text-[#D4D5DE]">
+                                    {message.description}
+                                  </p>
                                 </div>
                               </div>
-                            </div>
-                          )}
+                            ) : (
+                              /* Fields block — TaskDrawer-style rows */
+                              <div className="overflow-hidden rounded-[4px] border border-[#292B38] bg-[#191A22]">
+                                {message.entity &&
+                                message.entity !== "General update" ? (
+                                  <div className="grid grid-cols-[120px_1fr] border-b border-[#292B38]">
+                                    <div className="px-3 py-2.5 text-[13px] font-medium text-[#6B6D7A]">
+                                      {activeNotification.type.startsWith(
+                                        "comment.",
+                                      )
+                                        ? "Comment on"
+                                        : "Task"}
+                                    </div>
+                                    <div className="px-3 py-2.5 text-[13px] font-medium text-white">
+                                      {message.entity}
+                                    </div>
+                                  </div>
+                                ) : null}
+                                {message.description ? (
+                                  <div className="grid grid-cols-[120px_1fr] border-b border-[#292B38]">
+                                    <div className="px-3 py-2.5 text-[13px] font-medium text-[#6B6D7A]">
+                                      {isChangedField ? "Change" : "Detail"}
+                                    </div>
+                                    <div className="px-3 py-2.5 text-[13px] font-medium text-white">
+                                      {message.description}
+                                    </div>
+                                  </div>
+                                ) : null}
+                                <div className="grid grid-cols-[120px_1fr]">
+                                  <div className="px-3 py-2.5 text-[13px] font-medium text-[#6B6D7A]">
+                                    From
+                                  </div>
+                                  <div className="flex items-center gap-1.5 px-3 py-2.5">
+                                    {message.actorAvatarUrl ? (
+                                      <img
+                                        src={message.actorAvatarUrl}
+                                        alt={message.actor}
+                                        className="h-4 w-4 rounded-full object-cover"
+                                      />
+                                    ) : (
+                                      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#252636] text-[8px] font-bold text-[#8B8C9E]">
+                                        {getInboxInitials(message.actor)}
+                                      </span>
+                                    )}
+                                    <span className="text-[13px] font-medium text-white">
+                                      {message.actor}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       );
                     })()
