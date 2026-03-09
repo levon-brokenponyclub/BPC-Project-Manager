@@ -87,28 +87,28 @@ function extractTitleTemplate(type) {
   // 3. title = ternary ? `option1` : `option2`;
   // 4. Multi-line templates with ${...} interpolations
   // 5. Nested template literals like ${cond ? `inner` : ""}
-  
+
   // First, find the title assignment line(s)
   const titleAssignMatch = body.match(/title\s*=\s*([^;]+);/s);
   if (!titleAssignMatch) return null;
   const assignment = titleAssignMatch[1].trim();
-  
+
   // Find the main template literal by tracking ${ } depth
-  const firstBacktick = assignment.indexOf('`');
+  const firstBacktick = assignment.indexOf("`");
   if (firstBacktick === -1) return "—";
-  
+
   let i = firstBacktick + 1;
   let braceDepth = 0; // Tracks ${ } nesting depth
-  
+
   while (i < assignment.length) {
     const char = assignment[i];
     const prev = assignment[i - 1];
-    
-    if (char === '{' && prev === '$') {
+
+    if (char === "{" && prev === "$") {
       braceDepth++;
-    } else if (char === '}' && braceDepth > 0) {
+    } else if (char === "}" && braceDepth > 0) {
       braceDepth--;
-    } else if (char === '`' && braceDepth === 0) {
+    } else if (char === "`" && braceDepth === 0) {
       // Found the closing backtick at top level
       const template = assignment.substring(firstBacktick + 1, i);
       // Truncate if too long
@@ -119,7 +119,7 @@ function extractTitleTemplate(type) {
     }
     i++;
   }
-  
+
   // Fallback if we couldn't find a proper match
   return assignment.substring(0, 100).replace(/\s+/g, " ");
 }
@@ -184,7 +184,7 @@ function inferRoute(type) {
   if (type.startsWith("workspace.")) {
     // Member events might go to settings or clients
     if (type.includes("invite") || type.includes("member")) {
-      return "/w/:workspaceId/settings/members or /w/:workspaceId/clients";
+      return "/w/:workspaceId/settings/members | /w/:workspaceId/clients";
     }
     return "/w/:workspaceId/settings";
   }
@@ -325,10 +325,16 @@ function generateExamples() {
       description: "design-mockup.fig (2.3 MB)",
     },
     {
+      type: "asset.created",
+      actor: "Levon",
+      entity: "Brand Guidelines v2",
+      description: null,
+    },
+    {
       type: "workspace.invite_sent",
       actor: "Levon",
       entity: "BPC Workspace",
-      description: "Invited sarah@example.com",
+      description: "sarah@example.com",
     },
     {
       type: "workspace.member_joined",
@@ -356,8 +362,10 @@ function generateExamples() {
         rendered = `**${ex.actor}** commented on "${ex.entity}"\n  > ${ex.description}`;
       } else if (ex.type === "attachment.added") {
         rendered = `**${ex.actor}** uploaded a file to "${ex.entity}"\n  📎 ${ex.description}`;
+      } else if (ex.type === "asset.created") {
+        rendered = `**${ex.actor}** added "${ex.entity}" to the Asset Library`;
       } else if (ex.type === "workspace.invite_sent") {
-        rendered = `**${ex.actor}** ${ex.description} to the workspace`;
+        rendered = `**${ex.actor}** invited ${ex.description} to the workspace`;
       }
 
       return `### \`${ex.type}\`\n\n${rendered}\n\n**Delivery:** ${entry.sonner ? "Sonner toast" : "Inbox only"}${entry.browser ? " + Browser notification (if tab hidden)" : ""}\n**Route:** \`${entry.route}\``;
@@ -421,7 +429,7 @@ ${entries.map(tableRow).join("\n")}
 - **Sonner**: Shows in-app toast via Sonner library (if on allow-list)
 - **Browser**: Shows OS desktop notification (if tab hidden + permission granted)
 - **Push**: Web push notification via service worker (not yet implemented)
-- **Self-Dedup**: Whether self-action deduplication applies (✅ for all types)
+- **Self-Dedup**: Whether self-action deduplication applies to realtime toast and browser notifications (✅ for all types; inbox always persists)
 - **Route**: In-app navigation target when notification is clicked
 
 ---
@@ -633,7 +641,7 @@ ${LS_KEYS.map((k) => `- \`${k}\``).join("\n")}
 | Key | Purpose |
 |-----|---------|
 | \`bpc_desktop_notifications_paused\` | In-app pause toggle (does not revoke OS permission). Set via Pause button in Preferences. |
-| \`bpc_desktop_notifications_prompt_dismissed\` | Tracks whether the user dismissed the app-load enable prompt. Cleared on page reload only if removed manually. |
+| \`bpc_desktop_notifications_prompt_dismissed\` | Tracks whether the user dismissed the app-load enable prompt. Persists across page reloads until manually cleared from localStorage. |
 
 ---
 
