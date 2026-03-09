@@ -69,6 +69,8 @@ const config: Config = {
         soft: "0 10px 30px rgba(14, 24, 19, 0.08)",
         card: "0 1px 0 rgba(16, 24, 40, 0.04), 0 8px 24px rgba(16, 24, 40, 0.08)",
         lift: "0 2px 0 rgba(16, 24, 40, 0.04), 0 14px 36px rgba(16, 24, 40, 0.12)",
+        modal:
+          "0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 16px rgba(16, 24, 40, 0.07), 0 0 0 1px rgba(16, 24, 40, 0.05)",
         // useful for dark UI surfaces
         elevated:
           "0 1px 0 rgba(255, 255, 255, 0.04), 0 12px 32px rgba(0, 0, 0, 0.35)",

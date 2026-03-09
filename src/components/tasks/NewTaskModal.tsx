@@ -147,8 +147,8 @@ export function NewTaskModal({
 
   return (
     <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center bg-black/70 p-4">
-      <div className="flex max-h-[calc(100vh-3rem)] w-full max-w-[880px] flex-col overflow-hidden rounded-[4px] border border-[#292B38] bg-[#191A22] shadow-card">
-        <header className="flex items-center justify-between border-b border-[#25262B] px-5 py-3">
+      <div className="flex max-h-[calc(100vh-3rem)] w-full max-w-[880px] flex-col overflow-hidden rounded-[4px] border border-border bg-card shadow-modal dark:shadow-elevated">
+        <header className="flex items-center justify-between border-b border-border px-5 py-3">
           <div className="inline-flex items-center rounded-[4px] border border-border/70 bg-surface/60 p-0.5 text-sm">
             <button
               type="button"
@@ -177,12 +177,12 @@ export function NewTaskModal({
           </button>
         </header>
 
-        <div className="flex gap-3 border-b border-[#25262B] px-5 py-4">
+        <div className="flex gap-3 border-b border-border px-5 py-4">
           <div className="space-y-1">
             <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
               Workspace
             </p>
-            <div className="flex h-10 items-center gap-2 rounded-[5px] border border-[#313339] bg-[#15161D] px-3 text-[13px] font-medium text-white">
+            <div className="flex h-10 items-center gap-2 rounded-[5px] border border-border bg-surface px-3 text-[13px] font-medium text-foreground">
               {workspaceName}
             </div>
           </div>
@@ -190,18 +190,18 @@ export function NewTaskModal({
             <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
               Type
             </p>
-            <div className="flex h-10 items-center gap-2 rounded-[5px] border border-[#313339] bg-[#15161D] px-3 text-[13px] font-medium text-white">
+            <div className="flex h-10 items-center gap-2 rounded-[5px] border border-border bg-surface px-3 text-[13px] font-medium text-foreground">
               {isSubtask ? "Subtask" : "Task"}
             </div>
           </div>
         </div>
 
         {isSubtask && parentTaskTitle ? (
-          <div className="flex items-center gap-2 border-b border-[#25262B] bg-[#15161D] px-5 py-2.5">
-            <span className="text-[11px] font-medium uppercase tracking-wide text-[#97989E]">
+          <div className="flex items-center gap-2 border-b border-border bg-surface px-5 py-2.5">
+            <span className="text-[11px] font-medium uppercase tracking-wide text-muted">
               Parent task:
             </span>
-            <span className="truncate text-[13px] font-medium text-[#C4C5CC]">
+            <span className="truncate text-[13px] font-medium text-foreground">
               {parentTaskTitle}
             </span>
           </div>
@@ -335,7 +335,7 @@ export function NewTaskModal({
           </div>
         </div>
 
-        <footer className="flex items-center justify-between border-t border-[#25262B] bg-[#15161D] px-5 py-4">
+        <footer className="flex items-center justify-between border-t border-border bg-surface px-5 py-4">
           <input
             ref={fileInputRef}
             type="file"

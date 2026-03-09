@@ -145,10 +145,12 @@ export function ProfileEditModal({
 
   return (
     <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center bg-black/70 p-4">
-      <div className="flex max-h-[calc(100vh-3rem)] w-full max-w-[560px] flex-col overflow-hidden rounded-[4px] border border-[#292B38] bg-[#191A22] shadow-card">
+      <div className="flex max-h-[calc(100vh-3rem)] w-full max-w-[560px] flex-col overflow-hidden rounded-[4px] border border-border bg-card shadow-modal dark:shadow-elevated">
         {/* Header */}
-        <header className="flex items-center justify-between border-b border-[#25262B] px-5 py-3">
-          <p className="text-[13px] font-semibold text-white">Edit Profile</p>
+        <header className="flex items-center justify-between border-b border-border px-5 py-3">
+          <p className="text-[13px] font-semibold text-foreground">
+            Edit Profile
+          </p>
           <button
             type="button"
             onClick={onClose}
@@ -174,7 +176,7 @@ export function ProfileEditModal({
                 <img
                   src={avatarUrl || "/defaultAvatar.png"}
                   alt="Avatar"
-                  className="h-16 w-16 shrink-0 rounded-full border border-[#292B38] object-cover"
+                  className="h-16 w-16 shrink-0 rounded-full border border-border object-cover"
                 />
                 <div className="flex-1 space-y-1.5">
                   <label className="text-xs font-medium text-muted">
@@ -240,7 +242,7 @@ export function ProfileEditModal({
               ) : null}
 
               {/* Password */}
-              <div className="space-y-3 border-t border-[#25262B] pt-4">
+              <div className="space-y-3 border-t border-border pt-4">
                 <p className="text-xs font-medium text-muted">
                   Update Password{" "}
                   <span className="font-normal">(optional)</span>
@@ -284,7 +286,7 @@ export function ProfileEditModal({
         </div>
 
         {/* Footer */}
-        <footer className="flex items-center justify-end gap-2 border-t border-[#25262B] bg-[#15161D] px-5 py-4">
+        <footer className="flex items-center justify-end gap-2 border-t border-border bg-surface px-5 py-4">
           <Button type="button" variant="secondary" size="md" onClick={onClose}>
             Cancel
           </Button>
