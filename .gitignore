@@ -22,6 +22,7 @@ coverage/
 .netlify/
 .supabase/
 supabase/.temp/
+supabase/migrations/
 
 # ─── Design exports (large binary / Figma exports) ────────────────────────────
 design/
