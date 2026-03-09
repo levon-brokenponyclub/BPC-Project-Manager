@@ -22,14 +22,14 @@ interface GroupedUsers {
 
 function ClientsSkeleton(): React.ReactElement {
   return (
-    <Card className="border-[#222330] bg-[#191A22]">
-      <div className="flex h-13 items-center justify-between border-b border-[#222330] px-6 py-2">
+    <Card className="border-border bg-card">
+      <div className="flex h-13 items-center justify-between border-b border-border px-6 py-2">
         <div className="h-4 w-32 animate-pulse rounded bg-muted/20" />
       </div>
       <table className="w-full text-left text-sm">
         <tbody>
           {Array.from({ length: 5 }).map((_, i) => (
-            <tr key={i} className="h-11 border-b border-[#292B38] bg-[#191A22]">
+            <tr key={i} className="h-11 border-b border-border bg-card">
               <td className="px-6 py-3.5">
                 <div className="h-4 w-48 animate-pulse rounded bg-muted/20" />
               </td>
@@ -74,7 +74,7 @@ function UserAvatar({
         alt={displayName}
         className="h-7 w-7 rounded-full border border-border object-cover"
       />
-      <span className="text-[13px] font-medium text-[#E3E4EA]">
+      <span className="text-[13px] font-medium text-foreground">
         {firstName && surname ? `${firstName} ${surname}` : displayName}
       </span>
     </div>
@@ -343,8 +343,8 @@ export function ClientsPage(): React.ReactElement {
           />
         }
       >
-        <Card className="relative overflow-visible border-[#222330] bg-[#191A22]">
-          <div className="flex h-13 items-center justify-between border-b border-[#222330] px-6 py-2">
+        <Card className="relative overflow-visible border-border bg-card">
+          <div className="flex h-13 items-center justify-between border-b border-border px-6 py-2">
             <div className="text-sm font-medium text-foreground">All Users</div>
 
             <Button
@@ -364,13 +364,13 @@ export function ClientsPage(): React.ReactElement {
               {/* Admins Section */}
               {adminUsers.length > 0 && (
                 <Fragment key="__admins__">
-                  <tr className="h-10 border-b border-[#222330] bg-[#1E1F2A]">
+                  <tr className="h-10 border-b border-border bg-surface/50">
                     <td className="px-6" colSpan={5}>
                       <div className="inline-flex items-center gap-[10px] text-xs">
-                        <span className="font-medium text-[#E3E4EA]">
+                        <span className="font-medium text-foreground">
                           Admins
                         </span>
-                        <span className="font-normal text-[#97989E]">
+                        <span className="font-normal text-muted">
                           {adminUsers.length}
                         </span>
                       </div>
@@ -383,7 +383,7 @@ export function ClientsPage(): React.ReactElement {
                     return (
                       <tr
                         key={user.id}
-                        className="h-11 border-b border-[#292B38] bg-[#191A22] transition-colors hover:bg-[#1E2030]"
+                        className="h-11 border-b border-border bg-card transition-colors hover:bg-surface/50"
                       >
                         <td className="px-6 py-3.5 pl-12">
                           <UserAvatar
@@ -393,7 +393,7 @@ export function ClientsPage(): React.ReactElement {
                             avatarUrl={user.avatar_url}
                           />
                         </td>
-                        <td className="px-6 py-3.5 text-[#959699]">
+                        <td className="px-6 py-3.5 text-muted">
                           <span className="text-xs">{user.email}</span>
                         </td>
                         <td className="px-6 py-3.5">
@@ -473,13 +473,13 @@ export function ClientsPage(): React.ReactElement {
               {groupedClients.map((group) => (
                 <Fragment key={group.workspaceName}>
                   {/* Workspace Group Header */}
-                  <tr className="h-10 border-b border-[#222330] bg-[#1E1F2A]">
+                  <tr className="h-10 border-b border-border bg-surface/50">
                     <td className="px-6" colSpan={5}>
                       <div className="inline-flex items-center gap-[10px] text-xs">
-                        <span className="font-medium text-[#E3E4EA]">
+                        <span className="font-medium text-foreground">
                           {group.workspaceName}
                         </span>
-                        <span className="font-normal text-[#97989E]">
+                        <span className="font-normal text-muted">
                           {group.users.length}
                         </span>
                       </div>
@@ -495,7 +495,7 @@ export function ClientsPage(): React.ReactElement {
                     return (
                       <tr
                         key={user.id}
-                        className="h-11 border-b border-[#292B38] bg-[#191A22] transition-colors hover:bg-[#1E2030]"
+                        className="h-11 border-b border-border bg-card transition-colors hover:bg-surface/50"
                       >
                         <td className="px-6 py-3.5 pl-12">
                           <UserAvatar
@@ -505,7 +505,7 @@ export function ClientsPage(): React.ReactElement {
                             avatarUrl={user.avatar_url}
                           />
                         </td>
-                        <td className="px-6 py-3.5 text-[#959699]">
+                        <td className="px-6 py-3.5 text-muted">
                           <span className="text-xs">{user.email}</span>
                         </td>
                         <td className="px-6 py-3.5">

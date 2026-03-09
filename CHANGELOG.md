@@ -13,6 +13,49 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.9.0] - 2026-03-09
+
+### ✅ Added
+
+#### Native Browser Desktop Notifications
+
+Phase-1 browser desktop notification delivery, integrated into the existing Supabase realtime notification pipeline. All new behaviour builds on top of — and does not replace — the Sonner toast system, the inbox, or the unread-count badge.
+
+**New file — `src/lib/browserNotifications.ts`:**
+
+- `isBrowserNotificationSupported()` — safe guard for SSR / non-Notification environments
+- `getBrowserNotificationPermission()` — returns current OS permission state or `"unsupported"`
+- `requestBrowserNotificationPermission()` — async wrapper around `Notification.requestPermission()`, never throws
+- `isDesktopNotificationPaused()` / `setDesktopNotificationPaused()` — in-app opt-out backed by `localStorage` key `bpc_desktop_notifications_paused`
+- `isNotificationPromptDismissed()` / `setNotificationPromptDismissed()` — tracks whether the user has dismissed the app-load prompt; key `bpc_desktop_notifications_prompt_dismissed`
+- `showBrowserNotification({ title, body, icon, tag, route })` — creates a `Notification`, wires `onclick` to `window.focus()` + route navigation, returns `null` silently on any failure
+
+**Updated — `src/hooks/useRealtimeNotifications.ts`:**
+
+- After the existing Sonner toast, fires `showBrowserNotification()` when `document.visibilityState !== "visible"` (app is in a background tab)
+- Self-action dedup, allow-list filtering, and message formatting are all reused — desktop notifications are consistent with inbox rows and toasts
+
+**Updated — `src/components/layout/AppShell.tsx`:**
+
+- App-load notification prompt banner: shown once on mount when browser support is present, permission is `"default"`, and the user has not previously dismissed it
+- "Enable" button calls `requestBrowserNotificationPermission()` with Sonner feedback for granted / denied / unsupported outcomes
+- "Not now" dismisses the banner and stores the decision in localStorage so it does not reappear
+- `Bell` icon added to Lucide imports
+
+**Updated — `src/components/profile/ProfileEditModal.tsx`:**
+
+- **Desktop Notifications section** (all users): permission status badge (Enabled / Paused / Blocked / Not supported), Enable Notifications button for `"default"` state, Pause/Resume toggle for `"granted"` state
+- **Desktop Notification Test block** (admin-only): "Send Test Desktop Notification" button fires `showBrowserNotification()` directly — no database row created; requests permission first if still at `"default"`; Sonner feedback for success, blocked, and unsupported cases
+
+### 🔧 Changed
+
+#### Light Mode — `ClientsPage` tokenisation
+
+- Replaced all hardcoded dark hex values (`#191A22`, `#222330`, `#292B38`, `#E3E4EA`) in `ClientsPage.tsx` with design tokens (`bg-card`, `border-border`, `text-foreground`)
+- Covers: `ClientsSkeleton`, `UserAvatar` display name, main card and table header borders
+
+---
+
 ## [1.8.0] - 2026-03-09
 
 ### 🔧 Fixed

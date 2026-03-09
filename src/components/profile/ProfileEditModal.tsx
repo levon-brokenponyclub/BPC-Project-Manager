@@ -1,9 +1,18 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { X } from "lucide-react";
+import { Bell, BellOff, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  getBrowserNotificationPermission,
+  isBrowserNotificationSupported,
+  isDesktopNotificationPaused,
+  requestBrowserNotificationPermission,
+  setDesktopNotificationPaused,
+  showBrowserNotification,
+} from "@/lib/browserNotifications";
+import { notify } from "@/lib/toast";
 import type { User } from "@supabase/supabase-js";
 
 interface ProfileEditModalProps {
@@ -31,6 +40,71 @@ export function ProfileEditModal({
   const [uploading, setUploading] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<string | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
+
+  // Desktop notification state — kept local; no server round-trip needed.
+  const [notifPermission, setNotifPermission] = useState(
+    getBrowserNotificationPermission,
+  );
+  const [notifPaused, setNotifPaused] = useState(isDesktopNotificationPaused);
+
+  async function handleRequestPermission(): Promise<void> {
+    const result = await requestBrowserNotificationPermission();
+    setNotifPermission(result);
+    // Clear any in-app pause when the user explicitly enables.
+    if (result === "granted") {
+      setDesktopNotificationPaused(false);
+      setNotifPaused(false);
+    }
+  }
+
+  function handleTogglePaused(): void {
+    const next = !notifPaused;
+    setDesktopNotificationPaused(next);
+    setNotifPaused(next);
+  }
+
+  async function handleAdminTestNotification(): Promise<void> {
+    if (!isBrowserNotificationSupported()) {
+      notify.info(
+        "Not supported",
+        "Your browser does not support desktop notifications.",
+      );
+      return;
+    }
+    let permission = getBrowserNotificationPermission();
+    if (permission === "default") {
+      permission = await requestBrowserNotificationPermission();
+      setNotifPermission(permission);
+      if (permission === "granted") {
+        setDesktopNotificationPaused(false);
+        setNotifPaused(false);
+      }
+    }
+    if (permission !== "granted") {
+      notify.error(
+        "Notifications blocked",
+        "Enable desktop notifications in your browser site settings and try again.",
+      );
+      return;
+    }
+    const result = showBrowserNotification({
+      title: "Browser notification test",
+      body: `This is a test desktop notification from the ${workspaceId ? "workspace" : "Sognos workspace"}.`,
+      tag: "desktop-notification-test",
+      route: workspaceId ? `/w/${workspaceId}/project-overview` : null,
+    });
+    if (result) {
+      notify.success(
+        "Test desktop notification sent",
+        "Check your browser notifications.",
+      );
+    } else {
+      notify.info(
+        "Notification suppressed",
+        "Desktop notifications may be paused or blocked.",
+      );
+    }
+  }
 
   const workspaceNameQuery = useQuery({
     queryKey: ["workspace", workspaceId, "name"],
@@ -274,6 +348,92 @@ export function ProfileEditModal({
                   </div>
                 ) : null}
               </div>
+
+              {/* ── Desktop Notifications ── */}
+              <div className="space-y-3 border-t border-border pt-4">
+                <div>
+                  <p className="text-xs font-medium text-muted">
+                    Desktop Notifications
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-muted/70">
+                    Receive browser notifications for important workspace
+                    activity while the app is open.
+                  </p>
+                </div>
+
+                {!isBrowserNotificationSupported() ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-surface px-2.5 py-1 text-[11px] font-medium text-muted">
+                    Not supported in this browser
+                  </span>
+                ) : notifPermission === "denied" ? (
+                  <div className="space-y-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-red-500/30 bg-red-500/10 px-2.5 py-1 text-[11px] font-medium text-red-400">
+                      Blocked
+                    </span>
+                    <p className="text-[11px] text-muted">
+                      Notifications are blocked. Enable them in your browser
+                      site settings and reload the page.
+                    </p>
+                  </div>
+                ) : notifPermission === "granted" ? (
+                  <div className="flex items-center justify-between">
+                    {notifPaused ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-surface px-2.5 py-1 text-[11px] font-medium text-muted">
+                        <BellOff className="h-3 w-3" />
+                        Paused
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-green-500/30 bg-green-500/10 px-2.5 py-1 text-[11px] font-medium text-green-400">
+                        <Bell className="h-3 w-3" />
+                        Enabled
+                      </span>
+                    )}
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleTogglePaused}
+                    >
+                      {notifPaused ? "Resume" : "Pause"}
+                    </Button>
+                  </div>
+                ) : (
+                  /* default — not yet asked */
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => void handleRequestPermission()}
+                  >
+                    <Bell className="h-3.5 w-3.5" />
+                    Enable Notifications
+                  </Button>
+                )}
+              </div>
+
+              {/* ── Admin: Desktop Notification Test ── */}
+              {role === "admin" ? (
+                <div className="space-y-2 rounded-md border border-border/60 bg-surface p-3">
+                  <div>
+                    <p className="text-xs font-medium text-foreground">
+                      Desktop Notification Test
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-muted">
+                      Send a local browser notification to confirm delivery and
+                      click behavior. No database row is created.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => void handleAdminTestNotification()}
+                  >
+                    <Bell className="h-3.5 w-3.5" />
+                    Send Test Desktop Notification
+                  </Button>
+                </div>
+              ) : null}
 
               {updateStatus ? (
                 <p className="text-xs text-green-500">{updateStatus}</p>

@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { queryKeys } from "@/lib/queryKeys";
 import { mapNotificationToToast } from "@/lib/notifications/mapNotificationToToast";
+import { showBrowserNotification } from "@/lib/browserNotifications";
 import type { Notification } from "@/types/models";
 
 interface UseRealtimeNotificationsOptions {
@@ -90,6 +91,17 @@ export function useRealtimeNotifications({
           } else {
             toast(mapped.title, {
               description: mapped.description,
+            });
+          }
+
+          // Show a native desktop notification when the tab is not actively
+          // visible — Sonner covers the in-app case when the tab is focused.
+          if (document.visibilityState !== "visible") {
+            showBrowserNotification({
+              title: mapped.title,
+              body: mapped.description,
+              tag: notification.id ?? undefined,
+              route: mapped.route ?? null,
             });
           }
         },

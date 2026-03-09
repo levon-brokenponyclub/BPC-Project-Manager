@@ -9,6 +9,7 @@ import {
 } from "react";
 import {
   Archive,
+  Bell,
   CheckCircle2,
   Clock3,
   ChevronDown,
@@ -57,6 +58,13 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/AuthProvider";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
+import {
+  getBrowserNotificationPermission,
+  isBrowserNotificationSupported,
+  isNotificationPromptDismissed,
+  requestBrowserNotificationPermission,
+  setNotificationPromptDismissed,
+} from "@/lib/browserNotifications";
 import type { Comment, Notification } from "@/types/models";
 
 type AppShellProps = {
@@ -623,6 +631,45 @@ export default function AppShell({
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [profileEditOpen, setProfileEditOpen] = useState(false);
   const [snoozedIds, setSnoozedIds] = useState<string[]>([]);
+
+  // ── Desktop notification prompt ───────────────────────────────────────────
+  // Show once if: supported + permission === "default" + not dismissed before.
+  const [showNotifPrompt, setShowNotifPrompt] = useState<boolean>(() => {
+    if (!isBrowserNotificationSupported()) return false;
+    if (getBrowserNotificationPermission() !== "default") return false;
+    if (isNotificationPromptDismissed()) return false;
+    return true;
+  });
+
+  function dismissNotifPrompt(): void {
+    setNotificationPromptDismissed(true);
+    setShowNotifPrompt(false);
+    notify.info(
+      "Desktop notifications",
+      "You can enable them anytime from Preferences.",
+    );
+  }
+
+  async function enableFromPrompt(): Promise<void> {
+    setShowNotifPrompt(false);
+    const result = await requestBrowserNotificationPermission();
+    if (result === "granted") {
+      notify.success(
+        "Desktop notifications enabled",
+        "You'll be notified about important workspace activity.",
+      );
+    } else if (result === "denied") {
+      notify.error(
+        "Notifications blocked",
+        "Enable them in your browser site settings.",
+      );
+    } else if (result === "unsupported") {
+      notify.info(
+        "Not supported",
+        "Your browser does not support desktop notifications.",
+      );
+    }
+  }
 
   const roleQuery = useQuery({
     queryKey: ["workspace", workspaceId, "myRole"],
@@ -1203,6 +1250,40 @@ export default function AppShell({
             ) : null}
           </div>
         </header>
+
+        {showNotifPrompt ? (
+          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border/60 bg-primary/5 px-4 py-2.5">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <Bell className="h-4 w-4 shrink-0 text-primary" />
+              <div className="min-w-0">
+                <p className="truncate text-[13px] font-medium text-foreground">
+                  Enable desktop notifications
+                </p>
+                <p className="truncate text-[11px] text-muted">
+                  Get notified about important workspace activity while the app
+                  is open.
+                </p>
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="primary"
+                onClick={() => void enableFromPrompt()}
+              >
+                Enable
+              </Button>
+              <button
+                type="button"
+                onClick={dismissNotifPrompt}
+                className="focus-ring inline-flex h-7 items-center rounded-[4px] px-2.5 text-xs text-muted transition-colors hover:text-foreground"
+              >
+                Not now
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         {inboxOpen ? (
           <section className="min-h-0 flex-1 overflow-hidden bg-background">
