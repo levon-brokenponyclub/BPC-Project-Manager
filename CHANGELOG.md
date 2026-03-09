@@ -13,6 +13,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.2.0] - 2026-03-09
+
+### ✅ Added
+
+#### Notification System — Actor-First Formatting & Inbox Avatar UI (2026-03-09)
+
+- **Centralized Notification Formatter** (`src/lib/notifications/formatNotificationMessage.ts`): Single source of truth for all notification copy. Covers all 39 notification types with actor-first, event-specific language — e.g. `Levon changed "New Task"` with description `Todo → Upcoming`. Powers inbox list rows, inbox detail view, and Sonner realtime toasts.
+- **Actor Avatar in Inbox List**: Each inbox row now displays the actor's user avatar (32 px circle) on the left instead of a generic type icon. Falls back to initials when no avatar URL is present.
+- **`getInitials()` Utility**: Added to `src/lib/utils.ts` — splits on whitespace and takes up to two initials; returns `?` for missing names.
+- **`Avatar` UI Component** (`src/components/ui/avatar.tsx`): Reusable avatar with image/initials fallback, dark-theme border and background.
+- **Sonner Toast Integration** (`src/lib/toast.ts`, `src/main.tsx`): Global `<Toaster>` mounted at app root. `notify.*` helper wraps Sonner for success, error, info, loading and promise toasts.
+- **Realtime Notifications Hook** (`src/hooks/useRealtimeNotifications.ts`): Supabase Realtime subscription on `public.notifications` INSERT for the current user. Invalidates inbox and unread-count queries; shows selective Sonner toasts for high-signal events only. Skips toast when the acting user is the current user.
+
+### 🔧 Changed
+
+- **`mapNotificationToToast`**: Refactored to delegate entirely to `formatNotificationMessage` — removes the old `formatNotification` + `normalizeNotificationPayloadV2` call chain.
+- **`InboxListItem`**: Replaced type-icon badge with actor avatar (image or initials circle). Subtitle field replaced by `description` — shows the change detail or comment preview directly beneath the title.
+- **`renderInboxMessage` in AppShell**: Now a thin wrapper over `formatNotificationMessage`; all copy logic removed from the component.
+- **Inbox detail pane**: Reads `message.description` directly instead of parsing `--` delimited subtitles with a regex. Change/Detail label determined by event type.
+
+---
+
 ## [1.1.0] - 2026-03-09
 
 ### ✅ Added
