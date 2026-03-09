@@ -194,6 +194,22 @@ export function TasksPage(): React.ReactElement {
     ]);
   };
 
+  const handleInlineUpdate = async (
+    taskId: string,
+    patch: Partial<Task>,
+  ): Promise<void> => {
+    try {
+      await updateTask(taskId, patch);
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.tasks(workspaceId, "All", ""),
+      });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to update task.";
+      notify.error("Update failed", message);
+    }
+  };
+
   const createTaskMutation = useMutation({
     mutationFn: async ({ input, files }: CreateTaskPayload) => {
       const createdTask = await createTask(workspaceId, input);
@@ -966,7 +982,13 @@ export function TasksPage(): React.ReactElement {
             </div>
           </div>
 
-          <TaskTable tasks={tasks} onOpen={setSelectedTask} />
+          <TaskTable
+            tasks={tasks}
+            onOpen={setSelectedTask}
+            onUpdate={(taskId, patch) => {
+              void handleInlineUpdate(taskId, patch);
+            }}
+          />
         </Card>
       </DataStateWrapper>
 

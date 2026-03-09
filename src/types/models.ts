@@ -20,7 +20,7 @@ export interface Task {
   title: string;
   description: string | null;
   status: TaskStatus;
-  priority?: TaskPriority;
+  priority?: TaskPriority | null;
   support_bucket_id?: string | null;
   estimated_hours?: number | null;
   billable?: boolean;

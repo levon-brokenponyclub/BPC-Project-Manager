@@ -1,13 +1,21 @@
-import { Fragment, useState } from "react";
-import { ChevronDown, ChevronRight, Paperclip } from "lucide-react";
+import { Fragment, useEffect, useRef, useState } from "react";
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Flag,
+  Paperclip,
+  X,
+} from "lucide-react";
 
 import type { TaskWithUsers } from "@/api/tasks";
 import { StatusPill } from "@/components/tasks/StatusPill";
-import type { TaskStatus } from "@/types/models";
+import type { Task, TaskPriority, TaskStatus } from "@/types/models";
 
 interface TaskTableProps {
   tasks: TaskWithUsers[];
   onOpen: (task: TaskWithUsers) => void;
+  onUpdate?: (taskId: string, patch: Partial<Task>) => void;
 }
 
 interface StatusGroupDefinition {
@@ -129,12 +137,289 @@ function StatusGroupMarker({
   );
 }
 
+// ─── Priority cell ────────────────────────────────────────────────────────────
+
+const PRIORITY_CONFIG: Record<TaskPriority, { label: string; color: string }> =
+  {
+    Low: { label: "Low", color: "#95A2B3" },
+    Medium: { label: "Medium", color: "#5E6AD2" },
+    High: { label: "High", color: "#F2BE00" },
+    Urgent: { label: "Urgent", color: "#E05C5C" },
+  };
+
+function PriorityCell({
+  priority,
+}: {
+  priority?: TaskPriority | null;
+}): React.ReactElement {
+  if (!priority) {
+    return <span className="text-[12px] text-[#4A4C5A]">—</span>;
+  }
+  const { label, color } = PRIORITY_CONFIG[priority];
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <Flag className="h-3 w-3" style={{ color }} />
+      <span className="text-[12px] font-medium" style={{ color }}>
+        {label}
+      </span>
+    </span>
+  );
+}
+
+// ─── Inline editor types ──────────────────────────────────────────────────────
+
+type EditorTarget = {
+  taskId: string;
+  column: "status" | "due_date" | "priority";
+  rect: DOMRect;
+};
+
+// ─── Status popover ───────────────────────────────────────────────────────────
+
+const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
+  { value: "Todo", label: "Todo" },
+  { value: "Upcoming", label: "Upcoming" },
+  { value: "In Progress", label: "In Progress" },
+  { value: "In Review", label: "In Review" },
+  { value: "Awaiting Client", label: "Awaiting Client" },
+  { value: "On Hold", label: "On Hold" },
+  { value: "Complete", label: "Complete" },
+  { value: "Cancelled", label: "Cancelled" },
+];
+
+function InlineStatusEditor({
+  current,
+  anchorRect,
+  onSelect,
+  onClose,
+}: {
+  current: TaskStatus;
+  anchorRect: DOMRect;
+  onSelect: (s: TaskStatus) => void;
+  onClose: () => void;
+}): React.ReactElement {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const down = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("mousedown", down);
+    document.addEventListener("keydown", key);
+    return () => {
+      document.removeEventListener("mousedown", down);
+      document.removeEventListener("keydown", key);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        position: "fixed",
+        top: anchorRect.bottom + 4,
+        left: anchorRect.left,
+        zIndex: 9999,
+      }}
+      className="w-[200px] overflow-hidden rounded-[6px] border border-[#2A2C3A] bg-[#1B1C28] py-1 shadow-[0px_8px_24px_rgba(0,0,0,0.4)]"
+    >
+      {STATUS_OPTIONS.map(({ value, label }) => (
+        <button
+          key={value}
+          type="button"
+          className="flex w-full items-center gap-2.5 px-3 py-1.5 text-[13px] text-[#C4C5D0] transition-colors hover:bg-[#252636]"
+          onClick={() => onSelect(value)}
+        >
+          <StatusGroupMarker status={value} />
+          <span className="flex-1 text-left">{label}</span>
+          {value === current && (
+            <Check className="h-3.5 w-3.5 text-[#5E6AD2]" />
+          )}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ─── Priority popover ─────────────────────────────────────────────────────────
+
+const PRIORITY_OPTIONS: {
+  value: TaskPriority;
+  label: string;
+  color: string;
+}[] = [
+  { value: "Urgent", label: "Urgent", color: "#E05C5C" },
+  { value: "High", label: "High", color: "#F2BE00" },
+  { value: "Medium", label: "Medium", color: "#5E6AD2" },
+  { value: "Low", label: "Low", color: "#95A2B3" },
+];
+
+function InlinePriorityEditor({
+  current,
+  anchorRect,
+  onSelect,
+  onClose,
+}: {
+  current?: TaskPriority | null;
+  anchorRect: DOMRect;
+  onSelect: (p: TaskPriority | null) => void;
+  onClose: () => void;
+}): React.ReactElement {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const down = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("mousedown", down);
+    document.addEventListener("keydown", key);
+    return () => {
+      document.removeEventListener("mousedown", down);
+      document.removeEventListener("keydown", key);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        position: "fixed",
+        top: anchorRect.bottom + 4,
+        left: anchorRect.left,
+        zIndex: 9999,
+      }}
+      className="w-[160px] overflow-hidden rounded-[6px] border border-[#2A2C3A] bg-[#1B1C28] py-1 shadow-[0px_8px_24px_rgba(0,0,0,0.4)]"
+    >
+      {PRIORITY_OPTIONS.map(({ value, label, color }) => (
+        <button
+          key={value}
+          type="button"
+          className="flex w-full items-center gap-2.5 px-3 py-1.5 text-[13px] text-[#C4C5D0] transition-colors hover:bg-[#252636]"
+          onClick={() => onSelect(value)}
+        >
+          <Flag className="h-3.5 w-3.5" style={{ color }} />
+          <span className="flex-1 text-left">{label}</span>
+          {value === current && (
+            <Check className="h-3.5 w-3.5 text-[#5E6AD2]" />
+          )}
+        </button>
+      ))}
+      <div className="my-1 border-t border-[#2A2C3A]" />
+      <button
+        type="button"
+        className="flex w-full items-center gap-2.5 px-3 py-1.5 text-[13px] text-[#6B6D7A] transition-colors hover:bg-[#252636]"
+        onClick={() => onSelect(null)}
+      >
+        <X className="h-3.5 w-3.5" />
+        <span>Clear</span>
+      </button>
+    </div>
+  );
+}
+
+// ─── Date popover ─────────────────────────────────────────────────────────────
+
+function InlineDateEditor({
+  current,
+  anchorRect,
+  onSelect,
+  onClose,
+}: {
+  current: string | null;
+  anchorRect: DOMRect;
+  onSelect: (d: string | null) => void;
+  onClose: () => void;
+}): React.ReactElement {
+  const ref = useRef<HTMLDivElement>(null);
+  const [value, setValue] = useState(current ?? "");
+
+  useEffect(() => {
+    const down = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("mousedown", down);
+    document.addEventListener("keydown", key);
+    return () => {
+      document.removeEventListener("mousedown", down);
+      document.removeEventListener("keydown", key);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        position: "fixed",
+        top: anchorRect.bottom + 4,
+        left: anchorRect.left,
+        zIndex: 9999,
+      }}
+      className="w-[220px] rounded-[6px] border border-[#2A2C3A] bg-[#1B1C28] p-3 shadow-[0px_8px_24px_rgba(0,0,0,0.4)]"
+    >
+      <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-[#5F6272]">
+        Due Date
+      </p>
+      <input
+        type="date"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        className="w-full rounded-[4px] border border-[#2A2C3A] bg-[#23243A] px-2 py-1.5 text-[13px] text-white focus:border-[#5E6AD2] focus:outline-none"
+      />
+      <div className="mt-2.5 flex gap-2">
+        <button
+          type="button"
+          disabled={!value}
+          className="flex-1 rounded-[4px] bg-[#5E6AD2] py-1 text-[12px] font-medium text-white transition-colors hover:bg-[#6A76DE] disabled:cursor-not-allowed disabled:opacity-40"
+          onClick={() => {
+            if (value) onSelect(value);
+          }}
+        >
+          Set date
+        </button>
+        <button
+          type="button"
+          className="rounded-[4px] border border-[#2A2C3A] px-3 py-1 text-[12px] text-[#8B8C9E] transition-colors hover:bg-[#252636]"
+          onClick={() => onSelect(null)}
+        >
+          Clear
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function TaskTable({
   tasks,
   onOpen,
+  onUpdate,
 }: TaskTableProps): React.ReactElement {
-  // Track which parent task rows are expanded
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [openEditor, setOpenEditor] = useState<EditorTarget | null>(null);
+
+  // Close editor when the page scrolls (e.g. the tasks list scrolls)
+  useEffect(() => {
+    if (!openEditor) return;
+    const close = () => setOpenEditor(null);
+    window.addEventListener("scroll", close, true);
+    return () => window.removeEventListener("scroll", close, true);
+  }, [openEditor]);
+
+  // Find a task or subtask by id across the full tree
+  const findTask = (id: string): TaskWithUsers | undefined => {
+    for (const t of tasks) {
+      if (t.id === id) return t;
+      const sub = t.subtasks?.find((s) => s.id === id);
+      if (sub) return sub;
+    }
+    return undefined;
+  };
 
   const parentIdsWithSubtasks = tasks
     .filter((task) => (task.subtasks?.length ?? 0) > 0)
@@ -210,16 +495,19 @@ export function TaskTable({
               </div>
             </th>
             <th className="px-6 text-xs font-medium uppercase tracking-wide text-[#97989E]">
-              Status
-            </th>
-            <th className="px-6 text-xs font-medium uppercase tracking-wide text-[#97989E]">
-              Progress
-            </th>
-            <th className="px-6 text-xs font-medium uppercase tracking-wide text-[#97989E]">
               Due Date
             </th>
             <th className="px-6 text-xs font-medium uppercase tracking-wide text-[#97989E]">
+              Status
+            </th>
+            <th className="px-6 text-xs font-medium uppercase tracking-wide text-[#97989E]">
               Assignee
+            </th>
+            <th className="px-6 text-xs font-medium uppercase tracking-wide text-[#97989E]">
+              Priority
+            </th>
+            <th className="px-6 text-xs font-medium uppercase tracking-wide text-[#97989E]">
+              Progress
             </th>
           </tr>
         </thead>
@@ -230,7 +518,7 @@ export function TaskTable({
                 key={`${group.status}-header`}
                 className="h-10 border-b border-[#222330] bg-[#1E1F2A]"
               >
-                <td className="px-6" colSpan={5}>
+                <td className="px-6" colSpan={6}>
                   <div className="flex items-center justify-between">
                     <div className="inline-flex items-center gap-[10px] text-xs">
                       <StatusGroupMarker status={group.status} />
@@ -310,9 +598,69 @@ export function TaskTable({
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-3.5 align-middle">
+                      {/* Due Date */}
+                      <td
+                        className="cursor-pointer px-6 py-3.5 text-[#959699] transition-colors hover:text-[#C4C5D0]"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenEditor({
+                            taskId: task.id,
+                            column: "due_date",
+                            rect: e.currentTarget.getBoundingClientRect(),
+                          });
+                        }}
+                      >
+                        {task.due_date ? (
+                          <span className="inline-flex items-center gap-2 text-xs">
+                            <DueDateIndicator status={dueDateStatus} />
+                            <span>
+                              {new Date(task.due_date).toLocaleDateString()}
+                            </span>
+                          </span>
+                        ) : (
+                          <span className="text-xs text-[#3A3C4A] hover:text-[#6B6D7A]">
+                            Add date
+                          </span>
+                        )}
+                      </td>
+                      {/* Status */}
+                      <td
+                        className="cursor-pointer px-6 py-3.5 align-middle"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenEditor({
+                            taskId: task.id,
+                            column: "status",
+                            rect: e.currentTarget.getBoundingClientRect(),
+                          });
+                        }}
+                      >
                         <StatusPill status={task.status} />
                       </td>
+                      {/* Assignee */}
+                      <td className="px-6 py-3.5 align-middle">
+                        <div className="flex items-center">
+                          <UserAvatar
+                            email={task.assignee?.email || null}
+                            avatarUrl={task.assignee?.avatar_url}
+                          />
+                        </div>
+                      </td>
+                      {/* Priority */}
+                      <td
+                        className="cursor-pointer px-6 py-3.5 align-middle"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenEditor({
+                            taskId: task.id,
+                            column: "priority",
+                            rect: e.currentTarget.getBoundingClientRect(),
+                          });
+                        }}
+                      >
+                        <PriorityCell priority={task.priority} />
+                      </td>
+                      {/* Progress */}
                       <td className="px-6 py-3.5 align-middle">
                         {hasSubtasks ? (
                           <div className="flex items-center gap-2">
@@ -329,26 +677,6 @@ export function TaskTable({
                         ) : (
                           <span className="text-[11px] text-[#4A4C5A]">—</span>
                         )}
-                      </td>
-                      <td className="px-6 py-3.5 text-[#959699]">
-                        {task.due_date ? (
-                          <span className="inline-flex items-center gap-2 text-xs">
-                            <DueDateIndicator status={dueDateStatus} />
-                            <span>
-                              {new Date(task.due_date).toLocaleDateString()}
-                            </span>
-                          </span>
-                        ) : (
-                          <span className="text-xs">-</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-3.5 align-middle">
-                        <div className="flex items-center">
-                          <UserAvatar
-                            email={task.assignee?.email || null}
-                            avatarUrl={task.assignee?.avatar_url}
-                          />
-                        </div>
                       </td>
                     </tr>
 
@@ -383,11 +711,18 @@ export function TaskTable({
                                   </div>
                                 </div>
                               </td>
-                              <td className="px-6 py-2.5 align-middle">
-                                <StatusPill status={sub.status} />
-                              </td>
-                              <td className="px-6 py-2.5" />
-                              <td className="px-6 py-2.5 text-[#959699]">
+                              {/* Due Date */}
+                              <td
+                                className="cursor-pointer px-6 py-2.5 text-[#959699] transition-colors hover:text-[#C4C5D0]"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenEditor({
+                                    taskId: sub.id,
+                                    column: "due_date",
+                                    rect: e.currentTarget.getBoundingClientRect(),
+                                  });
+                                }}
+                              >
                                 {sub.due_date ? (
                                   <span className="inline-flex items-center gap-2 text-xs">
                                     <DueDateIndicator
@@ -400,9 +735,26 @@ export function TaskTable({
                                     </span>
                                   </span>
                                 ) : (
-                                  <span className="text-xs">-</span>
+                                  <span className="text-xs text-[#3A3C4A] hover:text-[#6B6D7A]">
+                                    Add date
+                                  </span>
                                 )}
                               </td>
+                              {/* Status */}
+                              <td
+                                className="cursor-pointer px-6 py-2.5 align-middle"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenEditor({
+                                    taskId: sub.id,
+                                    column: "status",
+                                    rect: e.currentTarget.getBoundingClientRect(),
+                                  });
+                                }}
+                              >
+                                <StatusPill status={sub.status} />
+                              </td>
+                              {/* Assignee */}
                               <td className="px-6 py-2.5 align-middle">
                                 <div className="flex items-center">
                                   <UserAvatar
@@ -411,6 +763,22 @@ export function TaskTable({
                                   />
                                 </div>
                               </td>
+                              {/* Priority */}
+                              <td
+                                className="cursor-pointer px-6 py-2.5 align-middle"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenEditor({
+                                    taskId: sub.id,
+                                    column: "priority",
+                                    rect: e.currentTarget.getBoundingClientRect(),
+                                  });
+                                }}
+                              >
+                                <PriorityCell priority={sub.priority} />
+                              </td>
+                              {/* Progress (n/a for subtasks) */}
+                              <td className="px-6 py-2.5" />
                             </tr>
                           );
                         })
@@ -422,6 +790,54 @@ export function TaskTable({
           ))}
         </tbody>
       </table>
+
+      {/* ── Inline editors (fixed-position overlays) ── */}
+      {(() => {
+        if (!openEditor) return null;
+        const target = findTask(openEditor.taskId);
+        if (!target) return null;
+
+        if (openEditor.column === "status") {
+          return (
+            <InlineStatusEditor
+              current={target.status}
+              anchorRect={openEditor.rect}
+              onSelect={(status) => {
+                onUpdate?.(openEditor.taskId, { status });
+                setOpenEditor(null);
+              }}
+              onClose={() => setOpenEditor(null)}
+            />
+          );
+        }
+
+        if (openEditor.column === "priority") {
+          return (
+            <InlinePriorityEditor
+              current={target.priority}
+              anchorRect={openEditor.rect}
+              onSelect={(priority) => {
+                onUpdate?.(openEditor.taskId, { priority });
+                setOpenEditor(null);
+              }}
+              onClose={() => setOpenEditor(null)}
+            />
+          );
+        }
+
+        // due_date
+        return (
+          <InlineDateEditor
+            current={target.due_date}
+            anchorRect={openEditor.rect}
+            onSelect={(due_date) => {
+              onUpdate?.(openEditor.taskId, { due_date });
+              setOpenEditor(null);
+            }}
+            onClose={() => setOpenEditor(null)}
+          />
+        );
+      })()}
     </div>
   );
 }
