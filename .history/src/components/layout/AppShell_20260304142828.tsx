@@ -1,0 +1,160 @@
+import { useEffect, useState } from "react";
+import {
+  LayoutGrid,
+  ListTodo,
+  ReceiptText,
+  Settings,
+  Timer,
+} from "lucide-react";
+import {
+  NavLink,
+  Outlet,
+  useLocation,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+import {
+  getUnreadNotificationCount,
+  listNotifications,
+  markNotificationRead,
+} from "@/api/notifications";
+import { getRunningTimer } from "@/api/time";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { TimerWidget } from "@/components/time/TimerWidget";
+import { Button } from "@/components/ui/button";
+import { queryKeys } from "@/lib/queryKeys";
+import { useAuth } from "@/providers/AuthProvider";
+
+const navItems = [
+  { key: "dashboard", label: "Dashboard", icon: LayoutGrid, path: "dashboard" },
+  { key: "tasks", label: "Tasks", icon: ListTodo, path: "tasks" },
+  { key: "time", label: "Time", icon: Timer, path: "time" },
+  { key: "reports", label: "Reports", icon: ReceiptText, path: "reports" },
+  { key: "settings", label: "Settings", icon: Settings, path: "settings" },
+] as const;
+
+export function AppShell(): React.ReactElement {
+  const { workspaceId } = useParams<{ workspaceId: string }>();
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { signOut } = useAuth();
+  const [tick, setTick] = useState(() => Date.now());
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setTick(Date.now()), 1000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const safeWorkspaceId = workspaceId ?? "";
+
+  const notificationsQuery = useQuery({
+    queryKey: queryKeys.notifications(safeWorkspaceId),
+    queryFn: () => listNotifications(safeWorkspaceId),
+    enabled: Boolean(safeWorkspaceId),
+  });
+
+  const unreadCountQuery = useQuery({
+    queryKey: queryKeys.unreadNotifications(safeWorkspaceId),
+    queryFn: () => getUnreadNotificationCount(safeWorkspaceId),
+    enabled: Boolean(safeWorkspaceId),
+  });
+
+  const runningTimerQuery = useQuery({
+    queryKey: queryKeys.runningTimer(safeWorkspaceId),
+    queryFn: () => getRunningTimer(safeWorkspaceId),
+    enabled: Boolean(safeWorkspaceId),
+    refetchInterval: 5000,
+  });
+
+  const markReadMutation = useMutation({
+    mutationFn: markNotificationRead,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.notifications(safeWorkspaceId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.unreadNotifications(safeWorkspaceId),
+        }),
+      ]);
+    },
+  });
+
+  return (
+    <div className="min-h-screen bg-background p-4 md:p-6">
+      <div className="mx-auto grid max-w-[1400px] grid-cols-1 gap-4 md:grid-cols-[240px_1fr]">
+        <aside className="rounded-2xl border border-border bg-white px-4 py-5 shadow-soft md:min-h-[86vh]">
+          <button
+            onClick={() => navigate("/workspaces")}
+            className="mb-7 flex items-center gap-3 text-left"
+          >
+            <img
+              src="/bpc-logo.svg"
+              alt="BPC"
+              className="h-10 w-10 rounded-xl"
+            />
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                Broken Pony Club
+              </p>
+              <p className="text-xs text-muted">Client Portal</p>
+            </div>
+          </button>
+
+          <nav className="space-y-2">
+            {navItems.map((item) => {
+              const active = pathname.includes(`/${item.path}`);
+              return (
+                <NavLink
+                  key={item.key}
+                  to={`/w/${safeWorkspaceId}/${item.path}`}
+                  className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
+                    active
+                      ? "bg-primary text-white"
+                      : "text-foreground hover:bg-stone-100"
+                  }`}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </NavLink>
+              );
+            })}
+          </nav>
+        </aside>
+
+        <div className="space-y-4">
+          <header className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-white px-4 py-3 shadow-soft">
+            <TimerWidget
+              runningTimer={runningTimerQuery.data ?? null}
+              nowTick={tick}
+            />
+            <div className="flex items-center gap-2">
+              <NotificationBell
+                notifications={notificationsQuery.data ?? []}
+                unreadCount={unreadCountQuery.data ?? 0}
+                onMarkRead={(id) => markReadMutation.mutate(id)}
+              />
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={async () => {
+                  await signOut();
+                  navigate("/login");
+                }}
+              >
+                Logout
+              </Button>
+            </div>
+          </header>
+
+          <main>
+            <Outlet />
+          </main>
+        </div>
+      </div>
+    </div>
+  );
+}

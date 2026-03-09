@@ -1,0 +1,447 @@
+# Broken Pony Club Client Portal
+
+A lightweight, premium-feeling client workspace platform for support delivery, inspired by Linear/ClickUp workflows.
+
+This project is a React + Supabase SaaS app focused on:
+
+- multi-workspace client collaboration,
+- task lifecycle management,
+- in-app notifications,
+- time tracking against prepaid support retainers.
+
+## 1) Project Overview
+
+**Broken Pony Club Client Portal** is a multi-tenant project management and support operations interface where each client organization maps to a workspace.
+
+Core outcomes:
+
+- provide clients with transparent visibility into support progress,
+- track effort in real time,
+- align logged time to retainer hours,
+- create a clean, premium portal experience that is easy to use.
+
+---
+
+## 2) Product Goals
+
+### Primary goals (V1)
+
+- Deliver a working end-to-end SaaS portal quickly.
+- Support multi-tenant access via workspace membership.
+- Provide reliable task creation/update/status workflows.
+- Track active timers and historical time entries.
+- Show support-hour consumption (allocated, used, remaining).
+- Surface actionable in-app notifications.
+
+### Business goals
+
+- Reduce manual status updates and support reporting overhead.
+- Improve client trust through visibility and consistency.
+- Create a foundation that can scale to stronger automation and reporting.
+
+---
+
+## 3) UI Design System
+
+### Brand
+
+- **Company:** Broken Pony Club
+- **Product:** Client Portal
+- **Logo:** black square with white "BPC" mark (used in login + sidebar)
+
+### Typography
+
+- **Primary font:** `Montserrat, sans-serif` (global default)
+
+### Visual style
+
+- Premium minimal dashboard aesthetic inspired by Linear/ClickUp.
+- Dark-first design with default dark mode on load.
+- Spacious layouts and consistent rounded corners.
+- Soft, low-noise shadows and subtle transitions.
+
+### Color tokens (dark mode)
+
+Defined in `tailwind.config.ts`:
+
+- `background`: `#0E1015`
+- `foreground`: `#E2E3E5`
+- `card`: `#12151C`
+- `surface`: `#171B24`
+- `border`: `#262A37`
+- `muted`: `#6B6E7B`
+- `primary`: `#78A3B0` (soft teal)
+
+Card overrides used in dashboard components:
+
+- Card background: `#191A22`
+- Card border: `#292B38`
+- Hover background: `#15161D`
+
+Border radius:
+
+- `rounded-xl`: `0.3rem` (sharper modern aesthetic)
+- `rounded-lg`: `0.5rem`
+
+Task status colors:
+
+- `Todo`: soft yellow
+- `In Progress`: orange (`text-status-inprogress`)
+- `Awaiting Client`: purple (`text-status-awaiting-client`)
+- `In Review`: blue
+- `Complete`: green (`text-status-complete`)
+- `Cancelled`: muted gray
+
+---
+
+## 4) UX Principles
+
+- **Clarity first:** users should understand task state and support usage at a glance.
+- **Low friction:** high-frequency actions (timer start/stop, status updates) require minimal clicks.
+- **Context persistence:** workspace-scoped shell keeps navigation stable.
+- **Progressive disclosure:** task details, comments, and activity live in a side drawer.
+- **Trust via transparency:** clear visibility into hours allocated vs consumed.
+- **Dark by default:** reduces eye strain in agency/developer workflows.
+
+---
+
+## 5) Feature List
+
+### Navigation
+
+- **Project Overview** is the first item in the sidebar and the default landing page per workspace
+- **Inbox** below Project Overview — Linear-style 3-pane layout (list / detail / properties)
+- Tasks, Users, and Admin sections (Clients, Time, Reports, Settings) follow
+- Workspace switcher shown in sidebar when user belongs to more than one workspace
+- Sidebar collapse/expand toggle persisted in `localStorage`
+
+### Project Overview Dashboard
+
+Real-time project health dashboard built from task data:
+
+- **Status Strip** — workspace name (live from DB), health badge (On Track / At Risk / Critical), active phase, overall % complete, target launch date, days remaining chip
+- **KPI Row** (4 cards):
+  - Overall Progress — % complete with mini progress bar
+  - Current Phase — subtask completion ratio for the active phase
+  - At Risk — count of overdue + awaiting client + blocked tasks
+  - Next Milestone — tasks remaining in next incomplete phase
+- **Operational Row** (4 cards):
+  - In Progress — count with "N due this week" helper
+  - Awaiting Client — count with first task name
+  - Overdue — count with first task name, danger tone when > 0
+  - Done This Week — count with week-on-week velocity comparison
+- **Recent Activity** list — last 6 tasks sorted by `updated_at` with relative timestamp
+- **Focus This Week** list — up to 5 overdue / blocked / urgent tasks with icon indicators
+- **Project Phases Board** — parent tasks as phases, subtasks as work items, per-row progress bars, Active badge on current phase, strikethrough for complete phases
+- All cards navigate to the Tasks page on click
+
+### Task Management
+
+- Task table with columns: Title, Status, Progress, Owner, Assignee, Due Date
+- Status pill with colour-coded states
+- Due date colour-coding: green (3+ days), yellow (0–2 days), red (overdue)
+- Owner and Assignee avatar chips with hover tooltip
+- New Task Modal with title, description, status, assignee, due date, priority, parent task
+- Subtask creation inline within TaskDrawer
+- Bulk delete support (admin only)
+- Search and status filter on task list
+
+### TaskDrawer
+
+- Right-side sticky nav pill: Task / Activity / Files tabs
+- Full-width header with workspace → parent → task breadcrumb
+- Editable fields: title, description, status, priority, due date, owner, assignee, billable, client visible, blocked flag + reason
+- Unified Activity & Comments timeline: comments as message bubbles, activity rows de-emphasised
+- Pinned bottom composer with quick-template buttons
+- File Attachments tab: upload, download, delete files stored per task in Supabase Storage
+- Permission-based editing: admins edit all fields; clients edit assignee only
+
+### Owner / Assignee Display
+
+- All dropdowns show `first_name + surname` from workspace user records
+- Falls back to email-derived name if name fields are empty
+- Applies consistently in: New Task Modal, TaskDrawer edit mode, TaskDrawer read-only labels
+
+### Inbox (Linear-style 3-pane)
+
+- **Left pane** — dense notification list grouped into Today / Earlier sections with type icon, unread dot, entity context, relative timestamp
+- **Middle pane** — task-drawer-style detail with breadcrumb, title block, comment cards or field-change rows
+- **Right pane** — properties rail with Status, Type, From, Received, Related fields
+- Mark all as read button
+- Unread count badge in sidebar
+
+### Time Tracking
+
+- Start/stop timer per task (admin only)
+- Running timer widget in top bar with live elapsed display
+- One-running-timer-per-user enforcement
+- Reports page: hours-used breakdown table by task
+
+### Support Hours (Settings-visible)
+
+- Allocated / Used / Remaining metrics
+- Progress bar showing retainer consumption
+- Top Up modal with live cost calculator (R715/hour ex VAT, 15% VAT breakdown)
+
+### Notifications & Web Push
+
+- Bell icon with unread count and pulse animation
+- Latest 50 notifications with filter tabs: All / Unread / Mentions / Task
+- Mark all as read (optimised single DB call)
+- Browser Web Push permission requested on login
+- Toast notifications for new events
+
+### User Profiles
+
+- Avatar image in top bar with edit modal
+- Edit first name, surname, profile image (uploaded to Supabase Storage `avatars` bucket)
+- Update password
+- Clients see auto-assigned company from workspace
+
+### Admin Features
+
+- Invite clients via magic link or email, with Client / Admin role toggle
+- Admin invites automatically assigned to all workspaces
+- Workspace picker hidden in invite modal when Admin role selected
+- Edit client profile (name, email, avatar)
+- Delete client users with workspace membership cleanup
+- Upload client avatar in Edit Client modal
+- Create additional workspaces from Settings
+- Delete workspace (Danger Zone in Settings) with name-confirmation guard
+- Clients page: dedicated Admins section at top, workspace-grouped clients below
+- Admin-only sidebar sections (Clients, Time, Reports, Settings) hidden from non-admin users
+
+### Dark Mode
+
+- Default theme on first load: **dark**
+- Theme stored in `localStorage` — user preference persisted across sessions
+- System theme fallback removed in favour of explicit dark default
+
+---
+
+## 6) System Architecture
+
+### Frontend stack
+
+- **Build/Runtime:** Vite + React + TypeScript
+- **Routing:** `react-router-dom`
+- **Data/cache:** `@tanstack/react-query`
+- **Backend client:** `@supabase/supabase-js`
+- **UI:** Tailwind + shadcn-style component primitives + lucide icons
+
+### Architectural pattern
+
+- Route-driven SPA with protected routes.
+- Modular API layer in `src/api/*` encapsulating Supabase queries.
+- Workspace-scoped query keys for cache isolation.
+- UI composed from reusable `components/ui/*` primitives.
+- Centralized Edge Function authentication via `invokeAuthedFunction` helper with automatic session refresh.
+
+### Auth behavior
+
+- Production path: Supabase password-only auth.
+- Dev path: local bypass (`isDevBypassEnabled`) for localhost review without credentials.
+- Edge Function calls: Centralized through `invokeAuthedFunction` helper that ensures valid session and attaches Authorization header with automatic refresh if token is expiring within 30 seconds.
+
+---
+
+## 7) Database Schema Overview
+
+### Tables
+
+- `workspaces(id, name, created_at)`
+- `workspace_users(workspace_id, user_id, role)`
+- `tasks(id, workspace_id, title, description, status, due_date, assignee_user_id, created_by, parent_task_id, priority, blocked, blocked_reason, completed_at, created_at, updated_at)`
+- `comments(id, task_id, user_id, body, created_at)`
+- `task_activity(id, task_id, type, payload jsonb, created_at)`
+- `time_entries(id, workspace_id, task_id, user_id, started_at, ended_at, duration_seconds, created_at)`
+- `support_buckets(id, workspace_id, period_start, period_end, hours_allocated numeric, hours_used_cached numeric)`
+- `notifications(id, workspace_id, user_id, type, payload jsonb, read_at, created_at)`
+
+### Views
+
+- `my_workspaces(id, name)`
+- `workspace_support_summary(workspace_id, hours_allocated, hours_used, hours_remaining)`
+
+### RPC functions
+
+- `start_task_timer(p_workspace_id uuid, p_task_id uuid)`
+- `stop_task_timer(p_workspace_id uuid, p_task_id uuid)`
+- `get_workspace_users_with_emails(workspace_id_param uuid)` — Returns workspace users with email and avatar_url from auth.users metadata
+
+### Storage Buckets
+
+- `avatars` — User profile images and client avatars
+- `task-files` — Per-task file attachments
+
+### Fallback behavior
+
+If views/RPC are missing, client-side fallbacks in `src/api/*` use base tables.
+
+---
+
+## 8) File Structure
+
+```text
+.
+├─ src/
+│  ├─ api/
+│  │  ├─ clients.ts
+│  │  ├─ files.ts                            # Task file upload/download/delete
+│  │  ├─ index.ts
+│  │  ├─ notifications.ts
+│  │  ├─ tasks.ts                            # listTasksWithSubtasks, listTasksWithUsers
+│  │  ├─ time.ts
+│  │  └─ workspaces.ts                       # getWorkspaceUsers (with first_name/surname)
+│  ├─ components/
+│  │  ├─ dashboard/
+│  │  │  ├─ MicroStatsRow.tsx
+│  │  │  └─ OverviewCards.tsx                # NEW: ProjectStatusStrip, OverviewMetricCard, PhaseBoardCard, OverviewListCard
+│  │  ├─ layout/
+│  │  │  └─ AppShell.tsx                     # Linear-style 3-pane inbox, nav reorder
+│  │  ├─ skeletons/
+│  │  │  ├─ DashboardSkeleton.tsx
+│  │  │  ├─ ReportsSkeleton.tsx
+│  │  │  ├─ SettingsSkeleton.tsx
+│  │  │  ├─ TasksSkeleton.tsx
+│  │  │  └─ TimeSkeleton.tsx
+│  │  ├─ tasks/
+│  │  │  ├─ NewTaskModal.tsx                 # Updated: first_name+surname in dropdown
+│  │  │  ├─ StatusPill.tsx
+│  │  │  ├─ TaskDrawer.tsx                   # Updated: full names, breadcrumb, timeline
+│  │  │  └─ TaskTable.tsx                    # 5-column with Progress
+│  │  └─ ui/
+│  │     ├─ DataStateWrapper.tsx
+│  │     ├─ EmptyState.tsx
+│  │     ├─ ErrorState.tsx
+│  │     └─ ...
+│  ├─ lib/
+│  │  ├─ notifications/
+│  │  │  ├─ notificationCatalog.ts
+│  │  │  └─ timeAgo.ts
+│  │  ├─ theme.ts                            # Updated: dark default
+│  │  └─ ...
+│  ├─ pages/
+│  │  └─ workspace/
+│  │     ├─ DashboardPage.tsx
+│  │     ├─ ProjectOverviewPage.tsx          # REWRITTEN: full advanced dashboard
+│  │     ├─ TasksPage.tsx
+│  │     └─ ...
+│  └─ App.tsx                                # Updated: default route → project-overview
+├─ supabase/
+│  ├─ functions/
+│  │  ├─ admin-users/
+│  │  └─ invite-client/
+│  └─ migrations/
+├─ tailwind.config.ts
+└─ vite.config.ts
+```
+
+---
+
+## 9) Development Setup
+
+### Prerequisites
+
+- Node.js 18+
+- npm 9+
+- Supabase project
+
+### Install & run
+
+```bash
+npm install
+npm run dev
+```
+
+### Build
+
+```bash
+npm run build
+```
+
+---
+
+## 10) Environment Variables
+
+```env
+VITE_SUPABASE_URL=https://YOUR-PROJECT-REF.supabase.co
+VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+```
+
+Edge function variables:
+
+```env
+SUPABASE_URL=...
+SUPABASE_SERVICE_ROLE_KEY=...
+SUPABASE_ANON_KEY=...
+APP_BASE_URL=https://your-app-url.com
+```
+
+**Important:** Disable "Verify JWT with legacy secret" in Supabase Dashboard for each Edge Function to allow code-level JWT verification.
+
+---
+
+## 11) Production Deployment
+
+- Static SPA output in `dist/` via `npm run build`
+- Deploy to Netlify, Vercel, Cloudflare Pages, or any static host with SPA fallback (`netlify.toml` included)
+- Ensure `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are set in your deployment environment
+- All app routes must rewrite to `index.html`
+
+---
+
+## Latest Updates (March 9, 2026)
+
+- ✅ **Role-Based Sidebar**: Admin menu section (Clients, Time, Reports, Settings) now hidden from non-admin users — only visible to workspace admins
+- ✅ **Admin Invite Role Toggle**: Invite modal has Client / Admin toggle buttons. When Admin is selected, the workspace picker is hidden and replaced with a note ("Admin will have access to all workspaces automatically")
+- ✅ **Admin Invites Assigned to All Workspaces**: When inviting a user as Admin, the `invite-client` Edge Function now fetches all workspaces and upserts membership for every one of them with `role: "admin"` — applies to both email and magic-link delivery modes
+- ✅ **Admins Section in Clients Table**: The Clients page now shows a dedicated "Admins" section header at the top of the user table (flat list, no workspace grouping) followed by workspace-grouped client rows below
+- ✅ **Role Returned by Admin Users EF**: The `admin-users` list action now selects `role` from `workspace_users`, computes each user's effective role (admin if admin in any workspace), and returns it in the user object — enabling the Admins section and future role-based display
+- ✅ **Delete Workspace (Danger Zone)**: Settings page now has a Danger Zone section (admin only) with a confirmed-delete flow — user must type the workspace name to enable the button; on confirm, all workspace memberships are removed and the workspace is deleted, then the user is redirected to workspace select
+- ✅ **`delete_workspace` Edge Function Action**: New action added to `admin-users` EF — deletes all `workspace_users` memberships then deletes the workspace row
+
+---
+
+## Previous Updates (March 9, 2026)
+
+- ✅ **Edit Client Workspace Assignment**: Checking/unchecking workspaces in the Edit Client modal now correctly adds or removes the user from those workspaces via the Edge Function — previously workspace changes were silently ignored
+- ✅ **Edge Function Auth Fix**: Re-deployed `admin-users` with `--no-verify-jwt` to prevent Supabase gateway rejecting ES256 tokens before the function's own auth handling runs
+- ✅ **Task Title Attachment Indicator**: Paperclip icon and file count now display inline with the task title instead of stacked below it
+- ✅ **Settings Page Refactor**: Full admin-only settings screen with structured sections (Workspace Details, Client Access, Workspace Management, Support Buckets), polished form layouts, labeled fields, progress bars on bucket rows, and a clean restricted-access state for non-admins
+- ✅ **Preferences → Profile Edit Modal**: Profile dropdown "Preferences" now opens a full profile edit modal (avatar upload, first name, surname, password change) instead of navigating to Settings
+- ✅ **Admin-Only Profile Menu Items**: "Workspace settings" and "Invite and manage members" in the profile dropdown are now hidden for non-admin users
+- ✅ **Profile Modal Style**: ProfileEditModal rebuilt to match NewTaskModal visual language (dark container, labeled fields, footer with primary/secondary actions)
+- ✅ **Avatar Upload Fix**: Upload path changed from flat `uid-timestamp.ext` to `uid/timestamp.ext` to satisfy Supabase Storage RLS folder-ownership policy
+- ✅ **Project Overview Dashboard**: Full advanced project overview page with Status Strip, KPI cards, Operational cards, Phase Board, Recent Activity, and Focus This Week — all derived from real task data
+- ✅ **Dark Mode Default**: App now loads in dark mode by default for all new users
+- ✅ **Project Overview as Default Route**: Landing page on workspace load is now Project Overview instead of Dashboard
+- ✅ **Dashboard Removed from Nav**: Cleaned up sidebar — Dashboard menu item removed, Project Overview promoted to top of nav above Inbox
+- ✅ **Workspace Name in Status Strip**: Project Overview status strip fetches and displays the real workspace name instead of a hardcoded value
+- ✅ **First Name + Surname in Dropdowns**: Owner and Assignee dropdowns in TaskDrawer and New Task Modal now show full names (first name + surname) instead of email-derived usernames
+- ✅ **Linear-style 3-Pane Inbox**: Full inbox refactor with Today/Earlier grouping, dense notification list, task-drawer-style middle detail panel, and properties rail on the right
+- ✅ **TaskDrawer Activity Timeline**: Unified comment + activity feed with message-bubble comments and de-emphasised field-change rows, pinned composer at bottom
+- ✅ **5-Column Task Table**: Dedicated Progress column added alongside Status, Owner, Assignee, Due Date
+- ✅ **Subtask Support**: Full parent/subtask hierarchy with subtask management inside TaskDrawer
+- ✅ **File Attachments**: Per-task file upload, download, and delete via Supabase Storage
+- ✅ **Workspace Breadcrumb in TaskDrawer**: Full breadcrumb (workspace → parent task → subtask) displayed in drawer header
+
+---
+
+## Previous Updates (March 5, 2026)
+
+- ✅ **TaskDrawer Premium UI Enhancement**: Right-side sticky nav pill, Activity tab restructured as unified feed, always-visible quick templates, pinned bottom composer
+- ✅ **Unified Data Loading States**: `DataStateWrapper` with minimum skeleton delay, shared `EmptyState`/`ErrorState`, page-specific skeletons for all workspace pages
+- ✅ **Admin Add Workspace + Sidebar Switcher**: Backend action and Settings UI for admins to create additional named workspaces, plus a sidebar workspace switcher
+- ✅ **Invite Name Metadata Fix**: First Name and Surname now consistently saved during client invite/magic-link flows
+- ✅ **Admin Avatar Upload**: Admins can upload a client avatar image directly in the Edit Client modal
+- ✅ **Admin Edit Client Profiles**: Update client email, first name, surname, and avatar URL via secure Edge Function
+- ✅ **Client Table Avatar Images**: Clients admin table renders avatar images with deterministic fallback
+- ✅ **Client User Deletion**: Delete-user action with admin safeguards (self-delete prevention and workspace membership cleanup)
+- ✅ **Web Push Notifications**: Browser notification permission requested on login with toast and browser notifications
+- ✅ **Mark All Notifications Read**: Single-click bulk marking of all unread notifications
+- ✅ **Notification UI Redesign**: Filter tabs (All/Unread/Mentions/Task), time-ago formatting, footer actions
+- ✅ **Support Hours Top Up**: Top Up button with cost calculator modal (R715/hour ex VAT, 15% VAT)
+- ✅ **User Avatar Images in Task Tables**: Actual profile images with hover tooltips
+- ✅ **Task Assignment**: Owner and Assignee dropdowns with workspace user list
+- ✅ **Permission-Based Editing**: Admins edit both owner and assignee; clients edit assignee only
