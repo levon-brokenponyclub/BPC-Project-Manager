@@ -8,11 +8,61 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Planned
 
-- High-impact Activity tab UI enhancements (message bubbles, sticky composer styling, chip-style quick templates)
-- Netlify production deployment
 - CSV/PDF exports for reports
-- Workspace/member admin controls
 - Advanced analytics and SLA dashboards
+
+---
+
+## [1.1.0] - 2026-03-09
+
+### ✅ Added
+
+#### Role-Based Access & Admin Tools (2026-03-09)
+
+- **Role-Based Sidebar**: Admin menu section (Clients, Time, Reports, Settings) now hidden from non-admin users — only visible to workspace admins
+- **Admin Invite Role Toggle**: Invite modal has Client / Admin toggle buttons. When Admin is selected, the workspace picker is hidden and replaced with a note ("Admin will have access to all workspaces automatically")
+- **Admin Invites Assigned to All Workspaces**: When inviting a user as Admin, the `invite-client` Edge Function now fetches all workspaces and upserts membership for every one with `role: "admin"` — applies to both email and magic-link delivery modes
+- **Admins Section in Clients Table**: Clients page now shows a dedicated "Admins" section header at the top of the user table (flat list, no workspace grouping), followed by workspace-grouped client rows below
+- **Role Returned by Admin Users EF**: The `admin-users` list action now selects `role` from `workspace_users`, computes each user's effective role (admin if admin in any workspace), and returns it in the user object — enabling the Admins section and future role-based display
+- **Delete Workspace (Danger Zone)**: Settings page now has a Danger Zone section (admin only) with a confirmed-delete flow — user must type the workspace name to enable the button; on confirm, all memberships are removed and the workspace is deleted, then the user is redirected to workspace select
+- **`delete_workspace` Edge Function Action**: New action added to `admin-users` EF — deletes all `workspace_users` memberships then deletes the workspace row
+
+#### UI & Workflow Improvements (2026-03-09)
+
+- **Edit Client Workspace Assignment**: Checking/unchecking workspaces in the Edit Client modal now correctly adds or removes the user from those workspaces via the Edge Function — previously workspace changes were silently ignored
+- **Task Title Attachment Indicator**: Paperclip icon and file count now display inline with the task title instead of stacked below it
+- **Settings Page Refactor**: Full admin-only settings screen with structured sections (Workspace Details, Client Access, Workspace Management, Support Buckets), polished form layouts, labeled fields, progress bars on bucket rows, and a clean restricted-access state for non-admins
+- **Preferences → Profile Edit Modal**: Profile dropdown "Preferences" now opens a full profile edit modal (avatar upload, first name, surname, password change) instead of navigating to Settings
+- **Admin-Only Profile Menu Items**: "Workspace settings" and "Invite and manage members" in the profile dropdown are now hidden for non-admin users
+- **Profile Modal Style**: ProfileEditModal rebuilt to match NewTaskModal visual language (dark container, labeled fields, footer with primary/secondary actions)
+- **Project Overview Dashboard**: Full advanced project overview page with Status Strip, KPI cards, Operational cards, Phase Board, Recent Activity, and Focus This Week — all derived from real task data
+- **Dark Mode Default**: App now loads in dark mode by default for all new users
+- **Project Overview as Default Route**: Landing page on workspace load is now Project Overview instead of Dashboard
+- **Dashboard Removed from Nav**: Sidebar Dashboard item removed; Project Overview promoted to top of nav above Inbox
+- **Workspace Name in Status Strip**: Project Overview status strip fetches and displays the real workspace name instead of a hardcoded value
+- **First Name + Surname in Dropdowns**: Owner and Assignee dropdowns in TaskDrawer and New Task Modal now show full names (first name + surname) instead of email-derived usernames
+- **Linear-style 3-Pane Inbox**: Full inbox refactor with Today/Earlier grouping, dense notification list, task-drawer-style middle detail panel, and properties rail on the right
+- **TaskDrawer Activity Timeline**: Unified comment + activity feed with message-bubble comments and de-emphasised field-change rows, pinned composer at bottom
+- **5-Column Task Table**: Dedicated Progress column added alongside Status, Owner, Assignee, Due Date
+- **Subtask Support**: Full parent/subtask hierarchy with subtask management inside TaskDrawer
+- **File Attachments**: Per-task file upload, download, and delete via Supabase Storage
+- **Workspace Breadcrumb in TaskDrawer**: Full breadcrumb (workspace → parent task → subtask) displayed in drawer header
+
+### 🔧 Changed
+
+- **Avatar Upload Fix**: Upload path changed from flat `uid-timestamp.ext` to `uid/timestamp.ext` to satisfy Supabase Storage RLS folder-ownership policy
+
+### 🔐 Security Improvements
+
+- **Edge Function Auth Fix**: Re-deployed `admin-users` with `--no-verify-jwt` to prevent Supabase gateway rejecting ES256 tokens before the function's own auth handling runs
+
+### 🗑️ Removed
+
+- `src/components/notifications/NotificationBell.tsx`: Dead code, never imported
+- `src/components/dashboard/MicroStatsRow.tsx`: Dead code, never imported
+- `supabase/migrations/`: Removed from public repo (contains environment-specific SQL)
+- `design/`: Design export assets removed from repo (38MB+)
+- `.history/`, `.netlify/`, `supabase/.temp/`: Noise directories removed from tracking
 
 ---
 
