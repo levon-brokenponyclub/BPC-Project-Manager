@@ -601,363 +601,200 @@ export function TasksPage(): React.ReactElement {
   }, [requestedTaskId, tasks]);
 
   return (
-    <div className="relative min-h-full space-y-6">
-      <DataStateWrapper
-        isLoading={tasksIsLoading}
-        isError={tasksIsError}
-        error={tasksQuery.error}
-        onRetry={() => {
-          void tasksQuery.refetch();
-        }}
-        isEmpty={tasksIsEmpty}
-        skeleton={<TasksSkeleton />}
-        empty={
-          <EmptyState
-            title="No tasks found"
-            description="Create your first task to get work moving."
-            action={
-              <Button
-                type="button"
-                variant="primary"
-                size="sm"
-                onClick={openNewTaskModal}
-              >
-                <Plus className="h-4 w-4" />
-                Create Task
-              </Button>
-            }
-          />
-        }
-      >
-        <Card className="relative overflow-visible border-border bg-card">
-          <div className="flex h-13 items-center justify-between border-b border-border px-6 py-2">
-            <div className="relative">
-              <button
-                ref={filterButtonRef}
-                type="button"
-                aria-label="Open filters"
-                onClick={() => {
-                  setFilterOpen((previous) => !previous);
-                  setSortOpen(false);
-                }}
-                className={`focus-ring inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm font-medium transition-colors hover:bg-card/20 ${
-                  hasActiveFilters ? "text-primary" : "text-foreground"
-                }`}
-              >
-                <svg viewBox="0 0 16 16" className="h-4 w-4" aria-hidden="true">
-                  <path
-                    d="M2.5 3.5h11M4.5 7.5h7M6.5 11.5h3"
-                    stroke="currentColor"
-                    strokeWidth="1.4"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <span>Filter</span>
-                {hasActiveFilters ? (
-                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-white">
-                    {
-                      [
-                        statusFilter !== "All",
-                        assigneeFilter !== "All",
-                        priorityFilter !== "All",
-                      ].filter(Boolean).length
-                    }
-                  </span>
-                ) : null}
-              </button>
-
-              {filterOpen ? (
-                <div
-                  ref={filterPanelRef}
-                  className="absolute left-0 top-full z-50 mt-2 min-w-[280px] rounded-[8px] border border-border bg-popover p-[0.5px] shadow-[0px_3px_8px_rgba(0,0,0,0.12),0px_2px_5px_rgba(0,0,0,0.12),0px_1px_1px_rgba(0,0,0,0.12)]"
+    <>
+      <div className="relative min-h-full space-y-6">
+        <DataStateWrapper
+          isLoading={tasksIsLoading}
+          isError={tasksIsError}
+          error={tasksQuery.error}
+          onRetry={() => {
+            void tasksQuery.refetch();
+          }}
+          isEmpty={tasksIsEmpty}
+          skeleton={<TasksSkeleton />}
+          empty={
+            <EmptyState
+              title="No tasks found"
+              description="Create your first task to get work moving."
+              action={
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  onClick={openNewTaskModal}
                 >
-                  <div className="flex flex-col py-1">
-                    {/* Status Filter */}
-                    <div className="mb-3">
-                      <div className="mb-1 px-[14px] text-[11px] font-medium uppercase tracking-wide text-muted">
-                        Status
-                      </div>
-                      <div className="space-y-1">
-                        {(
-                          [
-                            "All",
-                            "Todo",
-                            "Upcoming",
-                            "In Progress",
-                            "In Review",
-                            "Awaiting Client",
-                            "On Hold",
-                            "Complete",
-                            "Cancelled",
-                          ] as const
-                        ).map((status) => (
-                          <button
-                            key={status}
-                            type="button"
-                            onClick={() => {
-                              setStatusFilter(status);
-                              setFilterOpen(false);
-                            }}
-                            className={`focus-ring mx-1.5 block h-8 w-[calc(100%-12px)] rounded-[6px] px-[14px] text-left text-[13px] leading-4 transition-colors hover:bg-surface ${
-                              statusFilter === status
-                                ? "bg-surface text-foreground font-medium"
-                                : "text-foreground/80"
-                            }`}
-                          >
-                            {status}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Assignee Filter */}
-                    <div className="mb-3 mt-1 border-t border-border pt-2">
-                      <div className="mb-1 px-[14px] text-[11px] font-medium uppercase tracking-wide text-muted">
-                        Assignee
-                      </div>
-                      <div className="max-h-[200px] space-y-1 overflow-y-auto">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAssigneeFilter("All");
-                            setFilterOpen(false);
-                          }}
-                          className={`focus-ring mx-1.5 block h-8 w-[calc(100%-12px)] rounded-[6px] px-[14px] text-left text-[13px] leading-4 transition-colors hover:bg-surface ${
-                            assigneeFilter === "All"
-                              ? "bg-surface text-foreground font-medium"
-                              : "text-foreground/80"
-                          }`}
-                        >
-                          All
-                        </button>
-                        {workspaceUsersQuery.data?.map((user) => (
-                          <button
-                            key={user.user_id}
-                            type="button"
-                            onClick={() => {
-                              setAssigneeFilter(user.user_id);
-                              setFilterOpen(false);
-                            }}
-                            className={`focus-ring mx-1.5 block h-8 w-[calc(100%-12px)] rounded-[6px] px-[14px] text-left text-[13px] leading-4 transition-colors hover:bg-surface ${
-                              assigneeFilter === user.user_id
-                                ? "bg-surface text-foreground font-medium"
-                                : "text-foreground/80"
-                            }`}
-                          >
-                            {formatUserDisplayName(user.email)}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Priority Filter */}
-                    <div className="mb-3 mt-1 border-t border-border pt-2">
-                      <div className="mb-1 px-[14px] text-[11px] font-medium uppercase tracking-wide text-muted">
-                        Priority
-                      </div>
-                      <div className="space-y-1">
-                        {(
-                          ["All", "Low", "Medium", "High", "Urgent"] as const
-                        ).map((priority) => (
-                          <button
-                            key={priority}
-                            type="button"
-                            onClick={() => {
-                              setPriorityFilter(priority);
-                              setFilterOpen(false);
-                            }}
-                            className={`focus-ring mx-1.5 block h-8 w-[calc(100%-12px)] rounded-[6px] px-[14px] text-left text-[13px] leading-4 transition-colors hover:bg-surface ${
-                              priorityFilter === priority
-                                ? "bg-surface text-foreground font-medium"
-                                : "text-foreground/80"
-                            }`}
-                          >
-                            {priority}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Clear Filters */}
-                    {hasActiveFilters ? (
-                      <div className="mt-1 border-t border-border pt-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            clearAllFilters();
-                            setFilterOpen(false);
-                          }}
-                          className="focus-ring mx-1.5 block h-8 w-[calc(100%-12px)] rounded-[6px] px-[14px] text-left text-[13px] leading-4 text-foreground/80 transition-colors hover:bg-surface"
-                        >
-                          Clear all filters
-                        </button>
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            <div className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Create Task
+                </Button>
+              }
+            />
+          }
+        >
+          <Card className="relative overflow-visible border-border bg-card">
+            <div className="flex h-13 items-center justify-between border-b border-border px-6 py-2">
               <div className="relative">
                 <button
-                  ref={sortButtonRef}
+                  ref={filterButtonRef}
                   type="button"
-                  aria-label="Open sort options"
+                  aria-label="Open filters"
                   onClick={() => {
-                    setSortOpen((previous) => !previous);
-                    setFilterOpen(false);
+                    setFilterOpen((previous) => !previous);
+                    setSortOpen(false);
                   }}
-                  className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-sm border border-border bg-card px-3 text-[13px] font-medium text-foreground transition-colors hover:bg-surface active:bg-surface disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50"
+                  className={`focus-ring inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm font-medium transition-colors hover:bg-card/20 ${
+                    hasActiveFilters ? "text-primary" : "text-foreground"
+                  }`}
                 >
                   <svg
                     viewBox="0 0 16 16"
-                    className="h-4 w-4 text-muted"
+                    className="h-4 w-4"
                     aria-hidden="true"
                   >
                     <path
-                      d="M3 4h10M5.5 8h5M7 12h2"
+                      d="M2.5 3.5h11M4.5 7.5h7M6.5 11.5h3"
                       stroke="currentColor"
                       strokeWidth="1.4"
                       strokeLinecap="round"
                     />
                   </svg>
-                  <span>Sort</span>
-                  {sortBy !== "none" ? (
-                    <span className="inline-flex h-5 w-5 items-center justify-center">
-                      <svg
-                        viewBox="0 0 16 16"
-                        className="h-3.5 w-3.5"
-                        aria-hidden="true"
-                      >
-                        {sortOrder === "asc" ? (
-                          <path d="M8 4L12 10H4L8 4Z" fill="currentColor" />
-                        ) : (
-                          <path d="M8 12L12 6H4L8 12Z" fill="currentColor" />
-                        )}
-                      </svg>
+                  <span>Filter</span>
+                  {hasActiveFilters ? (
+                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-white">
+                      {
+                        [
+                          statusFilter !== "All",
+                          assigneeFilter !== "All",
+                          priorityFilter !== "All",
+                        ].filter(Boolean).length
+                      }
                     </span>
                   ) : null}
                 </button>
 
-                {sortOpen ? (
+                {filterOpen ? (
                   <div
-                    ref={sortPanelRef}
-                    className="absolute right-0 top-full z-50 mt-2 min-w-[220px] rounded-[8px] border border-border bg-popover p-[0.5px] shadow-[0px_3px_8px_rgba(0,0,0,0.12),0px_2px_5px_rgba(0,0,0,0.12),0px_1px_1px_rgba(0,0,0,0.12)]"
+                    ref={filterPanelRef}
+                    className="absolute left-0 top-full z-50 mt-2 min-w-[280px] rounded-[8px] border border-border bg-popover p-[0.5px] shadow-[0px_3px_8px_rgba(0,0,0,0.12),0px_2px_5px_rgba(0,0,0,0.12),0px_1px_1px_rgba(0,0,0,0.12)]"
                   >
                     <div className="flex flex-col py-1">
-                      <div className="mb-1 px-[14px] text-[11px] font-medium uppercase tracking-wide text-muted">
-                        Sort by
+                      {/* Status Filter */}
+                      <div className="mb-3">
+                        <div className="mb-1 px-[14px] text-[11px] font-medium uppercase tracking-wide text-muted">
+                          Status
+                        </div>
+                        <div className="space-y-1">
+                          {(
+                            [
+                              "All",
+                              "Todo",
+                              "Upcoming",
+                              "In Progress",
+                              "In Review",
+                              "Awaiting Client",
+                              "On Hold",
+                              "Complete",
+                              "Cancelled",
+                            ] as const
+                          ).map((status) => (
+                            <button
+                              key={status}
+                              type="button"
+                              onClick={() => {
+                                setStatusFilter(status);
+                                setFilterOpen(false);
+                              }}
+                              className={`focus-ring mx-1.5 block h-8 w-[calc(100%-12px)] rounded-[6px] px-[14px] text-left text-[13px] leading-4 transition-colors hover:bg-surface ${
+                                statusFilter === status
+                                  ? "bg-surface text-foreground font-medium"
+                                  : "text-foreground/80"
+                              }`}
+                            >
+                              {status}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSortBy("status");
-                            setSortOrder(
-                              sortBy === "status" && sortOrder === "asc"
-                                ? "desc"
-                                : "asc",
-                            );
-                            setSortOpen(false);
-                          }}
-                          className={`focus-ring mx-1.5 inline-flex h-8 w-[calc(100%-12px)] items-center justify-between rounded-[6px] px-[14px] text-[13px] leading-4 transition-colors hover:bg-surface ${
-                            sortBy === "status"
-                              ? "bg-surface text-foreground font-medium"
-                              : "text-foreground/80"
-                          }`}
-                        >
-                          <span>Status</span>
-                          {sortBy === "status" ? (
-                            <span className="text-[11px] leading-[13px] text-muted">
-                              {sortOrder === "asc" ? "↑" : "↓"}
-                            </span>
-                          ) : null}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSortBy("assignee");
-                            setSortOrder(
-                              sortBy === "assignee" && sortOrder === "asc"
-                                ? "desc"
-                                : "asc",
-                            );
-                            setSortOpen(false);
-                          }}
-                          className={`focus-ring mx-1.5 inline-flex h-8 w-[calc(100%-12px)] items-center justify-between rounded-[6px] px-[14px] text-[13px] leading-4 transition-colors hover:bg-surface ${
-                            sortBy === "assignee"
-                              ? "bg-surface text-foreground font-medium"
-                              : "text-foreground/80"
-                          }`}
-                        >
-                          <span>Assignee</span>
-                          {sortBy === "assignee" ? (
-                            <span className="text-[11px] leading-[13px] text-muted">
-                              {sortOrder === "asc" ? "↑" : "↓"}
-                            </span>
-                          ) : null}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSortBy("due_date");
-                            setSortOrder(
-                              sortBy === "due_date" && sortOrder === "asc"
-                                ? "desc"
-                                : "asc",
-                            );
-                            setSortOpen(false);
-                          }}
-                          className={`focus-ring mx-1.5 inline-flex h-8 w-[calc(100%-12px)] items-center justify-between rounded-[6px] px-[14px] text-[13px] leading-4 transition-colors hover:bg-surface ${
-                            sortBy === "due_date"
-                              ? "bg-surface text-foreground font-medium"
-                              : "text-foreground/80"
-                          }`}
-                        >
-                          <span>Due Date</span>
-                          {sortBy === "due_date" ? (
-                            <span className="text-[11px] leading-[13px] text-muted">
-                              {sortOrder === "asc" ? "↑" : "↓"}
-                            </span>
-                          ) : null}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSortBy("priority");
-                            setSortOrder(
-                              sortBy === "priority" && sortOrder === "asc"
-                                ? "desc"
-                                : "asc",
-                            );
-                            setSortOpen(false);
-                          }}
-                          className={`focus-ring mx-1.5 inline-flex h-8 w-[calc(100%-12px)] items-center justify-between rounded-[6px] px-[14px] text-[13px] leading-4 transition-colors hover:bg-surface ${
-                            sortBy === "priority"
-                              ? "bg-surface text-foreground font-medium"
-                              : "text-foreground/80"
-                          }`}
-                        >
-                          <span>Priority</span>
-                          {sortBy === "priority" ? (
-                            <span className="text-[11px] leading-[13px] text-muted">
-                              {sortOrder === "asc" ? "↑" : "↓"}
-                            </span>
-                          ) : null}
-                        </button>
+
+                      {/* Assignee Filter */}
+                      <div className="mb-3 mt-1 border-t border-border pt-2">
+                        <div className="mb-1 px-[14px] text-[11px] font-medium uppercase tracking-wide text-muted">
+                          Assignee
+                        </div>
+                        <div className="max-h-[200px] space-y-1 overflow-y-auto">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAssigneeFilter("All");
+                              setFilterOpen(false);
+                            }}
+                            className={`focus-ring mx-1.5 block h-8 w-[calc(100%-12px)] rounded-[6px] px-[14px] text-left text-[13px] leading-4 transition-colors hover:bg-surface ${
+                              assigneeFilter === "All"
+                                ? "bg-surface text-foreground font-medium"
+                                : "text-foreground/80"
+                            }`}
+                          >
+                            All
+                          </button>
+                          {workspaceUsersQuery.data?.map((user) => (
+                            <button
+                              key={user.user_id}
+                              type="button"
+                              onClick={() => {
+                                setAssigneeFilter(user.user_id);
+                                setFilterOpen(false);
+                              }}
+                              className={`focus-ring mx-1.5 block h-8 w-[calc(100%-12px)] rounded-[6px] px-[14px] text-left text-[13px] leading-4 transition-colors hover:bg-surface ${
+                                assigneeFilter === user.user_id
+                                  ? "bg-surface text-foreground font-medium"
+                                  : "text-foreground/80"
+                              }`}
+                            >
+                              {formatUserDisplayName(user.email)}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                      {sortBy !== "none" ? (
+
+                      {/* Priority Filter */}
+                      <div className="mb-3 mt-1 border-t border-border pt-2">
+                        <div className="mb-1 px-[14px] text-[11px] font-medium uppercase tracking-wide text-muted">
+                          Priority
+                        </div>
+                        <div className="space-y-1">
+                          {(
+                            ["All", "Low", "Medium", "High", "Urgent"] as const
+                          ).map((priority) => (
+                            <button
+                              key={priority}
+                              type="button"
+                              onClick={() => {
+                                setPriorityFilter(priority);
+                                setFilterOpen(false);
+                              }}
+                              className={`focus-ring mx-1.5 block h-8 w-[calc(100%-12px)] rounded-[6px] px-[14px] text-left text-[13px] leading-4 transition-colors hover:bg-surface ${
+                                priorityFilter === priority
+                                  ? "bg-surface text-foreground font-medium"
+                                  : "text-foreground/80"
+                              }`}
+                            >
+                              {priority}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Clear Filters */}
+                      {hasActiveFilters ? (
                         <div className="mt-1 border-t border-border pt-2">
                           <button
                             type="button"
                             onClick={() => {
-                              setSortBy("none");
-                              setSortOpen(false);
+                              clearAllFilters();
+                              setFilterOpen(false);
                             }}
                             className="focus-ring mx-1.5 block h-8 w-[calc(100%-12px)] rounded-[6px] px-[14px] text-left text-[13px] leading-4 text-foreground/80 transition-colors hover:bg-surface"
                           >
-                            Clear sort
+                            Clear all filters
                           </button>
                         </div>
                       ) : null}
@@ -966,52 +803,221 @@ export function TasksPage(): React.ReactElement {
                 ) : null}
               </div>
 
-              {canManageTasks ? (
-                <Button
-                  type="button"
-                  variant="primary"
-                  size="sm"
-                  onClick={openNewTaskModal}
-                  disabled={createTaskMutation.isPending}
-                  className="min-w-[85px]"
-                >
-                  <Plus className="h-4 w-4" />
-                  New Task
-                </Button>
-              ) : null}
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <button
+                    ref={sortButtonRef}
+                    type="button"
+                    aria-label="Open sort options"
+                    onClick={() => {
+                      setSortOpen((previous) => !previous);
+                      setFilterOpen(false);
+                    }}
+                    className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-sm border border-border bg-card px-3 text-[13px] font-medium text-foreground transition-colors hover:bg-surface active:bg-surface disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50"
+                  >
+                    <svg
+                      viewBox="0 0 16 16"
+                      className="h-4 w-4 text-muted"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M3 4h10M5.5 8h5M7 12h2"
+                        stroke="currentColor"
+                        strokeWidth="1.4"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <span>Sort</span>
+                    {sortBy !== "none" ? (
+                      <span className="inline-flex h-5 w-5 items-center justify-center">
+                        <svg
+                          viewBox="0 0 16 16"
+                          className="h-3.5 w-3.5"
+                          aria-hidden="true"
+                        >
+                          {sortOrder === "asc" ? (
+                            <path d="M8 4L12 10H4L8 4Z" fill="currentColor" />
+                          ) : (
+                            <path d="M8 12L12 6H4L8 12Z" fill="currentColor" />
+                          )}
+                        </svg>
+                      </span>
+                    ) : null}
+                  </button>
+
+                  {sortOpen ? (
+                    <div
+                      ref={sortPanelRef}
+                      className="absolute right-0 top-full z-50 mt-2 min-w-[220px] rounded-[8px] border border-border bg-popover p-[0.5px] shadow-[0px_3px_8px_rgba(0,0,0,0.12),0px_2px_5px_rgba(0,0,0,0.12),0px_1px_1px_rgba(0,0,0,0.12)]"
+                    >
+                      <div className="flex flex-col py-1">
+                        <div className="mb-1 px-[14px] text-[11px] font-medium uppercase tracking-wide text-muted">
+                          Sort by
+                        </div>
+                        <div className="space-y-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSortBy("status");
+                              setSortOrder(
+                                sortBy === "status" && sortOrder === "asc"
+                                  ? "desc"
+                                  : "asc",
+                              );
+                              setSortOpen(false);
+                            }}
+                            className={`focus-ring mx-1.5 inline-flex h-8 w-[calc(100%-12px)] items-center justify-between rounded-[6px] px-[14px] text-[13px] leading-4 transition-colors hover:bg-surface ${
+                              sortBy === "status"
+                                ? "bg-surface text-foreground font-medium"
+                                : "text-foreground/80"
+                            }`}
+                          >
+                            <span>Status</span>
+                            {sortBy === "status" ? (
+                              <span className="text-[11px] leading-[13px] text-muted">
+                                {sortOrder === "asc" ? "↑" : "↓"}
+                              </span>
+                            ) : null}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSortBy("assignee");
+                              setSortOrder(
+                                sortBy === "assignee" && sortOrder === "asc"
+                                  ? "desc"
+                                  : "asc",
+                              );
+                              setSortOpen(false);
+                            }}
+                            className={`focus-ring mx-1.5 inline-flex h-8 w-[calc(100%-12px)] items-center justify-between rounded-[6px] px-[14px] text-[13px] leading-4 transition-colors hover:bg-surface ${
+                              sortBy === "assignee"
+                                ? "bg-surface text-foreground font-medium"
+                                : "text-foreground/80"
+                            }`}
+                          >
+                            <span>Assignee</span>
+                            {sortBy === "assignee" ? (
+                              <span className="text-[11px] leading-[13px] text-muted">
+                                {sortOrder === "asc" ? "↑" : "↓"}
+                              </span>
+                            ) : null}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSortBy("due_date");
+                              setSortOrder(
+                                sortBy === "due_date" && sortOrder === "asc"
+                                  ? "desc"
+                                  : "asc",
+                              );
+                              setSortOpen(false);
+                            }}
+                            className={`focus-ring mx-1.5 inline-flex h-8 w-[calc(100%-12px)] items-center justify-between rounded-[6px] px-[14px] text-[13px] leading-4 transition-colors hover:bg-surface ${
+                              sortBy === "due_date"
+                                ? "bg-surface text-foreground font-medium"
+                                : "text-foreground/80"
+                            }`}
+                          >
+                            <span>Due Date</span>
+                            {sortBy === "due_date" ? (
+                              <span className="text-[11px] leading-[13px] text-muted">
+                                {sortOrder === "asc" ? "↑" : "↓"}
+                              </span>
+                            ) : null}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSortBy("priority");
+                              setSortOrder(
+                                sortBy === "priority" && sortOrder === "asc"
+                                  ? "desc"
+                                  : "asc",
+                              );
+                              setSortOpen(false);
+                            }}
+                            className={`focus-ring mx-1.5 inline-flex h-8 w-[calc(100%-12px)] items-center justify-between rounded-[6px] px-[14px] text-[13px] leading-4 transition-colors hover:bg-surface ${
+                              sortBy === "priority"
+                                ? "bg-surface text-foreground font-medium"
+                                : "text-foreground/80"
+                            }`}
+                          >
+                            <span>Priority</span>
+                            {sortBy === "priority" ? (
+                              <span className="text-[11px] leading-[13px] text-muted">
+                                {sortOrder === "asc" ? "↑" : "↓"}
+                              </span>
+                            ) : null}
+                          </button>
+                        </div>
+                        {sortBy !== "none" ? (
+                          <div className="mt-1 border-t border-border pt-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSortBy("none");
+                                setSortOpen(false);
+                              }}
+                              className="focus-ring mx-1.5 block h-8 w-[calc(100%-12px)] rounded-[6px] px-[14px] text-left text-[13px] leading-4 text-foreground/80 transition-colors hover:bg-surface"
+                            >
+                              Clear sort
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+
+                {canManageTasks ? (
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    onClick={openNewTaskModal}
+                    disabled={createTaskMutation.isPending}
+                    className="min-w-[85px]"
+                  >
+                    <Plus className="h-4 w-4" />
+                    New Task
+                  </Button>
+                ) : null}
+              </div>
             </div>
-          </div>
 
-          <TaskTable
-            tasks={tasks}
-            onOpen={setSelectedTask}
-            onUpdate={(taskId, patch) => {
-              void handleInlineUpdate(taskId, patch);
-            }}
-          />
-        </Card>
-      </DataStateWrapper>
+            <TaskTable
+              tasks={tasks}
+              onOpen={setSelectedTask}
+              onUpdate={(taskId, patch) => {
+                void handleInlineUpdate(taskId, patch);
+              }}
+            />
+          </Card>
+        </DataStateWrapper>
 
-      <NewTaskModal
-        open={isNewTaskModalOpen}
-        workspaceId={workspaceId}
-        isSubmitting={createTaskMutation.isPending}
-        parentTaskId={newTaskParentId}
-        parentTaskTitle={newTaskParentTitle}
-        onClose={() => {
-          setIsNewTaskModalOpen(false);
-          setNewTaskParentId(null);
-          setNewTaskParentTitle(null);
-        }}
-        onCreateTask={async (input, files) => {
-          await createTaskMutation.mutateAsync({ input, files });
-          if (input.parent_task_id) {
-            await queryClient.invalidateQueries({
-              queryKey: ["task", input.parent_task_id, "subtasks"],
-            });
-          }
-        }}
-      />
+        <NewTaskModal
+          open={isNewTaskModalOpen}
+          workspaceId={workspaceId}
+          isSubmitting={createTaskMutation.isPending}
+          parentTaskId={newTaskParentId}
+          parentTaskTitle={newTaskParentTitle}
+          onClose={() => {
+            setIsNewTaskModalOpen(false);
+            setNewTaskParentId(null);
+            setNewTaskParentTitle(null);
+          }}
+          onCreateTask={async (input, files) => {
+            await createTaskMutation.mutateAsync({ input, files });
+            if (input.parent_task_id) {
+              await queryClient.invalidateQueries({
+                queryKey: ["task", input.parent_task_id, "subtasks"],
+              });
+            }
+          }}
+        />
+      </div>
 
       <TaskDrawer
         open={Boolean(selectedTask)}
@@ -1064,6 +1070,6 @@ export function TasksPage(): React.ReactElement {
         }}
         onOpenSubtask={(subtask) => setSelectedTask(subtask)}
       />
-    </div>
+    </>
   );
 }

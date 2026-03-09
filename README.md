@@ -15,7 +15,7 @@ A multi-workspace project management and client portal built for support agencie
 - **Task Management** — subtasks, inline status / due date / priority editing (ClickUp-style popovers), file attachments, due date colouring, drawer with full activity history
 - **Time Tracking** — start/stop timers per task, view time reports
 - **Support Buckets** — allocated vs used hours with progress bar
-- **Inbox** — Linear-style 3-pane notification inbox with date-grouped notifications (Today / Yesterday / Earlier), actor avatars, actor-first message formatting, per-row hover quick actions (mark read/unread, delete), and an inline comment thread + composer for comment notifications (reply directly from the inbox)
+- **Inbox** — Linear-style 3-pane notification inbox with date-grouped notifications (Today / Yesterday / Earlier), actor avatars, actor-first message formatting, per-row hover quick actions (mark read/unread, delete), and an inline comment thread + composer for comment notifications (reply directly from the inbox). Inbox fills full viewport height below the sticky header using a flex-child layout (no absolute positioning).
 - **Admin tools** — invite users (email / magic link), manage clients, create / delete workspaces, role-based access
 - **Asset Library** — per-workspace repository of files, links, logins and plugins; grouped 2×2 section card layout; file upload with signed-URL download, copy-to-clipboard for links/credentials, inline notes; notifications on add/delete
 - **Dark mode default** — persisted theme preference

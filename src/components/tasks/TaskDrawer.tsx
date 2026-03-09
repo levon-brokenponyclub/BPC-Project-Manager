@@ -635,7 +635,10 @@ export function TaskDrawer({
     "flex h-10 items-center rounded-[5px] border border-border bg-card px-3 text-[13px] font-medium leading-4 text-foreground/80";
 
   return (
-    <section className="absolute inset-0 z-40 !mt-0 overflow-hidden bg-background">
+    <section
+      className="fixed bottom-0 right-0 top-14 z-40 overflow-hidden bg-background"
+      style={{ left: "var(--sidebar-w, 275px)" }}
+    >
       <div className="grid h-full min-h-0 grid-cols-1 md:grid-cols-[300px_minmax(0,1fr)_280px]">
         <div className="flex min-h-0 flex-col bg-card md:border-r md:border-border">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">

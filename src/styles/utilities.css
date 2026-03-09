@@ -1,6 +1,6 @@
 @layer components {
   .app-shell {
-    @apply grid min-h-screen bg-background text-foreground;
+    @apply grid h-screen overflow-hidden bg-background text-foreground;
     grid-template-columns: 275px minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
   }

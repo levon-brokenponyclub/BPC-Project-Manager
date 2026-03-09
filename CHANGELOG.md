@@ -13,6 +13,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.8.0] - 2026-03-09
+
+### 🔧 Fixed
+
+#### AppShell — Sticky Header & Inbox Layout (2026-03-09)
+
+- **Sticky header now works everywhere**: `.app-shell` changed from `min-h-screen` (unbounded growth) to `h-screen overflow-hidden`, making the right-side column a true `h-full` flex container. The header's `sticky top-0` now always pins correctly because it lives inside an actual bounded scroll context.
+- **Right column scroll**: The column wrapper is `flex-col h-full` with no overflow of its own; `<main>` carries `overflow-y-auto flex-1` so page content scrolls inside its own region.
+- **Inbox as flex child**: Inbox section changed from `position: absolute` (which escaped layout flow and caused incorrect height) to a normal `flex-1 min-h-0 overflow-hidden` flex child — identical positioning model to the TaskDrawer.
+- **Main hidden while inbox is open**: `<main>` receives `hidden` when `inboxOpen` is true so the inbox section is the sole `flex-1` child and fills the full remaining height below the header.
+- **TaskDrawer positioning fixed**: Drawer changed from `position: absolute inset-0` to `position: fixed bottom-0 right-0 top-14` with `left: var(--sidebar-w, 275px)`, ensuring it always sits flush below the header and correctly accounts for sidebar width (collapsed or expanded).
+- **TasksPage render restructure**: Tasks page layout restructured to work correctly within the new `overflow-y-auto` main scroll context — removed the `relative min-h-full` wrapper pattern that relied on the old full-document scroll model.
+
+---
+
 ## [1.7.0] - 2026-03-09
 
 ### ✅ Added

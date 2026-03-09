@@ -56,7 +56,7 @@
   }
 
   .app-shell {
-    @apply grid min-h-screen bg-background;
+    @apply grid h-screen overflow-hidden bg-background;
     grid-template-columns: 275px 1fr;
   }
 

@@ -802,6 +802,7 @@ export default function AppShell({
 
   const shellStyle = {
     gridTemplateColumns: `${collapsed ? "72px" : "275px"} minmax(0, 1fr)`,
+    "--sidebar-w": collapsed ? "72px" : "275px",
   } as CSSProperties;
 
   const isDarkThemeActive =
@@ -1068,8 +1069,8 @@ export default function AppShell({
         </div>
       </aside>
 
-      <div className="relative flex min-h-screen min-w-0 flex-col overflow-hidden bg-background text-foreground">
-        <header className="header sticky top-0 z-10 h-14 border-b border-border/60 bg-card/70">
+      <div className="relative flex h-full min-w-0 flex-col bg-background text-foreground">
+        <header className="header z-50 h-14 shrink-0 border-b border-border/60 bg-card/95">
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -1204,7 +1205,7 @@ export default function AppShell({
         </header>
 
         {inboxOpen ? (
-          <section className="absolute inset-x-0 bottom-0 top-14 z-40 overflow-hidden bg-background">
+          <section className="min-h-0 flex-1 overflow-hidden bg-background">
             <div className="grid h-full min-h-0 grid-cols-[280px_minmax(0,1fr)_260px]">
               {/* ── LEFT: Inbox list ── */}
               <div className="flex min-h-0 flex-col border-r border-border bg-card">
@@ -1623,7 +1624,13 @@ export default function AppShell({
           </section>
         ) : null}
 
-        <main className={cn("main overflow-auto", isDashboardRoute && "p-0")}>
+        <main
+          className={cn(
+            "main min-h-0 flex-1 overflow-y-auto",
+            inboxOpen && "hidden",
+            isDashboardRoute && "p-0",
+          )}
+        >
           {children}
         </main>
       </div>
