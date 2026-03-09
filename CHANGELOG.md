@@ -13,6 +13,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.5.0] - 2026-03-09
+
+### ✅ Added
+
+#### Inbox — Inline Comment Thread & Composer (2026-03-09)
+
+- **`InboxCommentThread` Component**: When a selected notification is comment-related (`comment.created`, `comment.assigned`, `comment.reaction_added`), the inbox middle column now renders a full Task Activity-style comment thread instead of a simple detail card.
+- **Real Comment Thread**: Loads all comments for the related task via `listComments(taskId)` + `queryKeys.taskComments(taskId)`. Actor names and avatars are resolved from workspace users. Thread scrolls to bottom on load and after posting.
+- **Comment Cards**: Each comment uses the same `rounded-2xl` card style as the TaskDrawer Activity tab — actor avatar, actor name, "commented" label, relative timestamp, comment body, and a **Reply** button.
+- **Reply Quoting**: Clicking Reply pre-fills the composer with a quoted excerpt (`Replying to (Mar 9): "…"`), matching the TaskDrawer reply UX exactly.
+- **Inline Composer**: Sticky composer at the bottom of the middle column — current-user avatar, auto-growing textarea, `⌘↵` hint, and a **Comment** submit button. Posts via `addComment(taskId, body)`, invalidates the comments query on success, shows a Sonner error toast on failure.
+- **Task ID Resolution**: Task ID is extracted from the notification payload using `normalizeNotificationPayloadV2`. Gracefully falls back to the original detail card if no task ID is resolvable.
+- **Graceful Fallbacks**: Loading and error states for the comment thread; non-comment notifications continue using the existing fields-block rendering unchanged.
+
+### 🔧 Changed
+
+- **`AppShell` middle column**: `overflow-y-auto` moved from the outer container div into the non-comment branch so `InboxCommentThread` can manage its own internal scroll + sticky composer layout.
+- **Comment detection**: Generalised from `type === "comment.created"` to a `COMMENT_NOTIFICATION_TYPES` Set covering all three comment event types.
+
+---
+
 ## [1.4.0] - 2026-03-09
 
 ### ✅ Added
