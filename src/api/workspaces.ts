@@ -72,6 +72,7 @@ export interface WorkspaceUser {
   first_name?: string | null;
   surname?: string | null;
   role: "admin" | "client" | "contributor";
+  last_sign_in_at?: string | null;
 }
 
 export async function getWorkspaceUsers(

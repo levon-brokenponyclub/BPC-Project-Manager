@@ -18,6 +18,7 @@ import { invokeAuthedFunction } from "@/lib/invokeAuthedFunction";
 import { supabase } from "@/lib/supabase";
 import { DataStateWrapper } from "@/components/ui/DataStateWrapper";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { getUserPresence, formatRelativeTime } from "@/lib/userPresence";
 
 function UsersSkeleton(): React.ReactElement {
   return (
@@ -40,6 +41,12 @@ function UsersSkeleton(): React.ReactElement {
               </td>
               <td className="px-6 py-3.5">
                 <div className="h-6 w-16 animate-pulse rounded bg-muted/20" />
+              </td>
+              <td className="px-6 py-3.5">
+                <div className="h-4 w-20 animate-pulse rounded bg-muted/20" />
+              </td>
+              <td className="px-6 py-3.5">
+                <div className="h-4 w-24 animate-pulse rounded bg-muted/20" />
               </td>
             </tr>
           ))}
@@ -292,9 +299,55 @@ export function UsersPage(): React.ReactElement {
 
                     {/* Email (for client view, show as separate column) */}
                     {isClient && (
-                      <td className="px-6 py-3.5 text-[#959699]">
-                        <span className="text-xs">{user.email || "—"}</span>
-                      </td>
+                      <>
+                        <td className="px-6 py-3.5 text-[#959699]">
+                          <span className="text-xs">{user.email || "—"}</span>
+                        </td>
+
+                        {/* Status */}
+                        <td className="px-6 py-3.5">
+                          {(() => {
+                            const presence = getUserPresence(
+                              user.last_sign_in_at,
+                            );
+                            return (
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className={`h-2 w-2 rounded-full ${
+                                    presence.isOnline
+                                      ? "bg-green-500"
+                                      : "bg-muted-foreground/40"
+                                  }`}
+                                />
+                                <span className="text-xs text-muted-foreground">
+                                  {presence.isOnline ? "Online" : "Offline"}
+                                </span>
+                              </div>
+                            );
+                          })()}
+                        </td>
+
+                        {/* Last Online */}
+                        <td className="px-6 py-3.5">
+                          {(() => {
+                            const presence = getUserPresence(
+                              user.last_sign_in_at,
+                            );
+                            if (presence.isOnline) {
+                              return (
+                                <span className="text-xs text-muted-foreground">
+                                  —
+                                </span>
+                              );
+                            }
+                            return (
+                              <span className="text-xs text-muted-foreground">
+                                {formatRelativeTime(user.last_sign_in_at)}
+                              </span>
+                            );
+                          })()}
+                        </td>
+                      </>
                     )}
 
                     {/* Role */}
@@ -311,6 +364,51 @@ export function UsersPage(): React.ReactElement {
                             {user.role === "admin" ? "Admin" : "Client"}
                           </Badge>
                         </td>
+
+                        {/* Status */}
+                        <td className="px-6 py-3.5">
+                          {(() => {
+                            const presence = getUserPresence(
+                              user.last_sign_in_at,
+                            );
+                            return (
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className={`h-2 w-2 rounded-full ${
+                                    presence.isOnline
+                                      ? "bg-green-500"
+                                      : "bg-muted-foreground/40"
+                                  }`}
+                                />
+                                <span className="text-xs text-muted-foreground">
+                                  {presence.isOnline ? "Online" : "Offline"}
+                                </span>
+                              </div>
+                            );
+                          })()}
+                        </td>
+
+                        {/* Last Online */}
+                        <td className="px-6 py-3.5">
+                          {(() => {
+                            const presence = getUserPresence(
+                              user.last_sign_in_at,
+                            );
+                            if (presence.isOnline) {
+                              return (
+                                <span className="text-xs text-muted-foreground">
+                                  —
+                                </span>
+                              );
+                            }
+                            return (
+                              <span className="text-xs text-muted-foreground">
+                                {formatRelativeTime(user.last_sign_in_at)}
+                              </span>
+                            );
+                          })()}
+                        </td>
+
                         {isAdmin && (
                           <td className="px-6 py-3.5 text-right">
                             <div className="relative inline-block" data-menu>
