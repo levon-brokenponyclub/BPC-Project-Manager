@@ -1,5 +1,47 @@
-# Logs
-logs
+# ─── Dependencies ─────────────────────────────────────────────────────────────
+node_modules/
+
+# ─── Build output ─────────────────────────────────────────────────────────────
+dist/
+dist-ssr/
+*.tsbuildinfo
+
+# ─── Build and cache artifacts ────────────────────────────────────────────────
+coverage/
+.cache/
+.turbo/
+.vercel/
+
+# ─── Local environment files ──────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ─── Local development metadata ───────────────────────────────────────────────
+.history/
+.netlify/
+.supabase/
+supabase/.temp/
+
+# ─── Design exports (large binary / Figma exports) ────────────────────────────
+design/
+
+# ─── macOS ────────────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ─── Editor ───────────────────────────────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# ─── Test artifacts ───────────────────────────────────────────────────────────
+playwright-report/
+test-results/
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,16 +49,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
+# ─── Misc ─────────────────────────────────────────────────────────────────────
 *.suo
 *.ntvs*
 *.njsproj
