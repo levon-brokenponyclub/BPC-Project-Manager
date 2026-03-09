@@ -84,7 +84,7 @@ const navItems = [
 ] as const;
 
 const sidebarNavItemClassName =
-  "focus-ring flex items-center rounded-[4px] px-[6px] py-[4px] text-[13px] font-medium leading-4 text-[#E2E3E5] transition-colors";
+  "focus-ring flex items-center rounded-[4px] px-[10px] py-[8px] text-[13px] font-medium leading-4 text-[#E2E3E5] transition-colors";
 
 function IconButton({
   label,
@@ -573,7 +573,7 @@ export default function AppShell({
                     onClick={() => setInboxOpen(false)}
                     className={cn(
                       sidebarNavItemClassName,
-                      active ? "bg-[#1A1C1F]" : "hover:bg-[#1A1C1F]",
+                      active ? "bg-[#1E1F2A]" : "hover:bg-[#1E1F2A]",
                       collapsed ? "h-10 justify-center px-0" : "gap-[10px]",
                     )}
                   >
@@ -600,7 +600,7 @@ export default function AppShell({
               title="Inbox"
               className={cn(
                 sidebarNavItemClassName,
-                inboxOpen ? "bg-[#1A1C1F]" : "hover:bg-[#1A1C1F]",
+                inboxOpen ? "bg-[#1E1F2A]" : "hover:bg-[#1E1F2A]",
                 collapsed ? "h-10 justify-center px-0" : "gap-[10px]",
               )}
             >
@@ -617,7 +617,7 @@ export default function AppShell({
               {!collapsed ? (
                 <>
                   <span className="flex-1 truncate text-left">Inbox</span>
-                  <span className="inline-flex min-w-[26px] items-center justify-center rounded-[4px] bg-[#151619] px-[6px] py-[3px] text-[11px] font-normal leading-[13px] text-white">
+                  <span className="inline-flex min-w-[26px] items-center justify-center rounded-[4px] bg-[#5E69D1] px-[6px] py-[3px] text-[11px] font-normal leading-[13px] text-white">
                     {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 </>
@@ -637,7 +637,7 @@ export default function AppShell({
                     onClick={() => setInboxOpen(false)}
                     className={cn(
                       sidebarNavItemClassName,
-                      active ? "bg-[#1A1C1F]" : "hover:bg-[#1A1C1F]",
+                      active ? "bg-[#1E1F2A]" : "hover:bg-[#1E1F2A]",
                       collapsed ? "h-10 justify-center px-0" : "gap-[10px]",
                     )}
                   >
@@ -659,6 +659,31 @@ export default function AppShell({
               })}
           </nav>
 
+          {!collapsed && isAdmin && workspaces.length > 0 ? (
+            <div className="mt-5 space-y-2">
+              <div className="px-2 pt-2 text-[12px] font-medium leading-[15px] text-[#939496]">
+                Workspaces
+              </div>
+              {workspaces.map((ws) => (
+                <NavLink
+                  key={ws.id}
+                  to={`/w/${ws.id}/project-overview`}
+                  title={ws.name}
+                  onClick={() => setInboxOpen(false)}
+                  className={cn(
+                    sidebarNavItemClassName,
+                    ws.id === workspaceId
+                      ? "bg-[#1E1F2A]"
+                      : "hover:bg-[#1E1F2A]",
+                    "gap-[10px]",
+                  )}
+                >
+                  <span className="truncate">{ws.name}</span>
+                </NavLink>
+              ))}
+            </div>
+          ) : null}
+
           {!collapsed && isAdmin ? (
             <div className="mt-5 space-y-2">
               <div className="px-2 pt-2 text-[12px] font-medium leading-[15px] text-[#939496]">
@@ -675,7 +700,7 @@ export default function AppShell({
                     onClick={() => setInboxOpen(false)}
                     className={cn(
                       sidebarNavItemClassName,
-                      active ? "bg-[#1A1C1F]" : "hover:bg-[#1A1C1F]",
+                      active ? "bg-[#1E1F2A]" : "hover:bg-[#1E1F2A]",
                       "gap-[10px]",
                     )}
                   >
