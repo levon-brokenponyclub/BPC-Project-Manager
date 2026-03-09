@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useParams } from "react-router-dom";
 import {
   Archive,
@@ -36,46 +36,67 @@ import { notify } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import type { WorkspaceAsset } from "@/types/models";
 
-// ─── Type config ─────────────────────────────────────────────────────────────
+// ─── Type config ──────────────────────────────────────────────────────────────
 
 const TYPE_CONFIG: Record<
   AssetType,
   {
     label: string;
+    plural: string;
     Icon: React.FC<{ className?: string }>;
     color: string;
     bgColor: string;
+    borderColor: string;
+    emptyDescription: string;
+    addLabel: string;
   }
 > = {
   file: {
     label: "File",
+    plural: "Files",
     Icon: FileText,
     color: "text-blue-400",
     bgColor: "bg-blue-500/10",
+    borderColor: "border-blue-500/20",
+    emptyDescription:
+      "Upload project files, proposals, and downloadable resources.",
+    addLabel: "Add a File",
   },
   link: {
     label: "Link",
+    plural: "Links",
     Icon: Link2,
     color: "text-purple-400",
     bgColor: "bg-purple-500/10",
+    borderColor: "border-purple-500/20",
+    emptyDescription:
+      "Save design links, Figma files, docs, and external resources.",
+    addLabel: "Add a Link",
   },
   login: {
     label: "Login",
+    plural: "Logins",
     Icon: KeyRound,
     color: "text-amber-400",
     bgColor: "bg-amber-500/10",
+    borderColor: "border-amber-500/20",
+    emptyDescription: "Store login references, portals, and access notes.",
+    addLabel: "Add Login",
   },
   plugin: {
     label: "Plugin",
+    plural: "Plugins",
     Icon: Package,
     color: "text-green-400",
     bgColor: "bg-green-500/10",
+    borderColor: "border-green-500/20",
+    emptyDescription:
+      "Track plugin details, license info, and download sources.",
+    addLabel: "Add Plugin",
   },
 };
 
-type FilterType = "all" | AssetType;
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatFileSize(bytes: number | null | undefined): string {
   if (!bytes) return "";
@@ -104,9 +125,59 @@ async function copyToClipboard(text: string, label: string): Promise<void> {
   }
 }
 
-// ─── Asset Card ───────────────────────────────────────────────────────────────
+// ─── Tooltip ──────────────────────────────────────────────────────────────────
 
-function AssetCard({
+function Tooltip({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}): React.ReactElement {
+  return (
+    <div className="group/tip relative inline-flex">
+      {children}
+      <span className="pointer-events-none absolute bottom-full left-1/2 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded border border-[#2A2C3A] bg-[#0F0F16] px-2 py-1 text-[10px] leading-none text-[#B0B1BC] opacity-0 shadow-lg transition-opacity group-hover/tip:opacity-100">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+// ─── Icon action button ───────────────────────────────────────────────────────
+
+function ActionBtn({
+  tooltip,
+  onClick,
+  danger,
+  children,
+}: {
+  tooltip: string;
+  onClick: () => void;
+  danger?: boolean;
+  children: ReactNode;
+}): React.ReactElement {
+  return (
+    <Tooltip label={tooltip}>
+      <button
+        type="button"
+        onClick={onClick}
+        className={cn(
+          "inline-flex h-7 w-7 items-center justify-center rounded-[4px] transition-colors",
+          danger
+            ? "text-[#5F6272] hover:bg-red-950/50 hover:text-red-400"
+            : "text-[#5F6272] hover:bg-[#2A2C3A] hover:text-[#B0B1BC]",
+        )}
+      >
+        {children}
+      </button>
+    </Tooltip>
+  );
+}
+
+// ─── Asset row ────────────────────────────────────────────────────────────────
+
+function AssetRow({
   asset,
   onEdit,
   onDelete,
@@ -118,162 +189,225 @@ function AssetCard({
   onDownload: (a: WorkspaceAsset) => void;
 }): React.ReactElement {
   const assetType = asset.type as AssetType;
-  const cfg = TYPE_CONFIG[assetType] ?? TYPE_CONFIG.link;
-  const { Icon } = cfg;
+
+  const secondaryParts: string[] = [];
+  if (assetType === "file") {
+    if (asset.file_name) secondaryParts.push(asset.file_name);
+    if (asset.file_size_bytes)
+      secondaryParts.push(formatFileSize(asset.file_size_bytes));
+  } else if (assetType === "link") {
+    if (asset.url) secondaryParts.push(extractDomain(asset.url));
+    if (asset.category) secondaryParts.push(asset.category);
+  } else if (assetType === "login") {
+    if (asset.username) secondaryParts.push(asset.username);
+    if (asset.url) secondaryParts.push(extractDomain(asset.url));
+  } else if (assetType === "plugin") {
+    if (asset.vendor) secondaryParts.push(asset.vendor);
+    if (asset.url) secondaryParts.push(extractDomain(asset.url));
+  }
+
+  const notesSnippet =
+    (assetType === "login" || assetType === "plugin") && asset.notes
+      ? asset.notes.slice(0, 55) + (asset.notes.length > 55 ? "…" : "")
+      : null;
 
   return (
-    <div className="group flex items-start gap-4 rounded-lg border border-[#252636] bg-[#1A1B25] px-4 py-3.5 transition-colors hover:bg-[#1E1F2C]">
-      {/* Type icon */}
-      <div
-        className={cn(
-          "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
-          cfg.bgColor,
-        )}
-      >
-        <Icon className={cn("h-4 w-4", cfg.color)} />
-      </div>
-
+    <div className="group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-[#1E1F2D]">
       {/* Content */}
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="text-sm font-medium text-foreground">{asset.title}</p>
-          <span
-            className={cn(
-              "inline-flex items-center rounded-[4px] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-              cfg.bgColor,
-              cfg.color,
-            )}
-          >
-            {cfg.label}
-          </span>
-          {asset.category ? (
-            <span className="inline-flex items-center rounded-[4px] border border-[#292B38] px-1.5 py-0.5 text-[10px] text-[#6B6C7E]">
+        <div className="flex items-baseline gap-2">
+          <p className="truncate text-[13px] font-medium text-foreground leading-snug">
+            {asset.title}
+          </p>
+          {asset.category && assetType !== "link" ? (
+            <span className="shrink-0 rounded-[3px] border border-[#292B38] px-1.5 py-px text-[9px] font-medium uppercase tracking-wide text-[#5F6272]">
               {asset.category}
             </span>
           ) : null}
         </div>
-
-        {asset.description ? (
-          <p className="mt-1 line-clamp-2 text-xs text-muted">
-            {asset.description}
+        {secondaryParts.length > 0 ? (
+          <p className="mt-0.5 truncate text-[11px] text-[#5F6272]">
+            {secondaryParts.join(" · ")}
           </p>
         ) : null}
-
-        {/* Type-specific secondary info */}
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#5F6272]">
-          {assetType === "file" && (
-            <>
-              {asset.file_name ? (
-                <span className="font-mono">{asset.file_name}</span>
-              ) : null}
-              {asset.file_size_bytes ? (
-                <span>{formatFileSize(asset.file_size_bytes)}</span>
-              ) : null}
-            </>
-          )}
-          {assetType === "link" && asset.url ? (
-            <span className="truncate">{extractDomain(asset.url)}</span>
-          ) : null}
-          {assetType === "login" && (
-            <>
-              {asset.username ? (
-                <span className="truncate">{asset.username}</span>
-              ) : null}
-              {asset.url ? (
-                <span className="truncate">{extractDomain(asset.url)}</span>
-              ) : null}
-              {asset.notes ? (
-                <span className="truncate">{asset.notes.slice(0, 60)}</span>
-              ) : null}
-            </>
-          )}
-          {assetType === "plugin" && (
-            <>
-              {asset.vendor ? <span>{asset.vendor}</span> : null}
-              {asset.url ? (
-                <span className="truncate">{extractDomain(asset.url)}</span>
-              ) : null}
-              {asset.notes ? (
-                <span className="truncate">{asset.notes.slice(0, 60)}</span>
-              ) : null}
-            </>
-          )}
-          <span className="ml-auto shrink-0">{timeAgo(asset.created_at)}</span>
-        </div>
+        {notesSnippet ? (
+          <p className="mt-0.5 truncate text-[11px] italic text-[#4A4B5A]">
+            {notesSnippet}
+          </p>
+        ) : null}
       </div>
 
-      {/* Actions (appear on hover) */}
-      <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-        {/* Open link */}
+      {/* Time — hidden when actions visible */}
+      <span className="shrink-0 text-[11px] text-[#4A4B5A] transition-opacity group-hover:opacity-0">
+        {timeAgo(asset.created_at)}
+      </span>
+
+      {/* Hover actions */}
+      <div className="absolute right-3 flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
         {(assetType === "link" ||
           assetType === "login" ||
           assetType === "plugin") &&
         asset.url ? (
-          <button
-            type="button"
-            title="Open link"
+          <ActionBtn
+            tooltip="Open link"
             onClick={() => window.open(asset.url!, "_blank", "noopener")}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-[4px] text-[#5F6272] transition-colors hover:bg-[#2A2C3A] hover:text-[#B0B1BC]"
           >
             <ExternalLink className="h-3.5 w-3.5" />
-          </button>
+          </ActionBtn>
         ) : null}
 
-        {/* Download file */}
         {assetType === "file" && asset.file_path ? (
-          <button
-            type="button"
-            title="Download"
-            onClick={() => onDownload(asset)}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-[4px] text-[#5F6272] transition-colors hover:bg-[#2A2C3A] hover:text-[#B0B1BC]"
-          >
+          <ActionBtn tooltip="Download" onClick={() => onDownload(asset)}>
             <Download className="h-3.5 w-3.5" />
-          </button>
+          </ActionBtn>
         ) : null}
 
-        {/* Copy URL */}
         {asset.url ? (
-          <button
-            type="button"
-            title="Copy URL"
+          <ActionBtn
+            tooltip="Copy URL"
             onClick={() => void copyToClipboard(asset.url!, "URL")}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-[4px] text-[#5F6272] transition-colors hover:bg-[#2A2C3A] hover:text-[#B0B1BC]"
           >
             <Copy className="h-3.5 w-3.5" />
-          </button>
+          </ActionBtn>
         ) : null}
 
-        {/* Copy username */}
         {assetType === "login" && asset.username ? (
+          <ActionBtn
+            tooltip="Copy username"
+            onClick={() => void copyToClipboard(asset.username!, "Username")}
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </ActionBtn>
+        ) : null}
+
+        <ActionBtn tooltip="Edit" onClick={() => onEdit(asset)}>
+          <Pencil className="h-3.5 w-3.5" />
+        </ActionBtn>
+
+        <ActionBtn tooltip="Delete" onClick={() => onDelete(asset)} danger>
+          <Trash2 className="h-3.5 w-3.5" />
+        </ActionBtn>
+      </div>
+    </div>
+  );
+}
+
+// ─── Section empty state ──────────────────────────────────────────────────────
+
+function SectionEmptyState({
+  type,
+  onAdd,
+}: {
+  type: AssetType;
+  onAdd: () => void;
+}): React.ReactElement {
+  const cfg = TYPE_CONFIG[type];
+  const { Icon } = cfg;
+  return (
+    <div className="flex flex-col items-center justify-center py-8 text-center">
+      <div
+        className={cn(
+          "mb-3 flex h-12 w-12 items-center justify-center rounded-xl",
+          cfg.bgColor,
+        )}
+      >
+        <Icon className={cn("h-5 w-5 opacity-60", cfg.color)} />
+      </div>
+      <p className="max-w-[200px] text-xs leading-relaxed text-[#4A4B5A]">
+        {cfg.emptyDescription}
+      </p>
+      <button
+        type="button"
+        onClick={onAdd}
+        className={cn(
+          "mt-4 flex items-center gap-1.5 rounded-[6px] border px-3 py-1.5 text-[11px] font-medium transition-colors",
+          cfg.borderColor,
+          cfg.bgColor,
+          cfg.color,
+          "hover:opacity-80",
+        )}
+      >
+        <Plus className="h-3 w-3" />
+        {cfg.addLabel}
+      </button>
+    </div>
+  );
+}
+
+// ─── Section card ─────────────────────────────────────────────────────────────
+
+function SectionCard({
+  type,
+  assets,
+  onAdd,
+  onEdit,
+  onDelete,
+  onDownload,
+}: {
+  type: AssetType;
+  assets: WorkspaceAsset[];
+  onAdd: (t: AssetType) => void;
+  onEdit: (a: WorkspaceAsset) => void;
+  onDelete: (a: WorkspaceAsset) => void;
+  onDownload: (a: WorkspaceAsset) => void;
+}): React.ReactElement {
+  const cfg = TYPE_CONFIG[type];
+  const { Icon } = cfg;
+
+  return (
+    <div className="flex flex-col rounded-xl border border-[#222330] bg-[#16171F] shadow-sm">
+      {/* Card header */}
+      <div className="flex items-center gap-2.5 border-b border-[#1E1F2C] px-4 py-3">
+        <span
+          className={cn(
+            "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
+            cfg.bgColor,
+          )}
+        >
+          <Icon className={cn("h-3.5 w-3.5", cfg.color)} />
+        </span>
+        <span className="flex-1 text-[13px] font-semibold text-foreground">
+          {cfg.plural}
+        </span>
+        {assets.length > 0 ? (
+          <span
+            className={cn(
+              "rounded-full px-2 py-0.5 text-[10px] font-semibold tabular-nums",
+              cfg.bgColor,
+              cfg.color,
+            )}
+          >
+            {assets.length}
+          </span>
+        ) : null}
+        <Tooltip label={`Add ${cfg.label}`}>
           <button
             type="button"
-            title="Copy username"
-            onClick={() => void copyToClipboard(asset.username!, "Username")}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-[4px] text-[#5F6272] transition-colors hover:bg-[#2A2C3A] hover:text-[#B0B1BC]"
+            onClick={() => onAdd(type)}
+            className="inline-flex h-6 w-6 items-center justify-center rounded text-[#4A4B5A] transition-colors hover:bg-[#1E1F2C] hover:text-[#B0B1BC]"
           >
-            <Copy className="h-3.5 w-3.5" />
+            <Plus className="h-3.5 w-3.5" />
           </button>
-        ) : null}
+        </Tooltip>
+      </div>
 
-        {/* Edit */}
-        <button
-          type="button"
-          title="Edit"
-          onClick={() => onEdit(asset)}
-          className="inline-flex h-7 w-7 items-center justify-center rounded-[4px] text-[#5F6272] transition-colors hover:bg-[#2A2C3A] hover:text-[#B0B1BC]"
-        >
-          <Pencil className="h-3.5 w-3.5" />
-        </button>
-
-        {/* Delete */}
-        <button
-          type="button"
-          title="Delete"
-          onClick={() => onDelete(asset)}
-          className="inline-flex h-7 w-7 items-center justify-center rounded-[4px] text-[#5F6272] transition-colors hover:bg-[#2A2C3A] hover:text-[#E05C5C]"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
+      {/* Card body */}
+      <div className="relative min-h-[120px] flex-1 px-1 py-1">
+        {assets.length === 0 ? (
+          <SectionEmptyState type={type} onAdd={() => onAdd(type)} />
+        ) : (
+          <div className="space-y-0.5">
+            {assets.map((asset) => (
+              <AssetRow
+                key={asset.id}
+                asset={asset}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onDownload={onDownload}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -284,9 +418,6 @@ function AssetCard({
 export function AssetLibraryPage(): React.ReactElement {
   const { workspaceId = "" } = useParams<{ workspaceId: string }>();
   const queryClient = useQueryClient();
-
-  // ── Filter ────────────────────────────────────────────────────────────────
-  const [filter, setFilter] = useState<FilterType>("all");
 
   // ── Modal state ───────────────────────────────────────────────────────────
   const [modalOpen, setModalOpen] = useState(false);
@@ -316,15 +447,14 @@ export function AssetLibraryPage(): React.ReactElement {
   });
 
   const assets = assetsQuery.data ?? [];
-  const filtered =
-    filter === "all" ? assets : assets.filter((a) => a.type === filter);
+  const byType = (t: AssetType) => assets.filter((a) => a.type === t);
 
   const counts = {
-    all: assets.length,
-    file: assets.filter((a) => a.type === "file").length,
-    link: assets.filter((a) => a.type === "link").length,
-    login: assets.filter((a) => a.type === "login").length,
-    plugin: assets.filter((a) => a.type === "plugin").length,
+    total: assets.length,
+    file: byType("file").length,
+    link: byType("link").length,
+    login: byType("login").length,
+    plugin: byType("plugin").length,
   };
 
   // ── Handlers ──────────────────────────────────────────────────────────────
@@ -458,7 +588,6 @@ export function AssetLibraryPage(): React.ReactElement {
     }
   }
 
-  // Auto-scroll modal title input into view when modal opens
   useEffect(() => {
     if (!modalOpen) return;
     const timer = setTimeout(() => {
@@ -467,15 +596,7 @@ export function AssetLibraryPage(): React.ReactElement {
     return () => clearTimeout(timer);
   }, [modalOpen]);
 
-  // ── Render ─────────────────────────────────────────────────────────────────
-
-  const FILTERS: { key: FilterType; label: string }[] = [
-    { key: "all", label: "All" },
-    { key: "file", label: "Files" },
-    { key: "link", label: "Links" },
-    { key: "login", label: "Logins" },
-    { key: "plugin", label: "Plugins" },
-  ];
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <DataStateWrapper
@@ -485,11 +606,11 @@ export function AssetLibraryPage(): React.ReactElement {
       onRetry={() => void assetsQuery.refetch()}
       isEmpty={false}
       skeleton={
-        <div className="space-y-3 p-6">
+        <div className="grid grid-cols-2 gap-4 p-6">
           {[...Array(4)].map((_, i) => (
             <div
               key={i}
-              className="h-16 animate-pulse rounded-lg bg-[#1E1F2D]"
+              className="h-52 animate-pulse rounded-xl bg-[#16171F]"
             />
           ))}
         </div>
@@ -497,18 +618,17 @@ export function AssetLibraryPage(): React.ReactElement {
       empty={<span />}
     >
       <div className="flex flex-col space-y-5 p-6">
-        {/* ── Header ────────────────────────────────────────────────────── */}
+        {/* ── Header ───────────────────────────────────────────────────── */}
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <Archive className="h-5 w-5 text-primary" />
               <h1 className="text-xl font-semibold tracking-tight text-foreground">
                 Asset Library
               </h1>
             </div>
             <p className="mt-1 text-sm text-muted">
-              Shared project assets — files, design links, login references, and
-              plugin details.
+              Shared project resources — files, links, logins, and plugins.
             </p>
           </div>
           <Button onClick={() => openCreate()} className="shrink-0">
@@ -517,89 +637,49 @@ export function AssetLibraryPage(): React.ReactElement {
           </Button>
         </div>
 
-        {/* ── Filter pills ──────────────────────────────────────────────── */}
-        <div className="flex flex-wrap gap-2">
-          {FILTERS.map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setFilter(key)}
-              className={cn(
-                "flex items-center gap-1.5 rounded-[6px] border px-3 py-1.5 text-xs font-medium transition-colors",
-                filter === key
-                  ? "border-primary/60 bg-primary/10 text-primary"
-                  : "border-[#292B38] bg-[#1E1F2D] text-muted hover:border-[#3A3B4A] hover:text-foreground",
-              )}
-            >
-              {label}
-              <span className="tabular-nums opacity-70">{counts[key]}</span>
-            </button>
+        {/* ── Stat bar ─────────────────────────────────────────────────── */}
+        {counts.total > 0 ? (
+          <div className="flex flex-wrap gap-4 rounded-lg border border-[#1E1F2C] bg-[#13141C] px-4 py-3">
+            <div className="flex items-center gap-1.5 text-xs text-muted">
+              <span className="text-sm font-semibold tabular-nums text-foreground">
+                {counts.total}
+              </span>
+              Total
+            </div>
+            {(["file", "link", "login", "plugin"] as AssetType[]).map((t) => {
+              const cfg = TYPE_CONFIG[t];
+              const { Icon } = cfg;
+              if (counts[t] === 0) return null;
+              return (
+                <div
+                  key={t}
+                  className="flex items-center gap-1.5 text-xs text-muted"
+                >
+                  <Icon className={cn("h-3 w-3", cfg.color)} />
+                  <span className={cn("font-semibold tabular-nums", cfg.color)}>
+                    {counts[t]}
+                  </span>
+                  {cfg.plural}
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {/* ── 2×2 section grid ─────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {(["file", "link", "login", "plugin"] as AssetType[]).map((type) => (
+            <SectionCard
+              key={type}
+              type={type}
+              assets={byType(type)}
+              onAdd={openCreate}
+              onEdit={openEdit}
+              onDelete={setDeleteTarget}
+              onDownload={(a) => void handleDownload(a)}
+            />
           ))}
         </div>
-
-        {/* ── Quick-add by type ─────────────────────────────────────────── */}
-        {assets.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#292B38] py-16 text-center">
-            <Archive className="mb-3 h-10 w-10 text-[#2E3040]" />
-            <p className="text-sm font-medium text-foreground">No assets yet</p>
-            <p className="mt-1 text-xs text-muted">
-              Add project files, design links, logins, and plugin details.
-            </p>
-            <div className="mt-5 flex flex-wrap justify-center gap-2">
-              {(["file", "link", "login", "plugin"] as AssetType[]).map(
-                (type) => {
-                  const cfg = TYPE_CONFIG[type];
-                  const { Icon } = cfg;
-                  return (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => openCreate(type)}
-                      className={cn(
-                        "flex items-center gap-1.5 rounded-[6px] border px-3 py-2 text-xs font-medium transition-colors",
-                        "border-[#292B38] bg-[#1E1F2D] text-muted hover:border-[#3A3B4A] hover:text-foreground",
-                      )}
-                    >
-                      <Icon className={cn("h-3.5 w-3.5", cfg.color)} />
-                      Add {cfg.label}
-                    </button>
-                  );
-                },
-              )}
-            </div>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#292B38] py-12 text-center">
-            <p className="text-sm text-muted">
-              No{" "}
-              {filter !== "all"
-                ? TYPE_CONFIG[filter as AssetType].label.toLowerCase() + "s"
-                : "assets"}{" "}
-              found.
-            </p>
-            <button
-              type="button"
-              onClick={() =>
-                openCreate(filter !== "all" ? (filter as AssetType) : "link")
-              }
-              className="mt-3 text-xs text-primary hover:underline"
-            >
-              Add one now
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {filtered.map((asset) => (
-              <AssetCard
-                key={asset.id}
-                asset={asset}
-                onEdit={openEdit}
-                onDelete={setDeleteTarget}
-                onDownload={(a) => void handleDownload(a)}
-              />
-            ))}
-          </div>
-        )}
       </div>
 
       {/* ── Create / Edit Modal ──────────────────────────────────────────── */}
