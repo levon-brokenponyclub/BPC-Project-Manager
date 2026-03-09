@@ -68,7 +68,7 @@ const fmtSource = read("src/lib/notifications/formatNotificationMessage.ts");
 
 /**
  * For each notification type, try to extract the title template string from
- * the switch-case block.  We do a simple regex per case block.
+ * the switch-case block.  Enhanced to handle multi-line templates and ternaries.
  */
 function extractTitleTemplate(type) {
   // Match:  case "type.name": { title = `...`; ... }
@@ -80,13 +80,48 @@ function extractTitleTemplate(type) {
   const m = fmtSource.match(re);
   if (!m) return null;
   const body = m[1];
-  // grab first title = `...` or title = actor + ...
-  const titleMatch = body.match(/title\s*=\s*`([^`]+)`/);
-  if (titleMatch) return titleMatch[1];
-  // fallback: multi-line ternary — grab the first string fragment
-  const ternaryMatch = body.match(/title\s*=\s*[^;]+?`([^`]+)`/);
-  if (ternaryMatch) return ternaryMatch[1];
-  return null;
+
+  // Try to find title assignment — handle multiple patterns:
+  // 1. title = `simple template`;
+  // 2. title = actor + " did " + `something`;
+  // 3. title = ternary ? `option1` : `option2`;
+  // 4. Multi-line templates with ${...} interpolations
+  // 5. Nested template literals like ${cond ? `inner` : ""}
+  
+  // First, find the title assignment line(s)
+  const titleAssignMatch = body.match(/title\s*=\s*([^;]+);/s);
+  if (!titleAssignMatch) return null;
+  const assignment = titleAssignMatch[1].trim();
+  
+  // Find the main template literal by tracking ${ } depth
+  const firstBacktick = assignment.indexOf('`');
+  if (firstBacktick === -1) return "—";
+  
+  let i = firstBacktick + 1;
+  let braceDepth = 0; // Tracks ${ } nesting depth
+  
+  while (i < assignment.length) {
+    const char = assignment[i];
+    const prev = assignment[i - 1];
+    
+    if (char === '{' && prev === '$') {
+      braceDepth++;
+    } else if (char === '}' && braceDepth > 0) {
+      braceDepth--;
+    } else if (char === '`' && braceDepth === 0) {
+      // Found the closing backtick at top level
+      const template = assignment.substring(firstBacktick + 1, i);
+      // Truncate if too long
+      if (template.length > 150) {
+        return template.substring(0, 147) + "...";
+      }
+      return template;
+    }
+    i++;
+  }
+  
+  // Fallback if we couldn't find a proper match
+  return assignment.substring(0, 100).replace(/\s+/g, " ");
 }
 
 // ---------------------------------------------------------------------------
@@ -106,26 +141,85 @@ function extractCatalogEntry(type) {
 }
 
 // ---------------------------------------------------------------------------
-// 5.  Infer route category from formatter source
+// 5.  Infer route category from type and formatter source
 // ---------------------------------------------------------------------------
 function inferRoute(type) {
-  const entity = (extractCatalogEntry(type) || {}).entity || "";
+  // Check if the formatter has a specific route pattern for this type
+  const escaped = type.replace(".", "\\.");
+  const caseMatch = fmtSource.match(
+    new RegExp(
+      `case\\s+"${escaped}":\\s*\\{([\\s\\S]*?)(?=case\\s+"|default:|\\}\\s*$)`,
+      "m",
+    ),
+  );
+
+  if (caseMatch) {
+    const body = caseMatch[1];
+    // Look for route assignments or patterns
+    if (body.includes("task_id") || body.includes("/tasks?task=")) {
+      return "/w/:workspaceId/tasks?task=:taskId";
+    }
+    if (body.includes("asset_id") || body.includes("/assets/")) {
+      return "/w/:workspaceId/assets/:assetId";
+    }
+    if (body.includes("settings") || body.includes("/settings")) {
+      return "/w/:workspaceId/settings";
+    }
+    if (body.includes("clients") || body.includes("/clients")) {
+      return "/w/:workspaceId/clients";
+    }
+  }
+
+  // Fallback to prefix-based inference
   if (
     type.startsWith("task.") ||
     type.startsWith("comment.") ||
-    type.startsWith("attachment.")
-  )
-    return "/w/:id/tasks";
-  if (type.startsWith("asset.")) return "/w/:id/assets";
-  if (type.startsWith("workspace.")) return "/w/:id/settings or /w/:id/clients";
-  if (type.startsWith("integration.")) return "n/a";
-  if (type.startsWith("list.")) return "/w/:id/tasks";
-  if (type.startsWith("content.")) return "/w/:id/tasks";
+    type.startsWith("attachment.") ||
+    type.startsWith("content.") ||
+    type.startsWith("list.")
+  ) {
+    return "/w/:workspaceId/tasks?task=:taskId";
+  }
+  if (type.startsWith("asset.")) return "/w/:workspaceId/assets/:assetId";
+  if (type.startsWith("workspace.")) {
+    // Member events might go to settings or clients
+    if (type.includes("invite") || type.includes("member")) {
+      return "/w/:workspaceId/settings/members or /w/:workspaceId/clients";
+    }
+    return "/w/:workspaceId/settings";
+  }
+  if (type.startsWith("integration.")) return "n/a (email/external)";
   return "—";
 }
 
 // ---------------------------------------------------------------------------
-// 6.  Detect localStorage keys from browserNotifications.ts
+// 6.  Determine self-action dedup behavior
+// ---------------------------------------------------------------------------
+function hasSelfActionDedup(type) {
+  // All types go through the self-action dedup check in useRealtimeNotifications
+  // The check is: if payload.actor.id === currentUserId, return early
+  // This applies to all notification types
+  return "yes";
+}
+
+// ---------------------------------------------------------------------------
+// 7.  Determine visible tab behavior
+// ---------------------------------------------------------------------------
+function getVisibleTabBehavior(isSonner, isBrowser) {
+  if (isSonner && isBrowser) {
+    return "Visible: Sonner toast only | Hidden: Sonner + Browser notification";
+  } else if (isSonner && !isBrowser) {
+    return "Visible: Sonner toast only | Hidden: Sonner toast only";
+  } else if (!isSonner && isBrowser) {
+    // This shouldn't happen (browser requires sonner allow-list)
+    return "Visible: Nothing | Hidden: Browser notification";
+  } else {
+    return "Visible: Nothing | Hidden: Nothing (inbox only)";
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 8.  Detect localStorage keys from browserNotifications.ts
 // ---------------------------------------------------------------------------
 const browserSource = read("src/lib/browserNotifications.ts");
 
@@ -135,27 +229,32 @@ for (const m of browserSource.matchAll(/["'](bpc_[^"']+)["']/g)) {
 }
 
 // ---------------------------------------------------------------------------
-// 7.  Build per-type metadata model
+// 9.  Build per-type metadata model
 // ---------------------------------------------------------------------------
 const entries = ALL_TYPES.map((type) => {
   const catalog = extractCatalogEntry(type);
   const titleTemplate = extractTitleTemplate(type);
+  const isSonner = SONNER_SET.has(type);
+  const isBrowser = BROWSER_SET.has(type);
+
   return {
     type,
     label: catalog?.label ?? type,
     entity: catalog?.entity ?? "—",
     icon: catalog?.icon ?? "—",
     inbox: true, // all types persisted to public.notifications
-    sonner: SONNER_SET.has(type),
-    browser: BROWSER_SET.has(type),
-    push: "planned",
+    sonner: isSonner,
+    browser: isBrowser,
+    push: "no", // not yet implemented
     route: inferRoute(type),
     titleTemplate: titleTemplate ?? "—",
+    selfActionDedup: hasSelfActionDedup(type),
+    visibleTabBehavior: getVisibleTabBehavior(isSonner, isBrowser),
   };
 });
 
 // ---------------------------------------------------------------------------
-// 8.  Orphan analysis
+// 10.  Orphan analysis
 // ---------------------------------------------------------------------------
 const catalogMatches = new Set(
   ALL_TYPES.filter((t) => extractCatalogEntry(t) !== null),
@@ -173,15 +272,97 @@ const sonnerNotInMasterList = [...SONNER_SET].filter(
 );
 
 // ---------------------------------------------------------------------------
-// 9.  Render Markdown
+// 11.  Render Markdown
 // ---------------------------------------------------------------------------
 const now = new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC";
 
 const yesNo = (v) =>
-  v === true ? "✅" : v === "planned" ? "🔜 planned" : "❌";
+  v === true
+    ? "✅"
+    : v === "no"
+      ? "❌"
+      : v === "planned"
+        ? "🔜 planned"
+        : v === "yes"
+          ? "✅"
+          : "❌";
 
 function tableRow(e) {
-  return `| \`${e.type}\` | ${e.label} | ${e.entity} | ${yesNo(e.inbox)} | ${yesNo(e.sonner)} | ${yesNo(e.browser)} | ${yesNo(e.push)} | \`${e.route}\` |`;
+  return `| \`${e.type}\` | ${e.label} | ${e.entity} | ${yesNo(e.inbox)} | ${yesNo(e.sonner)} | ${yesNo(e.browser)} | ${yesNo(e.push)} | ${yesNo(e.selfActionDedup)} | \`${e.route}\` |`;
+}
+
+// Generate example rendered messages for common types
+function generateExamples() {
+  const examples = [
+    {
+      type: "task.created",
+      actor: "Levon",
+      entity: "New Homepage Task",
+      description: null,
+    },
+    {
+      type: "task.status_changed",
+      actor: "Levon",
+      entity: "New Homepage Task",
+      description: "Todo → In Progress",
+    },
+    {
+      type: "task.assignee_added",
+      actor: "Levon",
+      entity: "New Homepage Task",
+      description: "Assigned to Sarah",
+    },
+    {
+      type: "comment.created",
+      actor: "Levon",
+      entity: "Homepage Design",
+      description: "This looks great! Let's ship it.",
+    },
+    {
+      type: "attachment.added",
+      actor: "Levon",
+      entity: "Homepage Design",
+      description: "design-mockup.fig (2.3 MB)",
+    },
+    {
+      type: "workspace.invite_sent",
+      actor: "Levon",
+      entity: "BPC Workspace",
+      description: "Invited sarah@example.com",
+    },
+    {
+      type: "workspace.member_joined",
+      actor: "Sarah Johnson",
+      entity: "BPC Workspace",
+      description: null,
+    },
+  ];
+
+  return examples
+    .map((ex) => {
+      const entry = entries.find((e) => e.type === ex.type);
+      if (!entry) return "";
+
+      let rendered = `**${ex.actor}**`;
+      if (ex.type === "workspace.member_joined") {
+        rendered = `**${ex.actor}** joined the workspace`;
+      } else if (ex.type === "task.created") {
+        rendered = `**${ex.actor}** created "${ex.entity}"`;
+      } else if (ex.type === "task.status_changed") {
+        rendered = `**${ex.actor}** changed "${ex.entity}" → ${ex.description}`;
+      } else if (ex.type === "task.assignee_added") {
+        rendered = `**${ex.actor}** assigned "${ex.entity}" to ${ex.description.replace("Assigned to ", "")}`;
+      } else if (ex.type === "comment.created") {
+        rendered = `**${ex.actor}** commented on "${ex.entity}"\n  > ${ex.description}`;
+      } else if (ex.type === "attachment.added") {
+        rendered = `**${ex.actor}** uploaded a file to "${ex.entity}"\n  📎 ${ex.description}`;
+      } else if (ex.type === "workspace.invite_sent") {
+        rendered = `**${ex.actor}** ${ex.description} to the workspace`;
+      }
+
+      return `### \`${ex.type}\`\n\n${rendered}\n\n**Delivery:** ${entry.sonner ? "Sonner toast" : "Inbox only"}${entry.browser ? " + Browser notification (if tab hidden)" : ""}\n**Route:** \`${entry.route}\``;
+    })
+    .join("\n\n---\n\n");
 }
 
 const md = `<!-- AUTO-GENERATED — do not edit manually -->
@@ -201,12 +382,13 @@ Event occurs in the app
   → Supabase Realtime pushes INSERT event to the subscribed client
   → useRealtimeNotifications (hook) receives the event
       ├── invalidates React Query caches (inbox + unread count badge)
+      ├── performs self-action dedup check (skip if user's own action)
       ├── shows a Sonner in-app toast  [if type is on the allow-list]
       └── shows a browser desktop notification  [if tab hidden + permission granted]
 \`\`\`
 
 **Persistence:** All notification rows are stored in \`public.notifications\` and
-displayed in the in-app Inbox panel.  The inbox is the durable notification history.
+displayed in the in-app Inbox panel. The inbox is the durable notification history.
 
 **Realtime toasts:** A subset of high-value types produce a Sonner toast via
 \`mapNotificationToToast.ts\`.
@@ -215,21 +397,56 @@ displayed in the in-app Inbox panel.  The inbox is the durable notification hist
 \`src/lib/browserNotifications.ts\`, only when \`document.visibilityState !== "visible"\`
 and OS permission is granted.
 
-**Push notifications:** Not yet implemented — marked as \`planned\` in the table below.
+**Self-action dedup:** All notification types go through self-action deduplication.
+If \`payload.actor.id\` matches the current user, the realtime toast and browser
+notification are suppressed (user already got feedback from their own action).
+
+**Push notifications:** Not yet implemented.
 
 ---
 
 ## 1. Notification Types
 
-| Type | Label | Entity | Inbox | Sonner | Browser | Push | Route |
-|------|-------|--------|-------|--------|---------|------|-------|
+| Type | Label | Entity | Inbox | Sonner | Browser | Push | Self-Dedup | Route |
+|------|-------|--------|-------|--------|---------|------|------------|-------|
 ${entries.map(tableRow).join("\n")}
 
-**Legend:** ✅ = active  🔜 planned = not yet implemented  ❌ = not applicable
+**Legend:**
+- ✅ = active / yes
+- ❌ = not active / not applicable
+- 🔜 planned = not yet implemented
+
+**Column Guide:**
+- **Inbox**: Persisted to \`public.notifications\` table (always ✅ for all types)
+- **Sonner**: Shows in-app toast via Sonner library (if on allow-list)
+- **Browser**: Shows OS desktop notification (if tab hidden + permission granted)
+- **Push**: Web push notification via service worker (not yet implemented)
+- **Self-Dedup**: Whether self-action deduplication applies (✅ for all types)
+- **Route**: In-app navigation target when notification is clicked
 
 ---
 
-## 2. Notification Payload Structure
+## 2. Visible Tab Behavior
+
+When a realtime notification arrives, behavior depends on tab visibility:
+
+| Scenario | Sonner? | Browser? | Behavior |
+|----------|---------|----------|----------|
+| **Tab visible + Type on allow-list** | ✅ | ❌ | Sonner toast only |
+| **Tab hidden + Type on allow-list** | ✅ | ✅ | Sonner toast + Browser notification |
+| **Tab visible + Type NOT on allow-list** | ❌ | ❌ | Inbox update only |
+| **Tab hidden + Type NOT on allow-list** | ❌ | ❌ | Inbox update only |
+
+**Per-type summary:**
+
+${entries
+  .filter((e) => e.sonner || e.browser)
+  .map((e) => `- \`${e.type}\`: ${e.visibleTabBehavior}`)
+  .join("\n")}
+
+---
+
+## 3. Notification Payload Structure
 
 All notification payloads are normalised to \`NotificationPayloadV2\` (defined in
 \`src/lib/notifications/notificationTypes.ts\`) before being passed to the formatter
@@ -283,7 +500,7 @@ legacy payload shapes transparently so older rows still render correctly.
 
 ---
 
-## 3. Formatting Rules
+## 4. Formatting Rules
 
 **File:** \`src/lib/notifications/formatNotificationMessage.ts\`
 
@@ -317,19 +534,35 @@ ${entries
 
 ---
 
-## 4. Delivery Layers
+## 5. Source Code Map
+
+| Component | File | What it does |
+|-----------|------|--------------|
+| **Type definitions** | \`src/lib/notifications/notificationTypes.ts\` | Master list of all 43 notification types + \`NotificationPayloadV2\` interface |
+| **Catalog metadata** | \`src/lib/notifications/notificationCatalog.ts\` | Per-type label, icon, entity classification |
+| **Message formatter** | \`src/lib/notifications/formatNotificationMessage.ts\` | Converts payload → human-readable title + description |
+| **Sonner allow-list** | \`src/lib/notifications/mapNotificationToToast.ts\` | \`REALTIME_TOAST_TYPES\` Set — which types trigger in-app toasts |
+| **Realtime subscription** | \`src/hooks/useRealtimeNotifications.ts\` | Subscribes to Supabase postgres_changes, invalidates caches, shows toasts + desktop notifications |
+| **Browser notifications** | \`src/lib/browserNotifications.ts\` | Native \`Notification\` API helpers, permission management, localStorage flags |
+| **Inbox queries** | \`src/api/notifications.ts\` | \`listNotifications()\`, \`getUnreadNotificationCount()\`, \`markAsRead()\` |
+| **Database schema** | \`supabase/migrations/*.sql\` | \`public.notifications\` table, RLS policies, indexes |
+
+---
+
+## 6. Delivery Layers
 
 | Layer | File | How it works |
 |-------|------|--------------|
-| **Inbox persistence** | \`supabase/migrations/\` + backend edge functions | Row inserted into \`public.notifications\`; fetched by \`listNotifications()\` in \`src/api/notifications.ts\` |
+| **Backend creation** | Edge functions, backend mutations | Inserts row into \`public.notifications\` with \`user_id\`, \`type\`, \`payload\` |
+| **Inbox persistence** | \`src/api/notifications.ts\` | Fetched by \`listNotifications()\`, displayed in Inbox panel |
 | **Unread badge** | \`src/api/notifications.ts\` → \`getUnreadNotificationCount()\` | React Query cache invalidated on each realtime INSERT |
-| **Sonner in-app toast** | \`src/hooks/useRealtimeNotifications.ts\` + \`src/lib/notifications/mapNotificationToToast.ts\` | Allow-list check (\`REALTIME_TOAST_TYPES\`), self-action dedup, then \`toast()\` from Sonner |
-| **Browser desktop notification** | \`src/lib/browserNotifications.ts\` | \`showBrowserNotification()\` — requires \`Notification.permission === "granted"\`, in-app not paused, and \`document.visibilityState !== "visible"\` |
+| **Sonner in-app toast** | \`src/hooks/useRealtimeNotifications.ts\` + \`mapNotificationToToast.ts\` | Allow-list check (\`REALTIME_TOAST_TYPES\`), self-action dedup, then \`toast()\` from Sonner |
+| **Browser desktop notification** | \`src/lib/browserNotifications.ts\` | \`showBrowserNotification()\` — requires \`Notification.permission === "granted"\`, not paused, and \`document.visibilityState !== "visible"\` |
 | **Push notifications** | Not implemented | Planned — no OneSignal or service-worker push currently |
 
 ---
 
-## 5. Realtime Flow
+## 7. Realtime Flow
 
 **Hook:** \`src/hooks/useRealtimeNotifications.ts\`
 
@@ -365,7 +598,7 @@ supabase.channel(\`notifications:\${workspaceId}:\${userId}\`)
 
 ---
 
-## 6. Admin / Test Utilities
+## 8. Admin / Test Utilities
 
 | Utility | Location | Description |
 |---------|----------|-------------|
@@ -375,7 +608,7 @@ supabase.channel(\`notifications:\${workspaceId}:\${userId}\`)
 
 ---
 
-## 7. Debugging
+## 9. Debugging
 
 ### Console logs (current build)
 
@@ -404,7 +637,7 @@ ${LS_KEYS.map((k) => `- \`${k}\``).join("\n")}
 
 ---
 
-## 8. Orphaned / Inconsistent Types
+## 10. Orphaned / Inconsistent Types
 
 Types that appear in one source but not another — useful for spotting gaps.
 
@@ -434,11 +667,19 @@ ${
 
 ---
 
+## 11. Example Rendered Messages
+
+Below are example notifications showing how different types render in the UI.
+
+${generateExamples()}
+
+---
+
 _Generated by \`scripts/generate-notifications-docs.mjs\` · ${now}_
 `;
 
 // ---------------------------------------------------------------------------
-// 10.  Write output
+// 12.  Write output
 // ---------------------------------------------------------------------------
 const outPath = path.join(ROOT, "docs", "notifications.md");
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
