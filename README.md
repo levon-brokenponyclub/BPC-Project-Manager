@@ -76,9 +76,10 @@ npx supabase db push
 ```bash
 npx supabase functions deploy admin-users --no-verify-jwt
 npx supabase functions deploy invite-client --no-verify-jwt
+npx supabase functions deploy send-email-notification --no-verify-jwt
 ```
 
-> Deploy both functions with `--no-verify-jwt`. They perform their own JWT verification via the service role key.
+> Deploy all functions with `--no-verify-jwt`. They perform their own JWT verification via the service role key.
 
 ### 3. Edge Function environment variables
 
