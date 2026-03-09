@@ -17,6 +17,7 @@ A multi-workspace project management and client portal built for support agencie
 - **Support Buckets** — allocated vs used hours with progress bar
 - **Inbox** — Linear-style 3-pane notification inbox with date-grouped notifications (Today / Yesterday / Earlier), actor avatars, actor-first message formatting, per-row hover quick actions (mark read/unread, delete), and an inline comment thread + composer for comment notifications (reply directly from the inbox)
 - **Admin tools** — invite users (email / magic link), manage clients, create / delete workspaces, role-based access
+- **Asset Library** — per-workspace repository of files, links, logins and plugins; grouped 2×2 section card layout; file upload with signed-URL download, copy-to-clipboard for links/credentials, inline notes; notifications on add/delete
 - **Dark mode default** — persisted theme preference
 
 ---
@@ -93,10 +94,11 @@ Set the following in your Supabase Dashboard → **Edge Functions**:
 
 Create two buckets in **Storage → New bucket**:
 
-| Bucket       | Public |
-| ------------ | ------ |
-| `avatars`    | Yes    |
-| `task-files` | No     |
+| Bucket             | Public |
+| ------------------ | ------ |
+| `avatars`          | Yes    |
+| `task-files`       | No     |
+| `workspace-assets` | No     |
 
 ### 5. Bootstrap seed (optional)
 
@@ -162,16 +164,17 @@ Roles are stored in `workspace_users.role`.
 
 ## Database Overview
 
-| Table             | Purpose                           |
-| ----------------- | --------------------------------- |
-| `workspaces`      | Tenant organisations              |
-| `workspace_users` | Membership and role per workspace |
-| `tasks`           | Task and subtask records          |
-| `comments`        | Task comments                     |
-| `task_activity`   | Field-change audit log            |
-| `time_entries`    | Timer records                     |
-| `support_buckets` | Prepaid hour allocations          |
-| `notifications`   | In-app notification records       |
+| Table              | Purpose                           |
+| ------------------ | --------------------------------- |
+| `workspaces`       | Tenant organisations              |
+| `workspace_users`  | Membership and role per workspace |
+| `tasks`            | Task and subtask records          |
+| `comments`         | Task comments                     |
+| `task_activity`    | Field-change audit log            |
+| `time_entries`     | Timer records                     |
+| `support_buckets`  | Prepaid hour allocations          |
+| `notifications`    | In-app notification records       |
+| `workspace_assets` | Files, links, logins and plugins  |
 
 ---
 

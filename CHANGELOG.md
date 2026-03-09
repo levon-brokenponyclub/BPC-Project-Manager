@@ -13,6 +13,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.6.0] - 2026-03-09
+
+### ✅ Added
+
+#### Workspace Asset Library (2026-03-09)
+
+- **`workspace_assets` Table**: New table stores four asset types per workspace — `file`, `link`, `login`, and `plugin`. Fields: `name`, `url`, `username`, `password`, `category`, `notes`, `file_name`, `file_size_bytes`, `file_path`, `file_mime_type`, plus standard timestamps and workspace/creator FKs.
+- **`workspace-assets` Storage Bucket**: Private Supabase Storage bucket for uploaded asset files, with per-workspace folder organisation and RLS scoped to workspace members.
+- **`src/api/assets.ts`**: Full CRUD API — `listWorkspaceAssets`, `createWorkspaceAsset`, `updateWorkspaceAsset`, `deleteWorkspaceAsset`, `createAssetFileUploadUrl` (signed upload URL), `createAssetFileDownloadUrl` (signed download URL), `deleteAssetFile`.
+- **`AssetLibraryPage`** (`src/pages/workspace/AssetLibraryPage.tsx`): Premium grouped layout with four section cards in a 2×2 responsive grid (Files · Links · Logins · Plugins). Each card shows a header with type icon, per-type item count badge, and an inline **Add** button; an `AssetRow` list with secondary metadata, italic notes preview, and fade-in hover actions (copy URL/username/password, download for files, edit, delete); and a type-specific `SectionEmptyState` with a CTA when no items exist.
+- **Hover Action Tooltips**: CSS-only `Tooltip` component using Tailwind named groups (`group/tip`) — no JS overhead.
+- **Add / Edit Modal**: Shared modal with conditional field rendering per asset type (URL field for links/logins/plugins, file upload for files, username/password for logins, category & notes for all types).
+- **Asset Notifications**: Four new notification types (`asset.file_added`, `asset.link_added`, `asset.login_added`, `asset.plugin_added`) and a corresponding delete type. All hooked into the existing notification system — realtime Sonner toasts and inbox rows.
+- **`queryKeys.workspaceAssets(workspaceId)`**: TanStack Query key for the asset list, used for targeted invalidation after mutations.
+- **Project Overview CTA**: Asset Library card on the Project Overview page replaces the Phase Board placeholder, linking to `/assets`.
+- **AppShell Navigation**: `Archive` icon + **Asset Library** nav item added to the sidebar after Tasks.
+
+### 🔧 Changed
+
+- **`src/types/models.ts`**: Added `WorkspaceAsset` interface.
+- **`src/lib/queryKeys.ts`**: Added `workspaceAssets` key factory.
+- **`src/lib/notifications/notificationTypes.ts`**: Added `"asset"` entity and four asset event types.
+- **`src/lib/notifications/notificationCatalog.ts`**: Four new catalog entries for asset events.
+- **`src/lib/notifications/formatNotificationMessage.ts`**: Four new case blocks for asset notification copy.
+- **`src/App.tsx`**: Route `{ path: "assets", element: <AssetLibraryPage /> }` added under the workspace layout.
+
+---
+
 ## [1.5.0] - 2026-03-09
 
 ### ✅ Added
