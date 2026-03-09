@@ -112,3 +112,14 @@ export interface WorkspaceAsset {
   updated_at: string;
   client_visible: boolean;
 }
+
+export interface UserNotificationPreferences {
+  user_id: string;
+  email_enabled: boolean;
+  task_created: boolean;
+  task_status_changed: boolean;
+  task_assignee_added: boolean;
+  comment_created: boolean;
+  created_at: string;
+  updated_at: string;
+}

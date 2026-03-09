@@ -1,9 +1,14 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Bell, BellOff, X } from "lucide-react";
+import { Bell, BellOff, Mail, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  getUserNotificationPreferences,
+  updateUserNotificationPreferences,
+  sendTestEmailNotification,
+} from "@/api";
 import {
   getBrowserNotificationPermission,
   isBrowserNotificationSupported,
@@ -46,6 +51,36 @@ export function ProfileEditModal({
     getBrowserNotificationPermission,
   );
   const [notifPaused, setNotifPaused] = useState(isDesktopNotificationPaused);
+
+  // Email notification preferences
+  const emailPrefsQuery = useQuery({
+    queryKey: ["emailNotificationPreferences"],
+    queryFn: getUserNotificationPreferences,
+  });
+
+  const updateEmailPrefsMutation = useMutation({
+    mutationFn: updateUserNotificationPreferences,
+    onSuccess: () => {
+      emailPrefsQuery.refetch();
+      notify.success("Saved", "Email preferences updated");
+    },
+    onError: (err: Error) => {
+      notify.error("Error", err.message || "Failed to update preferences");
+    },
+  });
+
+  const testEmailMutation = useMutation({
+    mutationFn: sendTestEmailNotification,
+    onSuccess: () => {
+      notify.success(
+        "Test email sent",
+        "Check your inbox for a test notification email.",
+      );
+    },
+    onError: (err: Error) => {
+      notify.error("Error", err.message || "Failed to send test email");
+    },
+  });
 
   async function handleRequestPermission(): Promise<void> {
     const result = await requestBrowserNotificationPermission();
@@ -431,6 +466,198 @@ export function ProfileEditModal({
                   >
                     <Bell className="h-3.5 w-3.5" />
                     Send Test Desktop Notification
+                  </Button>
+                </div>
+              ) : null}
+
+              {/* ── Email Notifications ── */}
+              <div className="space-y-3 border-t border-border pt-4">
+                <div>
+                  <p className="text-xs font-medium text-muted">
+                    Email Notifications
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-muted/70">
+                    Receive emails for workspace activity. Only applies to
+                    select notification types.
+                  </p>
+                </div>
+
+                {emailPrefsQuery.isLoading ? (
+                  <p className="text-xs text-muted">Loading preferences...</p>
+                ) : emailPrefsQuery.error ? (
+                  <p className="text-xs text-red-400">
+                    Failed to load email preferences
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {/* Master toggle */}
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-medium text-foreground">
+                        Email notifications
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateEmailPrefsMutation.mutate({
+                            email_enabled: !emailPrefsQuery.data?.email_enabled,
+                          });
+                        }}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                          emailPrefsQuery.data?.email_enabled
+                            ? "bg-primary"
+                            : "bg-border"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                            emailPrefsQuery.data?.email_enabled
+                              ? "translate-x-5"
+                              : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Type-specific toggles */}
+                    {emailPrefsQuery.data?.email_enabled ? (
+                      <div className="space-y-2 rounded-md border border-border/60 bg-surface p-3">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs text-muted">
+                            Task created
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateEmailPrefsMutation.mutate({
+                                task_created:
+                                  !emailPrefsQuery.data?.task_created,
+                              });
+                            }}
+                            className={`relative inline-flex h-4 w-8 items-center rounded-full transition-colors ${
+                              emailPrefsQuery.data?.task_created
+                                ? "bg-primary"
+                                : "bg-border"
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                                emailPrefsQuery.data?.task_created
+                                  ? "translate-x-4"
+                                  : "translate-x-1"
+                              }`}
+                            />
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs text-muted">
+                            Task status changed
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateEmailPrefsMutation.mutate({
+                                task_status_changed:
+                                  !emailPrefsQuery.data?.task_status_changed,
+                              });
+                            }}
+                            className={`relative inline-flex h-4 w-8 items-center rounded-full transition-colors ${
+                              emailPrefsQuery.data?.task_status_changed
+                                ? "bg-primary"
+                                : "bg-border"
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                                emailPrefsQuery.data?.task_status_changed
+                                  ? "translate-x-4"
+                                  : "translate-x-1"
+                              }`}
+                            />
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs text-muted">
+                            Task assigned
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateEmailPrefsMutation.mutate({
+                                task_assignee_added:
+                                  !emailPrefsQuery.data?.task_assignee_added,
+                              });
+                            }}
+                            className={`relative inline-flex h-4 w-8 items-center rounded-full transition-colors ${
+                              emailPrefsQuery.data?.task_assignee_added
+                                ? "bg-primary"
+                                : "bg-border"
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                                emailPrefsQuery.data?.task_assignee_added
+                                  ? "translate-x-4"
+                                  : "translate-x-1"
+                              }`}
+                            />
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs text-muted">
+                            Comment added
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateEmailPrefsMutation.mutate({
+                                comment_created:
+                                  !emailPrefsQuery.data?.comment_created,
+                              });
+                            }}
+                            className={`relative inline-flex h-4 w-8 items-center rounded-full transition-colors ${
+                              emailPrefsQuery.data?.comment_created
+                                ? "bg-primary"
+                                : "bg-border"
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                                emailPrefsQuery.data?.comment_created
+                                  ? "translate-x-4"
+                                  : "translate-x-1"
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+
+              {/* ── Admin: Test Email ── */}
+              {role === "admin" ? (
+                <div className="space-y-2 rounded-md border border-border/60 bg-surface p-3">
+                  <div>
+                    <p className="text-xs font-medium text-foreground">
+                      Email Notification Test
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-muted">
+                      Send a test email notification to your email address to
+                      verify delivery.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => testEmailMutation.mutate()}
+                    disabled={testEmailMutation.isPending}
+                  >
+                    <Mail className="h-3.5 w-3.5" />
+                    {testEmailMutation.isPending
+                      ? "Sending..."
+                      : "Send Test Email Notification"}
                   </Button>
                 </div>
               ) : null}

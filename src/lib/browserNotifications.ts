@@ -116,14 +116,29 @@ export interface BrowserNotificationOptions {
 export function showBrowserNotification(
   options: BrowserNotificationOptions,
 ): Notification | null {
-  if (!isBrowserNotificationSupported()) return null;
-  if (Notification.permission !== "granted") return null;
-  if (isDesktopNotificationPaused()) return null;
+  if (!isBrowserNotificationSupported()) {
+    console.log(
+      "[BrowserNotification] skipped — Notifications API not supported",
+    );
+    return null;
+  }
+  if (Notification.permission !== "granted") {
+    console.log(
+      "[BrowserNotification] skipped — permission:",
+      Notification.permission,
+    );
+    return null;
+  }
+  if (isDesktopNotificationPaused()) {
+    console.log("[BrowserNotification] skipped — paused by user");
+    return null;
+  }
 
   const { title, body, icon = APP_ICON, tag, route } = options;
 
   try {
     const notification = new Notification(title, { body, icon, tag });
+    console.log("[BrowserNotification] shown", { title, body, tag, route });
 
     notification.onclick = () => {
       // Bring the app tab to front

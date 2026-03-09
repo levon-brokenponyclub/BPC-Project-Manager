@@ -636,19 +636,19 @@ export function TaskDrawer({
 
   return (
     <section
-      className="fixed bottom-0 right-0 top-14 z-40 overflow-hidden bg-background"
+      className="fixed bottom-0 right-0 top-14 z-40 overflow-hidden bg-[#15161D]"
       style={{ left: "var(--sidebar-w, 275px)" }}
     >
       <div className="grid h-full min-h-0 grid-cols-1 md:grid-cols-[300px_minmax(0,1fr)_280px]">
-        <div className="flex min-h-0 flex-col bg-card md:border-r md:border-border">
-          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <div className="flex min-h-0 flex-col bg-[#1E1F2A] md:border-r md:border-[#222330]">
+          <div className="flex items-center justify-between border-b border-[#222330] px-4 py-3">
             <h3 className="text-[15px] leading-[22px] font-medium text-foreground">
               Task Panel
             </h3>
             <button
               type="button"
               onClick={onClose}
-              className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-[5px] border border-border bg-surface text-muted transition-colors hover:bg-card hover:text-foreground"
+              className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-[5px] border border-[#313339] bg-[#15161D] text-[#939496] transition-colors hover:bg-[#1A1C23] hover:text-white"
               aria-label="Close task panel"
             >
               <X className="h-4 w-4" />
@@ -656,7 +656,7 @@ export function TaskDrawer({
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
             {isNewTask ? (
-              <div className="rounded-[5px] border border-border bg-surface px-4 py-3 text-[15px] font-medium leading-[22px] text-muted">
+              <div className="rounded-[5px] border border-[#25262B] bg-[#15161D] px-4 py-3 text-[15px] font-medium leading-[22px] text-[#97989E]">
                 Creating a new task
               </div>
             ) : (
@@ -670,8 +670,8 @@ export function TaskDrawer({
                       onClick={() => setActiveTab(key)}
                       className={`focus-ring flex w-full items-center gap-2 rounded-[5px] border px-4 py-3 text-left text-[15px] font-medium leading-[22px] transition-colors ${
                         isActive
-                          ? "border-border bg-surface text-foreground"
-                          : "border-transparent text-muted hover:bg-surface hover:text-foreground"
+                          ? "border-[#2A2C31] bg-[#15161D] text-white"
+                          : "border-transparent text-[#97989E] hover:bg-[#15161D] hover:text-white"
                       }`}
                     >
                       <Icon className="h-4 w-4" />
@@ -683,7 +683,7 @@ export function TaskDrawer({
                   <button
                     type="button"
                     onClick={() => onAddSubtask(task.id)}
-                    className="focus-ring flex w-full items-center gap-2 rounded-[5px] border border-transparent px-4 py-3 text-left text-[15px] font-medium leading-[22px] text-muted transition-colors hover:bg-surface hover:text-foreground"
+                    className="focus-ring flex w-full items-center gap-2 rounded-[5px] border border-transparent px-4 py-3 text-left text-[15px] font-medium leading-[22px] text-[#97989E] transition-colors hover:bg-[#15161D] hover:text-white"
                   >
                     <Plus className="h-4 w-4" />
                     <span>Add Sub Task</span>
@@ -694,8 +694,8 @@ export function TaskDrawer({
           </div>
         </div>
 
-        <div className="grid min-h-0 grid-cols-1 grid-rows-[auto_minmax(0,1fr)] bg-card md:col-span-2 md:grid-cols-[minmax(0,1fr)_280px]">
-          <header className="flex items-center justify-between gap-3 border-b border-border bg-card px-5 py-3 md:col-span-2">
+        <div className="grid min-h-0 grid-cols-1 grid-rows-[auto_minmax(0,1fr)] bg-[#1A1B25] md:col-span-2 md:grid-cols-[minmax(0,1fr)_280px]">
+          <header className="flex items-center justify-between gap-3 border-b border-[#222330] bg-[#191A22] px-5 py-3 md:col-span-2">
             <div className="min-w-0 flex-1">
               {!isNewTask && workspaceName ? (
                 <p className="mb-0.5 flex items-center gap-1 truncate text-[11px] text-muted">
@@ -789,13 +789,13 @@ export function TaskDrawer({
                       className="min-h-[72px] resize-none border-0 bg-transparent px-0 text-xl font-medium leading-8 tracking-[-0.16px] text-foreground shadow-none focus-visible:ring-0"
                     />
 
-                    <div className="space-y-5 rounded-[4px] border border-border bg-surface p-5">
+                    <div className="space-y-5 rounded-[4px] border border-[#292B38] bg-[#191A22] p-5">
                       <h3 className="text-[13px] font-medium uppercase tracking-wide text-muted">
                         Fields
                       </h3>
 
-                      <div className="overflow-hidden rounded-[4px] border border-border bg-card">
-                        <div className="grid grid-cols-[140px_1fr] border-b border-border">
+                      <div className="overflow-hidden rounded-[4px] border border-[#292B38] bg-[#191A22]">
+                        <div className="grid grid-cols-[140px_1fr] border-b border-[#292B38]">
                           <div className="px-3 py-2.5 text-[13px] font-medium text-muted">
                             Status
                           </div>
@@ -869,7 +869,7 @@ export function TaskDrawer({
                       </div>
                     </div>
 
-                    <div className="space-y-3 rounded-[4px] border border-border bg-surface p-4">
+                    <div className="space-y-3 rounded-[4px] border border-[#292B38] bg-[#191A22] p-4">
                       <div className="flex items-center justify-between">
                         <p className="text-[13px] font-medium text-foreground">
                           Files for this task
@@ -902,7 +902,7 @@ export function TaskDrawer({
                           {draftFiles.map((file, index) => (
                             <div
                               key={`${file.name}-${index}`}
-                              className="flex items-center justify-between rounded-[4px] border border-border bg-card px-3 py-2 text-[13px]"
+                              className="flex items-center justify-between rounded-[4px] border border-[#292B38] bg-[#191A22] px-3 py-2 text-[13px]"
                             >
                               <span className="truncate text-foreground">
                                 {file.name}
@@ -987,7 +987,7 @@ export function TaskDrawer({
                       </h2>
                     )}
 
-                    <div className="space-y-3 rounded-[4px] border border-border bg-surface p-5">
+                    <div className="space-y-3 rounded-[4px] border border-[#292B38] bg-[#191A22] p-5">
                       <div className="flex items-center justify-between gap-4 text-[15px] font-medium">
                         <span className="text-muted">Assignee</span>
                         <span className="text-foreground">{assigneeLabel}</span>
@@ -1003,13 +1003,13 @@ export function TaskDrawer({
                     </div>
                   </section>
 
-                  <section className="space-y-5 rounded-[4px] border border-border bg-surface p-5">
+                  <section className="space-y-5 rounded-[4px] border border-[#292B38] bg-[#191A22] p-5">
                     <h3 className="text-[13px] font-medium uppercase tracking-wide text-muted">
                       Fields
                     </h3>
 
-                    <div className="overflow-hidden rounded-[4px] border border-border bg-card">
-                      <div className="grid grid-cols-[140px_1fr] border-b border-border">
+                    <div className="overflow-hidden rounded-[4px] border border-[#292B38] bg-[#191A22]">
+                      <div className="grid grid-cols-[140px_1fr] border-b border-[#292B38]">
                         <div className="px-3 py-2.5 text-[13px] font-medium text-muted">
                           Status
                         </div>
@@ -1233,7 +1233,7 @@ export function TaskDrawer({
                     ) : null}
                   </section>
 
-                  <section className="space-y-4 rounded-[4px] border border-border bg-surface p-5">
+                  <section className="space-y-4 rounded-[4px] border border-[#292B38] bg-[#191A22] p-5">
                     <h3 className="text-[13px] font-medium uppercase tracking-wide text-muted">
                       Time Logged
                     </h3>
@@ -1452,7 +1452,7 @@ export function TaskDrawer({
             ) : null}
           </div>
 
-          <div className="hidden min-h-0 bg-sidebar md:flex md:flex-col">
+          <div className="hidden min-h-0 bg-[#1E1F2A] md:flex md:flex-col">
             <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5">
               {/* ── Sub Tasks ── */}
               {!isNewTask ? (
@@ -1480,7 +1480,7 @@ export function TaskDrawer({
                         <button
                           key={sub.id}
                           type="button"
-                          className="flex w-full items-center gap-2 rounded border border-border bg-card px-2.5 py-1.5 text-left transition-colors hover:bg-surface"
+                          className="flex w-full items-center gap-2 rounded border border-[#292B38] bg-[#15161D] px-2.5 py-1.5 text-left transition-colors hover:bg-[#1A1C23]"
                           onClick={() => onOpenSubtask?.(sub)}
                         >
                           <span
@@ -1531,7 +1531,7 @@ export function TaskDrawer({
                       {files.map((file) => (
                         <div
                           key={file.id}
-                          className="flex w-full items-center gap-2 rounded border border-border bg-card px-2.5 py-1.5"
+                          className="flex w-full items-center gap-2 rounded border border-[#292B38] bg-[#15161D] px-2.5 py-1.5"
                         >
                           <Paperclip className="h-3 w-3 shrink-0 text-muted" />
                           <button
@@ -1575,7 +1575,7 @@ export function TaskDrawer({
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={isUploadingFile}
-                      className="focus-ring inline-flex w-full items-center justify-center gap-1.5 rounded border border-border bg-card py-1.5 text-xs text-muted transition-colors hover:text-foreground disabled:opacity-50"
+                      className="focus-ring inline-flex w-full items-center justify-center gap-1.5 rounded border border-[#2A2C31] bg-[#15161D] py-1.5 text-xs text-[#97989E] transition-colors hover:text-white disabled:opacity-50"
                     >
                       <Paperclip className="h-3 w-3" />
                       {isUploadingFile ? "Uploading..." : "Upload File"}

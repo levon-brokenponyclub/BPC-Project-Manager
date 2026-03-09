@@ -75,10 +75,26 @@ export function useRealtimeNotifications({
           // they already received immediate Sonner feedback from the mutation.
           const isSelfAction = actorId != null && actorId === userIdRef.current;
 
-          if (isSelfAction) return;
+          console.log("[RealtimeNotif] received", {
+            type: notification.type,
+            isSelfAction,
+            actorId,
+            userId: userIdRef.current,
+          });
+
+          if (isSelfAction) {
+            console.log("[RealtimeNotif] skipped — self-action");
+            return;
+          }
 
           const mapped = mapNotificationToToast(notification);
-          if (!mapped) return;
+          if (!mapped) {
+            console.log(
+              "[RealtimeNotif] skipped — not on toast allow-list",
+              notification.type,
+            );
+            return;
+          }
 
           if (mapped.route) {
             toast(mapped.title, {
@@ -96,6 +112,10 @@ export function useRealtimeNotifications({
 
           // Show a native desktop notification when the tab is not actively
           // visible — Sonner covers the in-app case when the tab is focused.
+          console.log(
+            "[RealtimeNotif] visibilityState:",
+            document.visibilityState,
+          );
           if (document.visibilityState !== "visible") {
             showBrowserNotification({
               title: mapped.title,
@@ -103,6 +123,10 @@ export function useRealtimeNotifications({
               tag: notification.id ?? undefined,
               route: mapped.route ?? null,
             });
+          } else {
+            console.log(
+              "[RealtimeNotif] browser notification skipped — tab is visible (Sonner only)",
+            );
           }
         },
       )

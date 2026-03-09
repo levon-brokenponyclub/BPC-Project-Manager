@@ -124,15 +124,15 @@ function StatusGroupMarker({
   if (status === "Cancelled") {
     return (
       <span className="relative inline-flex h-[14px] w-[14px] items-center justify-center rounded-full bg-[#95A2B3]">
-        <span className="absolute h-[1.5px] w-[7px] rotate-45 bg-background" />
-        <span className="absolute h-[1.5px] w-[7px] -rotate-45 bg-background" />
+        <span className="absolute h-[1.5px] w-[7px] rotate-45 bg-[#15161D]" />
+        <span className="absolute h-[1.5px] w-[7px] -rotate-45 bg-[#15161D]" />
       </span>
     );
   }
 
   return (
     <span className="relative inline-flex h-[14px] w-[14px] rounded-full bg-[#5E6AD2]">
-      <span className="absolute inset-[3px] rounded-full bg-background" />
+      <span className="absolute inset-[3px] rounded-full bg-[#15161D]" />
     </span>
   );
 }
@@ -153,7 +153,7 @@ function PriorityCell({
   priority?: TaskPriority | null;
 }): React.ReactElement {
   if (!priority) {
-    return <span className="text-[12px] text-muted/60">—</span>;
+    return <span className="text-[12px] text-[#4A4C5A]">—</span>;
   }
   const { label, color } = PRIORITY_CONFIG[priority];
   return (
@@ -223,13 +223,13 @@ function InlineStatusEditor({
         left: anchorRect.left,
         zIndex: 9999,
       }}
-      className="w-[200px] overflow-hidden rounded-[6px] border border-border bg-popover py-1 shadow-[0px_8px_24px_rgba(0,0,0,0.15)]"
+      className="w-[200px] overflow-hidden rounded-[6px] border border-[#2A2C3A] bg-[#1B1C28] py-1 shadow-[0px_8px_24px_rgba(0,0,0,0.4)]"
     >
       {STATUS_OPTIONS.map(({ value, label, color }) => (
         <button
           key={value}
           type="button"
-          className="flex w-full items-center gap-2.5 px-3 py-1.5 text-[13px] text-foreground/90 transition-colors hover:bg-surface"
+          className="flex w-full items-center gap-2.5 px-3 py-1.5 text-[13px] text-[#C4C5D0] transition-colors hover:bg-[#252636]"
           onClick={() => onSelect(value)}
         >
           <span
@@ -237,7 +237,9 @@ function InlineStatusEditor({
             style={{ backgroundColor: color }}
           />
           <span className="flex-1 text-left">{label}</span>
-          {value === current && <Check className="h-3.5 w-3.5 text-primary" />}
+          {value === current && (
+            <Check className="h-3.5 w-3.5 text-[#5E6AD2]" />
+          )}
         </button>
       ))}
     </div>
@@ -293,24 +295,26 @@ function InlinePriorityEditor({
         left: anchorRect.left,
         zIndex: 9999,
       }}
-      className="w-[160px] overflow-hidden rounded-[6px] border border-border bg-popover py-1 shadow-[0px_8px_24px_rgba(0,0,0,0.15)]"
+      className="w-[160px] overflow-hidden rounded-[6px] border border-[#2A2C3A] bg-[#1B1C28] py-1 shadow-[0px_8px_24px_rgba(0,0,0,0.4)]"
     >
       {PRIORITY_OPTIONS.map(({ value, label, color }) => (
         <button
           key={value}
           type="button"
-          className="flex w-full items-center gap-2.5 px-3 py-1.5 text-[13px] text-foreground/90 transition-colors hover:bg-surface"
+          className="flex w-full items-center gap-2.5 px-3 py-1.5 text-[13px] text-[#C4C5D0] transition-colors hover:bg-[#252636]"
           onClick={() => onSelect(value)}
         >
           <Flag className="h-3.5 w-3.5" style={{ color }} />
           <span className="flex-1 text-left">{label}</span>
-          {value === current && <Check className="h-3.5 w-3.5 text-primary" />}
+          {value === current && (
+            <Check className="h-3.5 w-3.5 text-[#5E6AD2]" />
+          )}
         </button>
       ))}
-      <div className="my-1 border-t border-border" />
+      <div className="my-1 border-t border-[#2A2C3A]" />
       <button
         type="button"
-        className="flex w-full items-center gap-2.5 px-3 py-1.5 text-[13px] text-muted transition-colors hover:bg-surface"
+        className="flex w-full items-center gap-2.5 px-3 py-1.5 text-[13px] text-[#6B6D7A] transition-colors hover:bg-[#252636]"
         onClick={() => onSelect(null)}
       >
         <X className="h-3.5 w-3.5" />
@@ -360,22 +364,22 @@ function InlineDateEditor({
         left: anchorRect.left,
         zIndex: 9999,
       }}
-      className="w-[220px] rounded-[6px] border border-border bg-popover p-3 shadow-[0px_8px_24px_rgba(0,0,0,0.15)]"
+      className="w-[220px] rounded-[6px] border border-[#2A2C3A] bg-[#1B1C28] p-3 shadow-[0px_8px_24px_rgba(0,0,0,0.4)]"
     >
-      <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted">
+      <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-[#5F6272]">
         Due Date
       </p>
       <input
         type="date"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="w-full rounded-[4px] border border-border bg-surface px-2 py-1.5 text-[13px] text-foreground focus:border-primary focus:outline-none"
+        className="w-full rounded-[4px] border border-[#2A2C3A] bg-[#23243A] px-2 py-1.5 text-[13px] text-white focus:border-[#5E6AD2] focus:outline-none"
       />
       <div className="mt-2.5 flex gap-2">
         <button
           type="button"
           disabled={!value}
-          className="flex-1 rounded-[4px] bg-primary py-1 text-[12px] font-medium text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex-1 rounded-[4px] bg-[#5E6AD2] py-1 text-[12px] font-medium text-white transition-colors hover:bg-[#6A76DE] disabled:cursor-not-allowed disabled:opacity-40"
           onClick={() => {
             if (value) onSelect(value);
           }}
@@ -384,7 +388,7 @@ function InlineDateEditor({
         </button>
         <button
           type="button"
-          className="rounded-[4px] border border-border px-3 py-1 text-[12px] text-muted transition-colors hover:bg-surface"
+          className="rounded-[4px] border border-[#2A2C3A] px-3 py-1 text-[12px] text-[#8B8C9E] transition-colors hover:bg-[#252636]"
           onClick={() => onSelect(null)}
         >
           Clear
@@ -467,8 +471,8 @@ export function TaskTable({
     <div className="overflow-x-auto">
       <table className="w-full min-w-[640px] text-left text-sm">
         <thead>
-          <tr className="h-10 border-b border-border bg-card">
-            <th className="px-6 text-xs font-medium uppercase tracking-wide text-muted">
+          <tr className="h-10 border-b border-[#222330] bg-[#1E1F2A]">
+            <th className="px-6 text-xs font-medium uppercase tracking-wide text-[#97989E]">
               <div className="inline-flex items-center gap-2">
                 {hasAnySubtasks ? (
                   <button
@@ -479,7 +483,7 @@ export function TaskTable({
                         ? "Collapse all subtasks"
                         : "Expand all subtasks"
                     }
-                    className="inline-flex h-4 w-4 items-center justify-center rounded text-muted transition-colors hover:text-foreground"
+                    className="inline-flex h-4 w-4 items-center justify-center rounded text-[#959699] transition-colors hover:text-[#E3E4EA]"
                   >
                     {allExpanded ? (
                       <ChevronDown className="h-3.5 w-3.5" />
@@ -493,19 +497,19 @@ export function TaskTable({
                 <span>Task</span>
               </div>
             </th>
-            <th className="px-6 text-xs font-medium uppercase tracking-wide text-muted">
+            <th className="px-6 text-xs font-medium uppercase tracking-wide text-[#97989E]">
               Due Date
             </th>
-            <th className="px-6 text-xs font-medium uppercase tracking-wide text-muted">
+            <th className="px-6 text-xs font-medium uppercase tracking-wide text-[#97989E]">
               Status
             </th>
-            <th className="px-6 text-xs font-medium uppercase tracking-wide text-muted">
+            <th className="px-6 text-xs font-medium uppercase tracking-wide text-[#97989E]">
               Assignee
             </th>
-            <th className="px-6 text-xs font-medium uppercase tracking-wide text-muted">
+            <th className="px-6 text-xs font-medium uppercase tracking-wide text-[#97989E]">
               Priority
             </th>
-            <th className="px-6 text-xs font-medium uppercase tracking-wide text-muted">
+            <th className="px-6 text-xs font-medium uppercase tracking-wide text-[#97989E]">
               Progress
             </th>
           </tr>
@@ -515,16 +519,16 @@ export function TaskTable({
             <Fragment key={group.status}>
               <tr
                 key={`${group.status}-header`}
-                className="h-10 border-b border-border bg-card"
+                className="h-10 border-b border-[#222330] bg-[#1E1F2A]"
               >
                 <td className="px-6" colSpan={6}>
                   <div className="flex items-center justify-between">
                     <div className="inline-flex items-center gap-[10px] text-xs">
                       <StatusGroupMarker status={group.status} />
-                      <span className="font-medium text-foreground">
+                      <span className="font-medium text-[#E3E4EA]">
                         {group.label}
                       </span>
-                      <span className="font-normal text-muted">
+                      <span className="font-normal text-[#97989E]">
                         {group.tasks.length}
                       </span>
                     </div>
@@ -554,7 +558,7 @@ export function TaskTable({
                   <Fragment key={task.id}>
                     {/* ── Parent task row ── */}
                     <tr
-                      className="h-11 cursor-pointer border-b border-border bg-card transition-colors hover:bg-surface"
+                      className="h-11 cursor-pointer border-b border-[#292B38] bg-[#191A22] transition-colors hover:bg-[#1E2030]"
                       onClick={() => onOpen(task)}
                     >
                       <td className="px-6 py-3.5">
@@ -573,7 +577,7 @@ export function TaskTable({
                                   e.stopPropagation();
                                   toggleExpand(task.id);
                                 }}
-                                className="inline-flex h-4 w-4 items-center justify-center rounded text-muted transition-colors hover:text-foreground"
+                                className="inline-flex h-4 w-4 items-center justify-center rounded text-[#959699] transition-colors hover:text-[#E3E4EA]"
                               >
                                 {isExpanded ? (
                                   <ChevronDown className="h-3.5 w-3.5" />
@@ -585,11 +589,11 @@ export function TaskTable({
                           </span>
                           <StatusGroupMarker status={task.status} />
                           <div className="flex min-w-0 flex-1 items-center gap-2">
-                            <p className="truncate text-[13px] font-medium leading-4 text-foreground">
+                            <p className="truncate text-[13px] font-medium leading-4 text-[#E3E4EA]">
                               {task.title}
                             </p>
                             {hasAnyFiles ? (
-                              <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] text-muted">
+                              <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] text-[#6B6D7A]">
                                 <Paperclip className="h-2.5 w-2.5" />
                                 {totalFileCount}
                               </span>
@@ -599,7 +603,7 @@ export function TaskTable({
                       </td>
                       {/* Due Date */}
                       <td
-                        className="cursor-pointer px-6 py-3.5 text-muted transition-colors hover:text-foreground/90"
+                        className="cursor-pointer px-6 py-3.5 text-[#959699] transition-colors hover:text-[#C4C5D0]"
                         onClick={(e) => {
                           e.stopPropagation();
                           setOpenEditor({
@@ -617,7 +621,7 @@ export function TaskTable({
                             </span>
                           </span>
                         ) : (
-                          <span className="text-xs text-muted/40 hover:text-muted">
+                          <span className="text-xs text-[#3A3C4A] hover:text-[#6B6D7A]">
                             Add date
                           </span>
                         )}
@@ -663,18 +667,18 @@ export function TaskTable({
                       <td className="px-6 py-3.5 align-middle">
                         {hasSubtasks ? (
                           <div className="flex items-center gap-2">
-                            <div className="h-1.5 w-16 overflow-hidden rounded-full bg-border">
+                            <div className="h-1.5 w-16 overflow-hidden rounded-full bg-[#292B38]">
                               <div
-                                className="h-full rounded-full bg-primary transition-all"
+                                className="h-full rounded-full bg-[#5E6AD2] transition-all"
                                 style={{ width: `${progressPct}%` }}
                               />
                             </div>
-                            <span className="text-[11px] text-muted">
+                            <span className="text-[11px] text-[#6B6D7A]">
                               {completedSubtaskCount}/{subtasks.length}
                             </span>
                           </div>
                         ) : (
-                          <span className="text-[11px] text-muted/60">—</span>
+                          <span className="text-[11px] text-[#4A4C5A]">—</span>
                         )}
                       </td>
                     </tr>
@@ -689,20 +693,20 @@ export function TaskTable({
                           return (
                             <tr
                               key={sub.id}
-                              className="h-10 cursor-pointer border-b border-border bg-background transition-colors hover:bg-surface/40"
+                              className="h-10 cursor-pointer border-b border-[#222230] bg-[#171820] transition-colors hover:bg-[#1B1D2A]"
                               onClick={() => onOpen(sub)}
                             >
                               <td className="py-2.5 pl-[72px] pr-6">
                                 <div className="flex items-center gap-3">
                                   {/* indent guide line */}
-                                  <span className="mr-1 inline-flex h-4 w-px shrink-0 bg-border" />
+                                  <span className="mr-1 inline-flex h-4 w-px shrink-0 bg-[#2E3040]" />
                                   <StatusGroupMarker status={sub.status} />
                                   <div className="flex min-w-0 flex-1 items-center gap-2">
-                                    <p className="max-w-[360px] truncate text-[12px] font-medium leading-4 text-foreground/80">
+                                    <p className="max-w-[360px] truncate text-[12px] font-medium leading-4 text-[#C4C5CC]">
                                       {sub.title}
                                     </p>
                                     {(sub.file_count ?? 0) > 0 ? (
-                                      <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] text-muted">
+                                      <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] text-[#6B6D7A]">
                                         <Paperclip className="h-2.5 w-2.5" />
                                         {sub.file_count}
                                       </span>
@@ -712,7 +716,7 @@ export function TaskTable({
                               </td>
                               {/* Due Date */}
                               <td
-                                className="cursor-pointer px-6 py-2.5 text-muted transition-colors hover:text-foreground/90"
+                                className="cursor-pointer px-6 py-2.5 text-[#959699] transition-colors hover:text-[#C4C5D0]"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setOpenEditor({
@@ -734,7 +738,7 @@ export function TaskTable({
                                     </span>
                                   </span>
                                 ) : (
-                                  <span className="text-xs text-muted/40 hover:text-muted">
+                                  <span className="text-xs text-[#3A3C4A] hover:text-[#6B6D7A]">
                                     Add date
                                   </span>
                                 )}

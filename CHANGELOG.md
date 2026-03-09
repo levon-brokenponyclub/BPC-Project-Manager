@@ -31,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Users Page UI**: Both admin and client views updated with Status and Last Online columns; skeleton loader updated to show 5 columns
 
 **Implementation Notes:**
+
 - Uses Supabase built-in `auth.users.last_sign_in_at` timestamp (not real-time presence)
 - 5-minute online threshold provides practical approximation without requiring heartbeat infrastructure
 - Preserves all existing workspace-scoped filtering and role-based visibility

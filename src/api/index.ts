@@ -8,6 +8,7 @@ import * as timeApi from "@/api/time";
 import * as notificationsApi from "@/api/notifications";
 import * as filesApi from "@/api/files";
 import * as assetsApi from "@/api/assets";
+import * as emailNotificationsApi from "@/api/emailNotifications";
 
 export const getMyWorkspaces = (
   ...args: Parameters<typeof workspacesApi.getMyWorkspaces>
@@ -243,3 +244,25 @@ export const createAssetFileDownloadUrl = (
 ) => assetsApi.createAssetFileDownloadUrl(...args);
 
 export type { AssetType, CreateAssetInput } from "@/api/assets";
+
+// ─── Email Notifications ──────────────────────────────────────────────────────
+
+export const getUserNotificationPreferences = (
+  ...args: Parameters<
+    typeof emailNotificationsApi.getUserNotificationPreferences
+  >
+) => emailNotificationsApi.getUserNotificationPreferences(...args);
+
+export const updateUserNotificationPreferences = (
+  ...args: Parameters<
+    typeof emailNotificationsApi.updateUserNotificationPreferences
+  >
+) => emailNotificationsApi.updateUserNotificationPreferences(...args);
+
+export const sendEmailNotification = (
+  ...args: Parameters<typeof emailNotificationsApi.sendEmailNotification>
+) => emailNotificationsApi.sendEmailNotification(...args);
+
+export const sendTestEmailNotification = (
+  ...args: Parameters<typeof emailNotificationsApi.sendTestEmailNotification>
+) => emailNotificationsApi.sendTestEmailNotification(...args);
