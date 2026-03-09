@@ -116,15 +116,15 @@ function StatusGroupMarker({
   if (status === "Cancelled") {
     return (
       <span className="relative inline-flex h-[14px] w-[14px] items-center justify-center rounded-full bg-[#95A2B3]">
-        <span className="absolute h-[1.5px] w-[7px] rotate-45 bg-[#15161D]" />
-        <span className="absolute h-[1.5px] w-[7px] -rotate-45 bg-[#15161D]" />
+        <span className="absolute h-[1.5px] w-[7px] rotate-45 bg-background" />
+        <span className="absolute h-[1.5px] w-[7px] -rotate-45 bg-background" />
       </span>
     );
   }
 
   return (
     <span className="relative inline-flex h-[14px] w-[14px] rounded-full bg-[#5E6AD2]">
-      <span className="absolute inset-[3px] rounded-full bg-[#15161D]" />
+      <span className="absolute inset-[3px] rounded-full bg-background" />
     </span>
   );
 }
@@ -602,8 +602,8 @@ export function DashboardPage(): React.ReactElement {
           />
         }
       >
-        <Card className="relative overflow-visible border-[#222330] bg-[#191A22]">
-          <div className="flex h-13 items-center justify-between border-b border-[#222330] px-6 py-2">
+        <Card className="relative overflow-visible border-border bg-card">
+          <div className="flex h-13 items-center justify-between border-b border-border px-6 py-2">
             <div className="relative">
               <button
                 ref={filterButtonRef}
@@ -776,7 +776,7 @@ export function DashboardPage(): React.ReactElement {
                     setSortOpen((previous) => !previous);
                     setFilterOpen(false);
                   }}
-                  className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-sm border border-[#313339] bg-[#15161D] px-3 text-[13px] font-medium text-white transition-colors hover:bg-[#1C1E26] active:bg-[#20222B] disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50"
+                  className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-sm border border-border bg-surface px-3 text-[13px] font-medium text-foreground transition-colors hover:bg-card active:bg-card disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50"
                 >
                   <svg
                     viewBox="0 0 16 16"
@@ -954,16 +954,16 @@ export function DashboardPage(): React.ReactElement {
                 <Fragment key={group.status}>
                   <tr
                     key={`${group.status}-header`}
-                    className="h-10 border-b border-[#222330] bg-[#1E1F2A]"
+                    className="h-10 border-b border-border bg-card"
                   >
                     <td className="px-6" colSpan={4}>
                       <div className="flex items-center justify-between">
                         <div className="inline-flex items-center gap-[10px] text-xs">
                           <StatusGroupMarker status={group.status} />
-                          <span className="font-medium text-[#E3E4EA]">
+                          <span className="font-medium text-foreground">
                             {group.label}
                           </span>
-                          <span className="font-normal text-[#97989E]">
+                          <span className="font-normal text-muted">
                             {group.tasks.length}
                           </span>
                         </div>
@@ -987,16 +987,16 @@ export function DashboardPage(): React.ReactElement {
                     return (
                       <tr
                         key={task.id}
-                        className="h-11 cursor-pointer border-b border-[#292B38] bg-[#191A22] transition-colors hover:bg-[#1E2030]"
+                        className="h-11 cursor-pointer border-b border-border bg-card transition-colors hover:bg-surface"
                         onClick={() => setSelectedTask(task)}
                       >
                         <td className="px-6 py-3.5">
                           <div className="flex items-center gap-3">
-                            <p className="w-[58px] text-[13px] font-normal leading-4 text-[#959699]">
+                            <p className="w-[58px] text-[13px] font-normal leading-4 text-muted">
                               {formatTaskKey(task.id)}
                             </p>
                             <StatusGroupMarker status={task.status} />
-                            <p className="max-w-[420px] truncate text-[13px] font-medium leading-4 text-[#E3E4EA]">
+                            <p className="max-w-[420px] truncate text-[13px] font-medium leading-4 text-foreground">
                               {task.title}
                             </p>
                           </div>
@@ -1009,7 +1009,7 @@ export function DashboardPage(): React.ReactElement {
                             />
                           </div>
                         </td>
-                        <td className="px-6 py-3.5 text-[#959699]">
+                        <td className="px-6 py-3.5 text-muted">
                           {task.due_date ? (
                             <span className="inline-flex items-center gap-2 text-xs">
                               <DueDateIndicator status={dueDateStatus} />
