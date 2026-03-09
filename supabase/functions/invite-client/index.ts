@@ -331,7 +331,7 @@ Deno.serve(async (req) => {
         await supabaseAdmin.auth.admin.generateLink({
           type: "recovery",
           email: normalizedEmail,
-          options: { redirectTo: magicLinkRedirectTo },
+          options: { redirectTo: magicLinkRedirectTo, expiresIn: 86400 },
         });
 
       invite = generated;

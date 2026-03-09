@@ -4,6 +4,7 @@ import { UserPlus, MoreVertical, X } from "lucide-react";
 import { useEffect, useMemo, useState, Fragment } from "react";
 
 import { getAllSystemUsers, type SystemUser } from "@/api/clients";
+import { timeAgo } from "@/lib/notifications/timeAgo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -37,6 +38,9 @@ function ClientsSkeleton(): React.ReactElement {
               </td>
               <td className="px-6 py-3.5">
                 <div className="h-6 w-16 animate-pulse rounded bg-muted/20" />
+              </td>
+              <td className="px-6 py-3.5">
+                <div className="h-4 w-24 animate-pulse rounded bg-muted/20" />
               </td>
             </tr>
           ))}
@@ -359,7 +363,7 @@ export function ClientsPage(): React.ReactElement {
               {adminUsers.length > 0 && (
                 <Fragment key="__admins__">
                   <tr className="h-10 border-b border-[#222330] bg-[#1E1F2A]">
-                    <td className="px-6" colSpan={4}>
+                    <td className="px-6" colSpan={5}>
                       <div className="inline-flex items-center gap-[10px] text-xs">
                         <span className="font-medium text-[#E3E4EA]">
                           Admins
@@ -400,6 +404,19 @@ export function ClientsPage(): React.ReactElement {
                           >
                             {isVerified ? "Verified" : "Pending"}
                           </Badge>
+                        </td>
+                        <td className="px-6 py-3.5 text-xs text-[#7B7D85]">
+                          {isVerified && user.last_sign_in_at ? (
+                            <span title={new Date(user.last_sign_in_at).toLocaleString()}>
+                              Last seen {timeAgo(user.last_sign_in_at)}
+                            </span>
+                          ) : user.created_at ? (
+                            <span title={new Date(user.created_at).toLocaleString()}>
+                              Invited {timeAgo(user.created_at)}
+                            </span>
+                          ) : (
+                            <span>—</span>
+                          )}
                         </td>
                         <td className="px-6 py-3.5 text-right">
                           <div
@@ -449,7 +466,7 @@ export function ClientsPage(): React.ReactElement {
                 <Fragment key={group.workspaceName}>
                   {/* Workspace Group Header */}
                   <tr className="h-10 border-b border-[#222330] bg-[#1E1F2A]">
-                    <td className="px-6" colSpan={4}>
+                    <td className="px-6" colSpan={5}>
                       <div className="inline-flex items-center gap-[10px] text-xs">
                         <span className="font-medium text-[#E3E4EA]">
                           {group.workspaceName}
@@ -493,6 +510,19 @@ export function ClientsPage(): React.ReactElement {
                           >
                             {isVerified ? "Verified" : "Pending"}
                           </Badge>
+                        </td>
+                        <td className="px-6 py-3.5 text-xs text-[#7B7D85]">
+                          {isVerified && user.last_sign_in_at ? (
+                            <span title={new Date(user.last_sign_in_at).toLocaleString()}>
+                              Last seen {timeAgo(user.last_sign_in_at)}
+                            </span>
+                          ) : user.created_at ? (
+                            <span title={new Date(user.created_at).toLocaleString()}>
+                              Invited {timeAgo(user.created_at)}
+                            </span>
+                          ) : (
+                            <span>—</span>
+                          )}
                         </td>
                         <td className="px-6 py-3.5 text-right">
                           <div
