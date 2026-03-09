@@ -10,6 +10,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - CSV/PDF exports for reports
 - Advanced analytics and SLA dashboards
+- Real-time presence with live heartbeat updates
+
+---
+
+## [1.10.0] - 2026-03-09
+
+### ✅ Added
+
+#### User Presence on Users Page (2026-03-09)
+
+- **Status Column**: Display online/offline status for all workspace users with color-coded indicators — green dot + "Online" for users who signed in within the last 5 minutes, gray dot + "Offline" for inactive users
+- **Last Online Column**: Relative timestamps showing when offline users were last active ("2 min ago", "1 hour ago", "Yesterday", "2 days ago", "Never"). Shows "—" for users currently online
+- **`userPresence.ts` Utility Library**: New utility module with presence logic:
+  - `ONLINE_THRESHOLD_MS = 5 * 60 * 1000` — 5-minute threshold for determining online status
+  - `getUserPresence(lastSignInAt)` — returns `{ isOnline: boolean, lastOnline: string | null }`
+  - `formatRelativeTime(timestamp)` — formats timestamps as human-readable relative time strings
+- **Database Migration**: `get_workspace_users_with_emails()` RPC function updated to include `last_sign_in_at` from `auth.users` table
+- **TypeScript Interface Update**: `WorkspaceUser` interface extended with `last_sign_in_at?: string | null` field
+- **Users Page UI**: Both admin and client views updated with Status and Last Online columns; skeleton loader updated to show 5 columns
+
+**Implementation Notes:**
+- Uses Supabase built-in `auth.users.last_sign_in_at` timestamp (not real-time presence)
+- 5-minute online threshold provides practical approximation without requiring heartbeat infrastructure
+- Preserves all existing workspace-scoped filtering and role-based visibility
+- Admin users remain excluded from the Users page list
 
 ---
 
