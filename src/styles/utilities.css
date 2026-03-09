@@ -19,11 +19,11 @@
   }
 
   .nav-item {
-    @apply flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-sidebar-foreground/90 transition-colors hover:bg-card/30;
+    @apply flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-sidebar-foreground/90 transition-colors hover:bg-foreground/[0.05];
   }
 
   .nav-item-active {
-    @apply border border-sidebar-border/60 bg-card/40;
+    @apply border border-sidebar-border/60 bg-foreground/[0.07];
   }
 
   .pill {

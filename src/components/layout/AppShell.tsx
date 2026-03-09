@@ -80,7 +80,7 @@ const navItems = [
 ] as const;
 
 const sidebarNavItemClassName =
-  "focus-ring flex items-center rounded-[4px] px-[10px] py-[8px] text-[13px] font-medium leading-4 text-[#E2E3E5] transition-colors";
+  "focus-ring flex items-center rounded-[4px] px-[10px] py-[8px] text-[13px] font-medium leading-4 text-sidebar-foreground/90 transition-colors";
 
 function IconButton({
   label,
@@ -127,7 +127,7 @@ function InboxPropertyRow({
 }): ReactElement {
   return (
     <div className="px-4 py-3">
-      <p className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.06em] text-[#5F6272]">
+      <p className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.06em] text-muted">
         {label}
       </p>
       <div>{children}</div>
@@ -175,8 +175,8 @@ function InboxListItem({
         }
       }}
       className={cn(
-        "group relative w-full cursor-pointer border-b border-[#1D1E2C] px-3 py-2.5 text-left transition-colors last:border-b-0",
-        isActive ? "bg-[#1F2133]" : "hover:bg-[#1C1D2A]",
+        "group relative w-full cursor-pointer border-b border-border px-3 py-2.5 text-left transition-colors last:border-b-0",
+        isActive ? "bg-surface" : "hover:bg-surface/60",
       )}
     >
       {isUnread ? (
@@ -192,7 +192,7 @@ function InboxListItem({
               className="h-7 w-7 rounded-full object-cover"
             />
           ) : (
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#2A2C38] bg-[#191A22] text-[10px] font-medium text-[#8B8C9E]">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-border bg-card text-[10px] font-medium text-muted">
               {getInboxInitials(msg.actor)}
             </span>
           )}
@@ -202,7 +202,7 @@ function InboxListItem({
             <p
               className={cn(
                 "truncate text-[13px] font-medium leading-[18px]",
-                isActive || isUnread ? "text-white" : "text-[#B8B9C6]",
+                isActive || isUnread ? "text-foreground" : "text-foreground/60",
               )}
             >
               {msg.title}
@@ -211,7 +211,7 @@ function InboxListItem({
             <div className="relative flex shrink-0 items-center">
               <span
                 className={cn(
-                  "text-[11px] leading-[18px] text-[#5F6170] transition-opacity",
+                  "text-[11px] leading-[18px] text-muted transition-opacity",
                   "group-hover:opacity-0",
                   isActive && "opacity-0",
                 )}
@@ -234,7 +234,7 @@ function InboxListItem({
                     if (isUnread) onMarkRead();
                     else onMarkUnread();
                   }}
-                  className="inline-flex h-6 w-6 items-center justify-center rounded-[4px] text-[#5F6272] transition-colors hover:bg-[#2A2C3A] hover:text-[#B0B1BC]"
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-[4px] text-muted transition-colors hover:bg-surface hover:text-foreground"
                 >
                   {isUnread ? (
                     <CheckCircle2 className="h-3.5 w-3.5" />
@@ -250,7 +250,7 @@ function InboxListItem({
                     e.stopPropagation();
                     onDelete();
                   }}
-                  className="inline-flex h-6 w-6 items-center justify-center rounded-[4px] text-[#5F6272] transition-colors hover:bg-[#2A2C3A] hover:text-[#E05C5C]"
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-[4px] text-muted transition-colors hover:bg-surface hover:text-destructive"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -258,7 +258,7 @@ function InboxListItem({
             </div>
           </div>
           {msg.description ? (
-            <p className="mt-0.5 truncate text-[12px] leading-[17px] text-[#5F6272]">
+            <p className="mt-0.5 truncate text-[12px] leading-[17px] text-muted">
               {msg.description}
             </p>
           ) : null}
@@ -409,7 +409,7 @@ function InboxCommentThread({
   if (commentsQuery.isLoading) {
     return (
       <div className="flex flex-1 items-center justify-center py-12">
-        <p className="text-[13px] text-[#5F6272]">Loading comments…</p>
+        <p className="text-[13px] text-muted">Loading comments…</p>
       </div>
     );
   }
@@ -432,9 +432,9 @@ function InboxCommentThread({
         className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4"
       >
         {comments.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <MessageSquare className="mb-2 h-7 w-7 text-[#2E3040]" />
-            <p className="text-[13px] text-[#5F6272]">
+          <div className="flex flex-1 flex-col items-center justify-center py-12 text-center">
+            <MessageSquare className="mb-2 h-7 w-7 text-border" />
+            <p className="text-[13px] text-muted">
               No comments yet. Be the first to reply.
             </p>
           </div>
@@ -462,45 +462,45 @@ function InboxCommentThread({
                   {/* connector line */}
                   <div className="relative flex justify-center">
                     {!isLast ? (
-                      <span className="absolute bottom-[-16px] top-8 w-px bg-[#222330]" />
+                      <span className="absolute bottom-[-16px] top-8 w-px bg-border" />
                     ) : null}
                     {actor.avatar ? (
                       <img
                         src={actor.avatar}
                         alt={actor.name}
-                        className="relative z-10 mt-0.5 h-7 w-7 rounded-full border border-[#2c2e42] bg-[#191A22] object-cover"
+                        className="relative z-10 mt-0.5 h-7 w-7 rounded-full border border-border bg-card object-cover"
                         loading="lazy"
                       />
                     ) : (
-                      <span className="relative z-10 mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#2A2C38] bg-[#191A22] text-[10px] font-medium text-[#8B8C9E]">
+                      <span className="relative z-10 mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full border border-border bg-card text-[10px] font-medium text-muted">
                         {getInboxInitials(actor.name)}
                       </span>
                     )}
                   </div>
 
                   {/* Comment card */}
-                  <div className="rounded-2xl border border-[#2c2e42] bg-[#1A1B25] px-4 py-3">
+                  <div className="rounded-2xl border border-border bg-card px-4 py-3">
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm leading-5 text-white">
+                      <p className="text-sm leading-5 text-foreground">
                         <span className="font-semibold">{actor.name}</span>{" "}
-                        <span className="text-[#5F6272]">commented</span>
+                        <span className="text-muted">commented</span>
                       </p>
                       <time
                         dateTime={comment.created_at}
                         title={absTime}
-                        className="shrink-0 text-xs text-[#5F6272]"
+                        className="shrink-0 text-xs text-muted"
                       >
                         {relTime}
                       </time>
                     </div>
-                    <p className="mt-2 whitespace-pre-wrap text-[14px] leading-[22px] text-[#D4D5DE]">
+                    <p className="mt-2 whitespace-pre-wrap text-[14px] leading-[22px] text-foreground/90">
                       {comment.body}
                     </p>
                     <div className="mt-2 flex justify-end">
                       <button
                         type="button"
                         onClick={() => handleReply(comment)}
-                        className="text-[12px] text-[#5F6272] transition-colors hover:text-[#B0B1BC]"
+                        className="text-[12px] text-muted transition-colors hover:text-foreground"
                       >
                         Reply
                       </button>
@@ -514,16 +514,16 @@ function InboxCommentThread({
       </div>
 
       {/* Composer */}
-      <div className="shrink-0 border-t border-[#222330] bg-[#1A1B25] px-5 py-4">
-        <div className="flex items-start gap-3 rounded-2xl border border-[#2c2e42] bg-[#191A22] p-3">
+      <div className="shrink-0 border-t border-border bg-card px-5 py-4">
+        <div className="flex items-start gap-3 rounded-2xl border border-border bg-surface p-3">
           {currentUserAvatar ? (
             <img
               src={currentUserAvatar}
               alt={currentUserName}
-              className="mt-0.5 h-8 w-8 shrink-0 rounded-full border border-[#2A2C38] object-cover"
+              className="mt-0.5 h-8 w-8 shrink-0 rounded-full border border-border object-cover"
             />
           ) : (
-            <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#2A2C38] bg-[#191A22] text-[10px] font-semibold text-[#8B8C9E]">
+            <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-card text-[10px] font-semibold text-muted">
               {getInboxInitials(currentUserName)}
             </span>
           )}
@@ -538,7 +538,7 @@ function InboxCommentThread({
               onChange={(e) => setComposerBody(e.target.value)}
               placeholder="Add your comment…"
               rows={3}
-              className="w-full resize-none bg-transparent px-0 py-0 text-[14px] leading-[22px] text-white outline-none placeholder:text-[#5F6272]"
+              className="w-full resize-none bg-transparent px-0 py-0 text-[14px] leading-[22px] text-foreground outline-none placeholder:text-muted"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
                   e.preventDefault();
@@ -546,8 +546,8 @@ function InboxCommentThread({
                 }
               }}
             />
-            <div className="mt-3 flex items-center justify-between border-t border-[#222330] pt-3">
-              <span className="text-[11px] text-[#3E3F50]">⌘↵ to submit</span>
+            <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
+              <span className="text-[11px] text-muted/50">⌘↵ to submit</span>
               <button
                 type="button"
                 onClick={submitComment}
@@ -882,7 +882,7 @@ export default function AppShell({
           <button
             type="button"
             className={cn(
-              "focus-ring flex min-w-0 items-center rounded-md transition-colors hover:bg-card/20",
+              "focus-ring flex min-w-0 items-center rounded-md transition-colors hover:bg-foreground/[0.05]",
               collapsed ? "h-10 w-10 justify-center px-0" : "gap-2 px-2 py-1.5",
             )}
             onClick={() => {
@@ -919,7 +919,9 @@ export default function AppShell({
                     onClick={() => setInboxOpen(false)}
                     className={cn(
                       sidebarNavItemClassName,
-                      active ? "bg-[#1E1F2A]" : "hover:bg-[#1E1F2A]",
+                      active
+                        ? "bg-foreground/[0.07]"
+                        : "hover:bg-foreground/[0.05]",
                       collapsed ? "h-10 justify-center px-0" : "gap-[10px]",
                     )}
                   >
@@ -927,11 +929,11 @@ export default function AppShell({
                       className={cn(
                         "inline-flex h-4 w-4 shrink-0 items-center justify-center",
                         collapsed
-                          ? "h-10 w-10 rounded-full bg-[#151619]"
+                          ? "h-10 w-10 rounded-full bg-sidebar-border/40"
                           : "h-4 w-4 rounded-none bg-transparent",
                       )}
                     >
-                      <Icon className="h-4 w-4 text-[#939496]" />
+                      <Icon className="h-4 w-4 text-sidebar-muted" />
                     </span>
                     {!collapsed ? (
                       <span className="truncate">{label}</span>
@@ -946,7 +948,9 @@ export default function AppShell({
               title="Inbox"
               className={cn(
                 sidebarNavItemClassName,
-                inboxOpen ? "bg-[#1E1F2A]" : "hover:bg-[#1E1F2A]",
+                inboxOpen
+                  ? "bg-foreground/[0.07]"
+                  : "hover:bg-foreground/[0.05]",
                 collapsed ? "h-10 justify-center px-0" : "gap-[10px]",
               )}
             >
@@ -954,11 +958,11 @@ export default function AppShell({
                 className={cn(
                   "inline-flex h-4 w-4 shrink-0 items-center justify-center",
                   collapsed
-                    ? "h-10 w-10 rounded-full bg-[#151619]"
+                    ? "h-10 w-10 rounded-full bg-sidebar-border/40"
                     : "h-4 w-4 rounded-none bg-transparent",
                 )}
               >
-                <Inbox className="h-4 w-4 text-[#939496]" />
+                <Inbox className="h-4 w-4 text-sidebar-muted" />
               </span>
               {!collapsed ? (
                 <>
@@ -983,7 +987,9 @@ export default function AppShell({
                     onClick={() => setInboxOpen(false)}
                     className={cn(
                       sidebarNavItemClassName,
-                      active ? "bg-[#1E1F2A]" : "hover:bg-[#1E1F2A]",
+                      active
+                        ? "bg-foreground/[0.07]"
+                        : "hover:bg-foreground/[0.05]",
                       collapsed ? "h-10 justify-center px-0" : "gap-[10px]",
                     )}
                   >
@@ -991,11 +997,11 @@ export default function AppShell({
                       className={cn(
                         "inline-flex h-4 w-4 shrink-0 items-center justify-center",
                         collapsed
-                          ? "h-10 w-10 rounded-full bg-[#151619]"
+                          ? "h-10 w-10 rounded-full bg-sidebar-border/40"
                           : "h-4 w-4 rounded-none bg-transparent",
                       )}
                     >
-                      <Icon className="h-4 w-4 text-[#939496]" />
+                      <Icon className="h-4 w-4 text-sidebar-muted" />
                     </span>
                     {!collapsed ? (
                       <span className="truncate">{label}</span>
@@ -1007,7 +1013,7 @@ export default function AppShell({
 
           {!collapsed && isAdmin && workspaces.length > 0 ? (
             <div className="mt-5 space-y-2">
-              <div className="px-2 pt-2 text-[12px] font-medium leading-[15px] text-[#939496]">
+              <div className="px-2 pt-2 text-[12px] font-medium leading-[15px] text-sidebar-muted">
                 Workspaces
               </div>
               {workspaces.map((ws) => (
@@ -1019,8 +1025,8 @@ export default function AppShell({
                   className={cn(
                     sidebarNavItemClassName,
                     ws.id === workspaceId
-                      ? "bg-[#1E1F2A]"
-                      : "hover:bg-[#1E1F2A]",
+                      ? "bg-foreground/[0.07]"
+                      : "hover:bg-foreground/[0.05]",
                     "gap-[10px]",
                   )}
                 >
@@ -1032,7 +1038,7 @@ export default function AppShell({
 
           {!collapsed && isAdmin ? (
             <div className="mt-5 space-y-2">
-              <div className="px-2 pt-2 text-[12px] font-medium leading-[15px] text-[#939496]">
+              <div className="px-2 pt-2 text-[12px] font-medium leading-[15px] text-sidebar-muted">
                 Admin
               </div>
               {adminNavItems.map(({ key, label, to, Icon }) => {
@@ -1046,11 +1052,13 @@ export default function AppShell({
                     onClick={() => setInboxOpen(false)}
                     className={cn(
                       sidebarNavItemClassName,
-                      active ? "bg-[#1E1F2A]" : "hover:bg-[#1E1F2A]",
+                      active
+                        ? "bg-foreground/[0.07]"
+                        : "hover:bg-foreground/[0.05]",
                       "gap-[10px]",
                     )}
                   >
-                    <Icon className="h-4 w-4 shrink-0 text-[#939496]" />
+                    <Icon className="h-4 w-4 shrink-0 text-sidebar-muted" />
                     <span className="truncate">{label}</span>
                   </NavLink>
                 );
@@ -1076,7 +1084,7 @@ export default function AppShell({
               )}
             </button>
             <span className="inline-flex h-2 w-2 rounded-full bg-primary" />
-            <h1 className="text-[18px] font-medium leading-[22px] text-white">
+            <h1 className="text-[18px] font-medium leading-[22px] text-foreground">
               {selectedWorkspaceName}
             </h1>
           </div>
@@ -1125,11 +1133,11 @@ export default function AppShell({
             </button>
 
             {profileMenuOpen ? (
-              <div className="absolute right-0 top-12 z-50 w-[224px] rounded-[8px] border border-[#333541] bg-[#1B1C23] p-[0.5px] shadow-[0px_3px_8px_rgba(0,0,0,0.12),0px_2px_5px_rgba(0,0,0,0.12),0px_1px_1px_rgba(0,0,0,0.12)]">
+              <div className="absolute right-0 top-12 z-50 w-[224px] rounded-[8px] border border-border bg-popover p-[0.5px] shadow-soft">
                 <div className="flex flex-col py-1">
                   <button
                     type="button"
-                    className="focus-ring mx-1.5 inline-flex h-8 items-center justify-between rounded-[6px] px-[14px] text-[13px] leading-4 text-[#E4E4EC] transition-colors hover:bg-[#2B2C34]"
+                    className="focus-ring mx-1.5 inline-flex h-8 items-center justify-between rounded-[6px] px-[14px] text-[13px] leading-4 text-foreground transition-colors hover:bg-surface"
                     onClick={() => {
                       setProfileMenuOpen(false);
                       setProfileEditOpen(true);
@@ -1140,11 +1148,11 @@ export default function AppShell({
 
                   {isAdmin ? (
                     <>
-                      <div className="my-1 border-b border-[#2E2F3B]" />
+                      <div className="my-1 border-b border-border/60" />
 
                       <button
                         type="button"
-                        className="focus-ring mx-1.5 inline-flex h-8 items-center rounded-[6px] px-[14px] text-[13px] leading-4 text-[#E4E4EC] transition-colors hover:bg-[#2B2C34]"
+                        className="focus-ring mx-1.5 inline-flex h-8 items-center rounded-[6px] px-[14px] text-[13px] leading-4 text-foreground transition-colors hover:bg-surface"
                         onClick={() => {
                           navigate(`/w/${workspaceId}/settings`);
                           setProfileMenuOpen(false);
@@ -1155,7 +1163,7 @@ export default function AppShell({
 
                       <button
                         type="button"
-                        className="focus-ring mx-1.5 inline-flex h-8 items-center rounded-[6px] px-[14px] text-[13px] leading-4 text-[#E4E4EC] transition-colors hover:bg-[#2B2C34]"
+                        className="focus-ring mx-1.5 inline-flex h-8 items-center rounded-[6px] px-[14px] text-[13px] leading-4 text-foreground transition-colors hover:bg-surface"
                         onClick={() => {
                           navigate(`/w/${workspaceId}/clients`);
                           setProfileMenuOpen(false);
@@ -1166,23 +1174,23 @@ export default function AppShell({
                     </>
                   ) : null}
 
-                  <div className="my-1 border-b border-[#2E2F3B]" />
+                  <div className="my-1 border-b border-border/60" />
 
                   <button
                     type="button"
-                    className="focus-ring mx-1.5 inline-flex h-8 items-center justify-between rounded-[6px] px-[14px] text-[13px] leading-4 text-[#E4E4EC] transition-colors hover:bg-[#2B2C34]"
+                    className="focus-ring mx-1.5 inline-flex h-8 items-center justify-between rounded-[6px] px-[14px] text-[13px] leading-4 text-foreground transition-colors hover:bg-surface"
                     onClick={() => {
                       navigate("/workspaces");
                       setProfileMenuOpen(false);
                     }}
                   >
                     <span>Switch workspace</span>
-                    <ChevronRight className="h-3 w-3 text-[#5F6066]" />
+                    <ChevronRight className="h-3 w-3 text-muted" />
                   </button>
 
                   <button
                     type="button"
-                    className="focus-ring mx-1.5 inline-flex h-8 items-center justify-between rounded-[6px] px-[14px] text-[13px] leading-4 text-[#E4E4EC] transition-colors hover:bg-[#2B2C34]"
+                    className="focus-ring mx-1.5 inline-flex h-8 items-center justify-between rounded-[6px] px-[14px] text-[13px] leading-4 text-foreground transition-colors hover:bg-surface"
                     onClick={() => {
                       void handleSignOut();
                     }}
@@ -1196,19 +1204,19 @@ export default function AppShell({
         </header>
 
         {inboxOpen ? (
-          <section className="absolute inset-x-0 bottom-0 top-14 z-40 overflow-hidden bg-[#15161D]">
+          <section className="absolute inset-x-0 bottom-0 top-14 z-40 overflow-hidden bg-background">
             <div className="grid h-full min-h-0 grid-cols-[280px_minmax(0,1fr)_260px]">
               {/* ── LEFT: Inbox list ── */}
-              <div className="flex min-h-0 flex-col border-r border-[#222330] bg-[#1A1B24]">
+              <div className="flex min-h-0 flex-col border-r border-border bg-card">
                 {/* Header */}
-                <div className="flex items-center justify-between border-b border-[#222330] px-3 py-2.5">
+                <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
                   <div className="flex items-center gap-2">
-                    <Inbox className="h-[15px] w-[15px] text-[#6B6E7B]" />
-                    <span className="text-[13px] font-semibold text-white">
+                    <Inbox className="h-[15px] w-[15px] text-muted" />
+                    <span className="text-[13px] font-semibold text-foreground">
                       Inbox
                     </span>
                     {unreadCount > 0 ? (
-                      <span className="inline-flex min-w-[18px] items-center justify-center rounded-[3px] bg-[#2D2E3A] px-1 py-px text-[11px] font-medium leading-[16px] text-[#A8A9B5]">
+                      <span className="inline-flex min-w-[18px] items-center justify-center rounded-[3px] bg-surface px-1 py-px text-[11px] font-medium leading-[16px] text-muted">
                         {unreadCount > 99 ? "99+" : unreadCount}
                       </span>
                     ) : null}
@@ -1216,7 +1224,7 @@ export default function AppShell({
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      className="text-[11px] text-[#6B6E7B] transition-colors hover:text-[#B0B1BC]"
+                      className="text-[11px] text-muted transition-colors hover:text-foreground"
                       onClick={() => {
                         if (markAllReadMutation.isPending) return;
                         void markAllReadMutation.mutateAsync();
@@ -1227,7 +1235,7 @@ export default function AppShell({
                     <button
                       type="button"
                       onClick={() => setInboxOpen(false)}
-                      className="focus-ring inline-flex h-6 w-6 items-center justify-center rounded-[4px] text-[#5F6170] transition-colors hover:bg-[#252630] hover:text-white"
+                      className="focus-ring inline-flex h-6 w-6 items-center justify-center rounded-[4px] text-muted transition-colors hover:bg-surface hover:text-foreground"
                       aria-label="Close inbox"
                     >
                       <X className="h-3.5 w-3.5" />
@@ -1239,10 +1247,8 @@ export default function AppShell({
                 <div className="min-h-0 flex-1 overflow-y-auto">
                   {inboxItems.length === 0 ? (
                     <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
-                      <Inbox className="mb-3 h-8 w-8 text-[#2E2F3E]" />
-                      <p className="text-[13px] text-[#5F6170]">
-                        All caught up
-                      </p>
+                      <Inbox className="mb-3 h-8 w-8 text-border" />
+                      <p className="text-[13px] text-muted">All caught up</p>
                     </div>
                   ) : (
                     <>
@@ -1261,7 +1267,7 @@ export default function AppShell({
                       ).map(({ label, items }) =>
                         items.length > 0 ? (
                           <div key={label}>
-                            <div className="sticky top-0 z-10 bg-[#1A1B24] px-3 pb-1 pt-3 text-[11px] font-medium uppercase tracking-[0.05em] text-[#4A4C5A]">
+                            <div className="sticky top-0 z-10 bg-card px-3 pb-1 pt-3 text-[11px] font-medium uppercase tracking-[0.05em] text-muted/60">
                               {label}
                             </div>
                             {items.map((notification) => (
@@ -1303,10 +1309,10 @@ export default function AppShell({
               {/* ── MIDDLE + RIGHT ── */}
               <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] md:col-span-2 md:grid-cols-[minmax(0,1fr)_260px]">
                 {/* Shared header bar */}
-                <header className="flex items-center justify-between gap-3 border-b border-[#222330] bg-[#191A22] px-5 py-[11px] md:col-span-2">
+                <header className="flex items-center justify-between gap-3 border-b border-border bg-card px-5 py-[11px] md:col-span-2">
                   <div className="min-w-0 flex-1">
                     {activeNotification ? (
-                      <p className="mb-0.5 flex items-center gap-1 truncate text-[11px] text-[#5F6272]">
+                      <p className="mb-0.5 flex items-center gap-1 truncate text-[11px] text-muted">
                         <span>{selectedWorkspaceName}</span>
                         <ChevronRight className="h-3 w-3 shrink-0" />
                         <span className="truncate">
@@ -1314,7 +1320,7 @@ export default function AppShell({
                         </span>
                       </p>
                     ) : null}
-                    <h3 className="truncate text-[14px] font-semibold leading-[20px] text-white">
+                    <h3 className="truncate text-[14px] font-semibold leading-[20px] text-foreground">
                       {activeNotification
                         ? renderInboxMessage(activeNotification).title
                         : "Select a notification"}
@@ -1362,7 +1368,7 @@ export default function AppShell({
                 </header>
 
                 {/* Middle: task-drawer-style content pane */}
-                <div className="flex min-h-0 flex-col border-r border-[#222330]">
+                <div className="flex min-h-0 flex-col border-r border-border">
                   {activeNotification ? (
                     (() => {
                       const message = renderInboxMessage(activeNotification);
@@ -1389,14 +1395,14 @@ export default function AppShell({
                         return (
                           <>
                             {/* Compact context header */}
-                            <div className="shrink-0 border-b border-[#222330] px-6 py-5">
-                              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5F6272]">
+                            <div className="shrink-0 border-b border-border px-6 py-5">
+                              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">
                                 {typeLabel}
                               </p>
-                              <h2 className="text-[18px] font-medium leading-[24px] tracking-[-0.2px] text-white">
+                              <h2 className="text-[18px] font-medium leading-[24px] tracking-[-0.2px] text-foreground">
                                 {message.title}
                               </h2>
-                              <div className="mt-2 flex items-center gap-2 text-[12px] text-[#6B6D7A]">
+                              <div className="mt-2 flex items-center gap-2 text-[12px] text-muted">
                                 {message.actorAvatarUrl ? (
                                   <img
                                     src={message.actorAvatarUrl}
@@ -1404,7 +1410,7 @@ export default function AppShell({
                                     className="h-5 w-5 rounded-full object-cover"
                                   />
                                 ) : (
-                                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#2A2C3A] text-[9px] font-bold text-[#A0A2B0]">
+                                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-surface text-[9px] font-bold text-muted">
                                     {getInboxInitials(message.actor)}
                                   </span>
                                 )}
@@ -1432,14 +1438,14 @@ export default function AppShell({
                           <div className="space-y-6 px-6 py-6">
                             {/* Title block */}
                             <div>
-                              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5F6272]">
+                              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">
                                 {typeLabel}
                               </p>
-                              <h2 className="text-[22px] font-medium leading-[28px] tracking-[-0.3px] text-white">
+                              <h2 className="text-[22px] font-medium leading-[28px] tracking-[-0.3px] text-foreground">
                                 {message.title}
                               </h2>
-                              <div className="mt-2 flex items-center gap-2 text-[12px] text-[#6B6D7A]">
-                                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#2A2C3A] text-[9px] font-bold text-[#A0A2B0]">
+                              <div className="mt-2 flex items-center gap-2 text-[12px] text-muted">
+                                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-surface text-[9px] font-bold text-muted">
                                   {getInboxInitials(message.actor)}
                                 </span>
                                 <span>{message.actor}</span>
@@ -1450,7 +1456,7 @@ export default function AppShell({
                               </div>
                             </div>
 
-                            <div className="border-t border-[#222330]" />
+                            <div className="border-t border-border" />
 
                             {/* Content block — comment fallback (no task ID) or fields */}
                             {isCommentType && message.description ? (
@@ -1463,49 +1469,49 @@ export default function AppShell({
                                     className="mt-0.5 h-7 w-7 shrink-0 rounded-full object-cover"
                                   />
                                 ) : (
-                                  <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#252636] text-[10px] font-bold text-[#8B8C9E]">
+                                  <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface text-[10px] font-bold text-muted">
                                     {getInboxInitials(message.actor)}
                                   </span>
                                 )}
-                                <div className="flex-1 rounded-[6px] border border-[#292B38] bg-[#1E1F2D] px-4 py-3">
-                                  <p className="mb-1.5 text-[12px] font-medium text-[#A0A2B0]">
+                                <div className="flex-1 rounded-[6px] border border-border bg-card px-4 py-3">
+                                  <p className="mb-1.5 text-[12px] font-medium text-muted">
                                     {message.actor}
                                   </p>
-                                  <p className="text-[14px] leading-[22px] text-[#D4D5DE]">
+                                  <p className="text-[14px] leading-[22px] text-foreground/90">
                                     {message.description}
                                   </p>
                                 </div>
                               </div>
                             ) : (
                               /* Fields block — TaskDrawer-style rows */
-                              <div className="overflow-hidden rounded-[4px] border border-[#292B38] bg-[#191A22]">
+                              <div className="overflow-hidden rounded-[4px] border border-border bg-card">
                                 {message.entity &&
                                 message.entity !== "General update" ? (
-                                  <div className="grid grid-cols-[120px_1fr] border-b border-[#292B38]">
-                                    <div className="px-3 py-2.5 text-[13px] font-medium text-[#6B6D7A]">
+                                  <div className="grid grid-cols-[120px_1fr] border-b border-border">
+                                    <div className="px-3 py-2.5 text-[13px] font-medium text-muted">
                                       {activeNotification.type.startsWith(
                                         "comment.",
                                       )
                                         ? "Comment on"
                                         : "Task"}
                                     </div>
-                                    <div className="px-3 py-2.5 text-[13px] font-medium text-white">
+                                    <div className="px-3 py-2.5 text-[13px] font-medium text-foreground">
                                       {message.entity}
                                     </div>
                                   </div>
                                 ) : null}
                                 {message.description ? (
-                                  <div className="grid grid-cols-[120px_1fr] border-b border-[#292B38]">
-                                    <div className="px-3 py-2.5 text-[13px] font-medium text-[#6B6D7A]">
+                                  <div className="grid grid-cols-[120px_1fr] border-b border-border">
+                                    <div className="px-3 py-2.5 text-[13px] font-medium text-muted">
                                       {isChangedField ? "Change" : "Detail"}
                                     </div>
-                                    <div className="px-3 py-2.5 text-[13px] font-medium text-white">
+                                    <div className="px-3 py-2.5 text-[13px] font-medium text-foreground">
                                       {message.description}
                                     </div>
                                   </div>
                                 ) : null}
                                 <div className="grid grid-cols-[120px_1fr]">
-                                  <div className="px-3 py-2.5 text-[13px] font-medium text-[#6B6D7A]">
+                                  <div className="px-3 py-2.5 text-[13px] font-medium text-muted">
                                     From
                                   </div>
                                   <div className="flex items-center gap-1.5 px-3 py-2.5">
@@ -1516,11 +1522,11 @@ export default function AppShell({
                                         className="h-4 w-4 rounded-full object-cover"
                                       />
                                     ) : (
-                                      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#252636] text-[8px] font-bold text-[#8B8C9E]">
+                                      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-surface text-[8px] font-bold text-muted">
                                         {getInboxInitials(message.actor)}
                                       </span>
                                     )}
-                                    <span className="text-[13px] font-medium text-white">
+                                    <span className="text-[13px] font-medium text-foreground">
                                       {message.actor}
                                     </span>
                                   </div>
@@ -1533,8 +1539,8 @@ export default function AppShell({
                     })()
                   ) : (
                     <div className="flex flex-1 flex-col items-center justify-center text-center">
-                      <MessageSquare className="mb-3 h-8 w-8 text-[#2E3040]" />
-                      <p className="text-[13px] text-[#5F6170]">
+                      <MessageSquare className="mb-3 h-8 w-8 text-border" />
+                      <p className="text-[13px] text-muted">
                         Select an item to view details
                       </p>
                     </div>
@@ -1542,9 +1548,9 @@ export default function AppShell({
                 </div>
 
                 {/* Right: properties rail */}
-                <div className="hidden min-h-0 bg-[#191A22] md:flex md:flex-col">
-                  <div className="border-b border-[#222330] px-4 py-2.5">
-                    <h3 className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5F6272]">
+                <div className="hidden min-h-0 bg-card md:flex md:flex-col">
+                  <div className="border-b border-border px-4 py-2.5">
+                    <h3 className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">
                       Properties
                     </h3>
                   </div>
@@ -1552,21 +1558,21 @@ export default function AppShell({
                     (() => {
                       const message = renderInboxMessage(activeNotification);
                       return (
-                        <div className="min-h-0 flex-1 divide-y divide-[#1F2030] overflow-y-auto">
+                        <div className="min-h-0 flex-1 divide-y divide-border overflow-y-auto">
                           <InboxPropertyRow label="Status">
                             <span
                               className={cn(
                                 "inline-flex items-center rounded-[4px] px-2 py-0.5 text-[12px] font-medium",
                                 message.status === "Unread"
                                   ? "bg-primary/15 text-primary"
-                                  : "bg-[#252530] text-[#8B8C9E]",
+                                  : "bg-surface text-muted",
                               )}
                             >
                               {message.status}
                             </span>
                           </InboxPropertyRow>
                           <InboxPropertyRow label="Type">
-                            <span className="text-[13px] text-[#C4C5D0]">
+                            <span className="text-[13px] text-foreground/80">
                               {getNotificationTypeLabel(
                                 activeNotification.type,
                               )}
@@ -1581,24 +1587,24 @@ export default function AppShell({
                                   className="h-5 w-5 rounded-full object-cover"
                                 />
                               ) : (
-                                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#252636] text-[9px] font-bold text-[#8B8C9E]">
+                                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-surface text-[9px] font-bold text-muted">
                                   {getInboxInitials(message.actor)}
                                 </span>
                               )}
-                              <span className="text-[13px] text-[#C4C5D0]">
+                              <span className="text-[13px] text-foreground/80">
                                 {message.actor}
                               </span>
                             </div>
                           </InboxPropertyRow>
                           <InboxPropertyRow label="Received">
-                            <span className="text-[13px] text-[#C4C5D0]">
+                            <span className="text-[13px] text-foreground/80">
                               {timeAgo(activeNotification.created_at)}
                             </span>
                           </InboxPropertyRow>
                           {message.entity &&
                           message.entity !== "General update" ? (
                             <InboxPropertyRow label="Related">
-                              <span className="text-[13px] text-[#C4C5D0]">
+                              <span className="text-[13px] text-foreground/80">
                                 {message.entity}
                               </span>
                             </InboxPropertyRow>
@@ -1607,7 +1613,7 @@ export default function AppShell({
                       );
                     })()
                   ) : (
-                    <p className="px-4 py-4 text-[13px] text-[#5F6170]">
+                    <p className="px-4 py-4 text-[13px] text-muted">
                       No item selected.
                     </p>
                   )}

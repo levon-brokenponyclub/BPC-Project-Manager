@@ -179,9 +179,7 @@ export function ProjectOverviewPage(): React.ReactElement {
     for (const t of allTasks) {
       if (!t.completed_at) continue;
       const d = new Date(t.completed_at);
-      const daysAgo = Math.floor(
-        (today.getTime() - d.getTime()) / 86400000,
-      );
+      const daysAgo = Math.floor((today.getTime() - d.getTime()) / 86400000);
       if (daysAgo >= 0 && daysAgo < 7) {
         weeklyBars[6 - daysAgo] += 1;
       }
@@ -190,7 +188,15 @@ export function ProjectOverviewPage(): React.ReactElement {
     const hasWeeklyData = weeklyBars.some((b) => b > 0);
     const displayBars = hasWeeklyData
       ? weeklyBars
-      : [1, 2, 1, 3, 2, 4, completedThisWeekCount > 0 ? completedThisWeekCount : 3];
+      : [
+          1,
+          2,
+          1,
+          3,
+          2,
+          4,
+          completedThisWeekCount > 0 ? completedThisWeekCount : 3,
+        ];
 
     // ── Phases (parent tasks → phases, subtasks → work items) ──────────────
     const phaseEntries: PhaseEntry[] = parentTasks.map((task) => {
@@ -268,16 +274,16 @@ export function ProjectOverviewPage(): React.ReactElement {
     const maxDueDate = dueDates[dueDates.length - 1] ?? null;
     const launchDateFormatted = maxDueDate
       ? new Date(maxDueDate).toLocaleDateString("en-ZA", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })
       : null;
     const daysRemaining = maxDueDate
       ? Math.ceil(
-        (new Date(maxDueDate).setHours(0, 0, 0, 0) - today.getTime()) /
-        86400000,
-      )
+          (new Date(maxDueDate).setHours(0, 0, 0, 0) - today.getTime()) /
+            86400000,
+        )
       : null;
 
     // ── List items ────────────────────────────────────────────────────────
@@ -321,22 +327,23 @@ export function ProjectOverviewPage(): React.ReactElement {
         id: t.id,
         primary: t.title,
         secondary: isOverdue
-          ? `Overdue${t.due_date
-            ? ` · ${new Date(t.due_date).toLocaleDateString("en-ZA", {
-              day: "numeric",
-              month: "short",
-            })}`
-            : ""
-          }`
+          ? `Overdue${
+              t.due_date
+                ? ` · ${new Date(t.due_date).toLocaleDateString("en-ZA", {
+                    day: "numeric",
+                    month: "short",
+                  })}`
+                : ""
+            }`
           : isBlocked
             ? `Blocked${t.blocked_reason ? ` · ${t.blocked_reason.slice(0, 50)}` : ""}`
             : `${t.priority ?? t.status} · In Progress`,
         icon: isOverdue ? AlertTriangle : isBlocked ? AlertCircle : Zap,
         iconColor: isOverdue
-          ? "bg-[#28141a] text-[#f87171]"
+          ? "bg-red-100 text-red-500 dark:bg-[#28141a] dark:text-[#f87171]"
           : isBlocked
-            ? "bg-[#231c10] text-[#d4a84b]"
-            : "bg-[#1e2638] text-[#7aa3c2]",
+            ? "bg-amber-100 text-amber-600 dark:bg-[#231c10] dark:text-[#d4a84b]"
+            : "bg-primary/[0.1] text-primary dark:bg-[#1e2638] dark:text-[#7aa3c2]",
         onClick: () => void navigate(`/w/${workspaceId}/tasks`),
       };
     });
@@ -568,21 +575,21 @@ export function ProjectOverviewPage(): React.ReactElement {
             type="button"
             onClick={() => void navigate(`/w/${workspaceId}/assets`)}
             className={cn(
-              "group w-full rounded-xl border border-[#1e2130] bg-[#13151e] p-5 text-left",
-              "transition-all duration-150 hover:-translate-y-[2px] hover:border-[#2a2d3e] hover:bg-[#171929] hover:shadow-[0_4px_24px_rgba(0,0,0,0.35)]",
+              "group w-full rounded-xl border border-border bg-card p-5 text-left",
+              "transition-all duration-150 hover:-translate-y-[2px] hover:bg-surface hover:shadow-card dark:hover:shadow-[0_4px_24px_rgba(0,0,0,0.35)]",
             )}
           >
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               {/* Left: icon + heading */}
               <div className="flex items-start gap-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[9px] bg-[#1e2638] transition-colors group-hover:bg-[#242e45]">
-                  <Archive className="h-4 w-4 text-[#7aa3c2]" />
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[9px] bg-primary/[0.1] transition-colors group-hover:bg-primary/[0.15] dark:bg-[#1e2638] dark:group-hover:bg-[#242e45]">
+                  <Archive className="h-4 w-4 text-primary dark:text-[#7aa3c2]" />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-[14px] font-semibold text-[rgba(255,255,255,0.88)]">
+                  <p className="text-[14px] font-semibold text-foreground">
                     Asset Library
                   </p>
-                  <p className="mt-0.5 text-[12px] text-[#50566a]">
+                  <p className="mt-0.5 text-[12px] text-muted">
                     {assetCount === 0
                       ? "Store project files, links, logins and plugin details"
                       : `${assetCount} asset${assetCount !== 1 ? "s" : ""} · files, links, logins & plugins`}
@@ -604,7 +611,7 @@ export function ProjectOverviewPage(): React.ReactElement {
                       ].map(({ Icon, label }) => (
                         <span
                           key={label}
-                          className="inline-flex items-center gap-1 rounded-[5px] bg-[#1a1d2a] px-2 py-0.5 text-[11px] text-[#50566a]"
+                          className="inline-flex items-center gap-1 rounded-[5px] bg-surface px-2 py-0.5 text-[11px] text-muted"
                         >
                           <Icon className="h-3 w-3" />
                           {label}
@@ -618,14 +625,14 @@ export function ProjectOverviewPage(): React.ReactElement {
               {/* Right: CTA */}
               <div className="shrink-0">
                 {assetCount === 0 ? (
-                  <span className="inline-flex items-center rounded-[8px] border border-[#2a3a4a] bg-[#1e2638] px-4 py-2 text-[12px] font-semibold text-[#7aa3c2] transition-colors group-hover:bg-[#242e45]">
+                  <span className="inline-flex items-center rounded-[8px] border border-primary/20 bg-primary/[0.1] px-4 py-2 text-[12px] font-semibold text-primary transition-colors group-hover:bg-primary/[0.15] dark:border-[#2a3a4a] dark:bg-[#1e2638] dark:text-[#7aa3c2] dark:group-hover:bg-[#242e45]">
                     Set Up Library
                   </span>
                 ) : (
                   <span
                     className={cn(
-                      "inline-flex items-center rounded-[8px] border border-[#1e2130] bg-[#1a1d2a] px-4 py-2 text-[12px] font-semibold text-[#6b7485]",
-                      "transition-colors group-hover:border-[#2a2d3e] group-hover:text-[rgba(255,255,255,0.82)]",
+                      "inline-flex items-center rounded-[8px] border border-border bg-surface px-4 py-2 text-[12px] font-semibold text-muted",
+                      "transition-colors group-hover:text-foreground",
                     )}
                   >
                     Open Library

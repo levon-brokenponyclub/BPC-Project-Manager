@@ -75,47 +75,49 @@ export interface OverviewListCardProps {
 
 // Card container base classes (shared across all card types)
 const CARD_BASE =
-  "rounded-xl border bg-[#13151e] border-[#1e2130] transition-all duration-150";
+  "rounded-xl border bg-card border-border transition-all duration-150";
 
 const CARD_CLICKABLE =
-  "cursor-pointer hover:bg-[#171929] hover:border-[#2a2d3e] hover:-translate-y-[2px] hover:shadow-[0_4px_24px_rgba(0,0,0,0.35)]";
+  "cursor-pointer hover:bg-surface hover:-translate-y-[2px] hover:shadow-card dark:hover:shadow-[0_4px_24px_rgba(0,0,0,0.35)]";
 
 // ─── Tone maps ────────────────────────────────────────────────────────────────
 
 // Metric value color per tone
 const TONE_VALUE: Record<CardTone, string> = {
-  default: "text-[rgba(255,255,255,0.88)]",
-  success: "text-[#4ade80]",          // emerald — elegant, not neon
-  warning: "text-[#d4a84b]",          // warm amber/bronze, not loud orange
-  danger: "text-[#f87171]",          // muted coral-red, not alarm red
-  purple: "text-[#a78bfa]",          // soft violet, not candy purple
+  default: "text-foreground",
+  success: "text-[#4ade80]", // emerald — elegant, not neon
+  warning: "text-[#d4a84b]", // warm amber/bronze, not loud orange
+  danger: "text-[#f87171]", // muted coral-red, not alarm red
+  purple: "text-[#a78bfa]", // soft violet, not candy purple
 };
 
 // Icon chip: background + foreground
 const TONE_ICON_BG: Record<CardTone, string> = {
-  default: "bg-[#1e2638] text-[#7aa3c2]",     // slate-blue chip — cool neutral
-  success: "bg-[#162820] text-[#4ade80]",      // deep emerald tint
-  warning: "bg-[#231c10] text-[#d4a84b]",      // deep amber tint
-  danger: "bg-[#28141a] text-[#f87171]",      // deep rose tint
-  purple: "bg-[#1c1730] text-[#a78bfa]",      // deep violet tint
+  default:
+    "bg-primary/[0.1] text-primary dark:bg-[#1e2638] dark:text-[#7aa3c2]",
+  success:
+    "bg-emerald-100 text-emerald-600 dark:bg-[#162820] dark:text-[#4ade80]",
+  warning: "bg-amber-100 text-amber-600 dark:bg-[#231c10] dark:text-[#d4a84b]",
+  danger: "bg-red-100 text-red-500 dark:bg-[#28141a] dark:text-[#f87171]",
+  purple: "bg-violet-100 text-violet-600 dark:bg-[#1c1730] dark:text-[#a78bfa]",
 };
 
 // Progress bar fill per tone
 const TONE_PROGRESS: Record<CardTone, string> = {
-  default: "bg-[#4a7fa5]",     // cool steel-blue
-  success: "bg-[#22c55e]",     // rich emerald
-  warning: "bg-[#c49a3a]",     // warm bronze
-  danger: "bg-[#e05c5c]",     // muted rose-red
-  purple: "bg-[#8b5cf6]",     // medium violet
+  default: "bg-[#4a7fa5]", // cool steel-blue
+  success: "bg-[#22c55e]", // rich emerald
+  warning: "bg-[#c49a3a]", // warm bronze
+  danger: "bg-[#e05c5c]", // muted rose-red
+  purple: "bg-[#8b5cf6]", // medium violet
 };
 
 // Tonal border tint (subtle accent on card edge)
 const TONE_BORDER: Record<CardTone, string> = {
-  default: "border-[#1e2130]",
-  success: "border-[#1e3028]",   // very faint emerald edge
-  warning: "border-[#2e2015]",   // very faint amber edge
-  danger: "border-[#2e1a1f]",   // very faint rose edge
-  purple: "border-[#201830]",   // very faint violet edge
+  default: "border-border",
+  success: "border-border dark:border-[#1e3028]",
+  warning: "border-border dark:border-[#2e2015]",
+  danger: "border-border dark:border-[#2e1a1f]",
+  purple: "border-border dark:border-[#201830]",
 };
 
 // Inset shadow glow — only for danger/warning, very restrained
@@ -129,26 +131,29 @@ const TONE_GLOW: Record<CardTone, string> = {
 
 // Mini bar chart bar tint (non-active bars)
 const TONE_BAR_MUTED: Record<CardTone, string> = {
-  default: "bg-[#2a3a4a]",
-  success: "bg-[#163826]",
-  warning: "bg-[#2e2010]",
-  danger: "bg-[#2e1820]",
-  purple: "bg-[#201838]",
+  default: "bg-border dark:bg-[#2a3a4a]",
+  success: "bg-emerald-200 dark:bg-[#163826]",
+  warning: "bg-amber-200 dark:bg-[#2e2010]",
+  danger: "bg-red-200 dark:bg-[#2e1820]",
+  purple: "bg-violet-200 dark:bg-[#201838]",
 };
 
 // Health badge config
 const HEALTH_CONFIG: Record<ProjectHealth, { badge: string; dot: string }> = {
   "On Track": {
-    badge: "bg-[#162820] text-[#4ade80] border-[#1e3828]",
-    dot: "bg-[#22c55e]",
+    badge:
+      "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-[#162820] dark:text-[#4ade80] dark:border-[#1e3828]",
+    dot: "bg-emerald-500 dark:bg-[#22c55e]",
   },
   "At Risk": {
-    badge: "bg-[#231c10] text-[#d4a84b] border-[#2e2415]",
-    dot: "bg-[#c49a3a]",
+    badge:
+      "bg-amber-50 text-amber-700 border-amber-200 dark:bg-[#231c10] dark:text-[#d4a84b] dark:border-[#2e2415]",
+    dot: "bg-amber-500 dark:bg-[#c49a3a]",
   },
   Critical: {
-    badge: "bg-[#28141a] text-[#f87171] border-[#36181e]",
-    dot: "bg-[#e05c5c]",
+    badge:
+      "bg-red-50 text-red-600 border-red-200 dark:bg-[#28141a] dark:text-[#f87171] dark:border-[#36181e]",
+    dot: "bg-red-500 dark:bg-[#e05c5c]",
   },
 };
 
@@ -157,7 +162,7 @@ const HEALTH_CONFIG: Record<ProjectHealth, { badge: string; dot: string }> = {
 export function TrendBadge({ diff }: { diff: number }): ReactElement {
   if (diff === 0) {
     return (
-      <span className="inline-flex items-center rounded-full bg-[#1e2130] px-2 py-0.5 text-[10px] font-semibold text-[#6b7485]">
+      <span className="inline-flex items-center rounded-full bg-surface px-2 py-0.5 text-[10px] font-semibold text-muted dark:bg-[#1e2130]">
         Same as last wk
       </span>
     );
@@ -168,8 +173,8 @@ export function TrendBadge({ diff }: { diff: number }): ReactElement {
       className={cn(
         "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold",
         positive
-          ? "bg-[#162820] text-[#4ade80]"
-          : "bg-[#28141a] text-[#f87171]",
+          ? "bg-emerald-100 text-emerald-700 dark:bg-[#162820] dark:text-[#4ade80]"
+          : "bg-red-100 text-red-600 dark:bg-[#28141a] dark:text-[#f87171]",
       )}
     >
       {positive ? "+" : ""}
@@ -218,7 +223,7 @@ export function MiniProgressBar({
   colorClass?: string;
 }): ReactElement {
   return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#1a1d2a]">
+    <div className="h-1.5 w-full overflow-hidden rounded-full bg-border/60 dark:bg-[#1a1d2a]">
       <div
         className={cn(
           "h-full rounded-full transition-[width] duration-700 ease-out",
@@ -275,12 +280,12 @@ export function AssetBreakdownStrip({
       {visible.map(({ label, count }) => (
         <span
           key={label}
-          className="inline-flex items-center gap-1 rounded-[5px] border border-[#242636] bg-[#1a1d2a] px-2 py-0.5"
+          className="inline-flex items-center gap-1 rounded-[5px] border border-border bg-surface px-2 py-0.5"
         >
-          <span className="text-[13px] font-semibold tabular-nums text-[rgba(255,255,255,0.82)]">
+          <span className="text-[13px] font-semibold tabular-nums text-foreground">
             {count}
           </span>
-          <span className="text-[11px] capitalize text-[#6b7485]">{label}</span>
+          <span className="text-[11px] capitalize text-muted">{label}</span>
         </span>
       ))}
     </div>
@@ -301,17 +306,15 @@ export function ProjectStatusStrip({
 
   const daysChipClass =
     daysRemaining == null
-      ? "bg-[#1a1d2a] text-[#6b7485]"
+      ? "bg-surface text-muted dark:bg-[#1a1d2a]"
       : daysRemaining < 7
-        ? "bg-[#28141a] text-[#f87171]"
+        ? "bg-red-50 text-red-600 dark:bg-[#28141a] dark:text-[#f87171]"
         : daysRemaining < 30
-          ? "bg-[#231c10] text-[#d4a84b]"
-          : "bg-[#1a1d2a] text-[#6b7485]";
+          ? "bg-amber-50 text-amber-600 dark:bg-[#231c10] dark:text-[#d4a84b]"
+          : "bg-surface text-muted dark:bg-[#1a1d2a]";
 
   return (
-    <div
-      className="relative overflow-hidden rounded-xl border border-[#1e2130] bg-[#0f1118] px-6 py-4"
-    >
+    <div className="relative overflow-hidden rounded-xl border border-border bg-card px-6 py-4">
       {/* Single restrained glow — far right, very subtle */}
       <div
         className="pointer-events-none absolute right-0 top-0 h-full w-56 opacity-50"
@@ -324,8 +327,8 @@ export function ProjectStatusStrip({
       <div className="relative flex flex-wrap items-center gap-x-5 gap-y-2">
         {/* Project name */}
         <div className="flex items-center gap-2.5">
-          <span className="h-[7px] w-[7px] rounded-full bg-[#4a7fa5]" />
-          <span className="text-[14px] font-semibold tracking-tight text-[rgba(255,255,255,0.9)]">
+          <span className="h-[7px] w-[7px] rounded-full bg-primary" />
+          <span className="text-[14px] font-semibold tracking-tight text-foreground">
             {projectName || "Project Overview"}
           </span>
         </div>
@@ -341,23 +344,27 @@ export function ProjectStatusStrip({
           {health}
         </span>
 
-        <div className="h-3.5 w-px bg-[#1e2130]" />
+        <div className="h-3.5 w-px bg-border" />
 
         {/* Metric chips */}
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="inline-flex items-center gap-1.5 rounded-[6px] bg-[#1a1d2a] px-2.5 py-[5px] text-[11px] text-[rgba(255,255,255,0.82)]">
-            <span className="text-[10px] text-[#6b7485]">Phase</span>
-            <span className="max-w-[140px] truncate font-medium">{currentPhase}</span>
+          <span className="inline-flex items-center gap-1.5 rounded-[6px] bg-surface px-2.5 py-[5px] text-[11px] text-foreground">
+            <span className="text-[10px] text-muted">Phase</span>
+            <span className="max-w-[140px] truncate font-medium">
+              {currentPhase}
+            </span>
           </span>
 
-          <span className="inline-flex items-center gap-1.5 rounded-[6px] bg-[#1a1d2a] px-2.5 py-[5px] text-[11px]">
-            <span className="text-[10px] text-[#6b7485]">Progress</span>
-            <span className="font-semibold text-[#4a7fa5]">{completionPercent}%</span>
+          <span className="inline-flex items-center gap-1.5 rounded-[6px] bg-surface px-2.5 py-[5px] text-[11px]">
+            <span className="text-[10px] text-muted">Progress</span>
+            <span className="font-semibold text-[#4a7fa5]">
+              {completionPercent}%
+            </span>
           </span>
 
           {launchDate ? (
-            <span className="inline-flex items-center gap-1.5 rounded-[6px] bg-[#1a1d2a] px-2.5 py-[5px] text-[11px] text-[rgba(255,255,255,0.82)]">
-              <span className="text-[10px] text-[#6b7485]">Target</span>
+            <span className="inline-flex items-center gap-1.5 rounded-[6px] bg-surface px-2.5 py-[5px] text-[11px] text-foreground">
+              <span className="text-[10px] text-muted">Target</span>
               <span className="font-medium">{launchDate}</span>
             </span>
           ) : null}
@@ -398,8 +405,8 @@ export function OverviewMetricCard({
       onKeyDown={
         onClick
           ? (e) => {
-            if (e.key === "Enter" || e.key === " ") onClick();
-          }
+              if (e.key === "Enter" || e.key === " ") onClick();
+            }
           : undefined
       }
       className={cn(
@@ -412,7 +419,7 @@ export function OverviewMetricCard({
     >
       {/* Header: label + icon chip */}
       <div className="flex items-start justify-between gap-2">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.09em] text-[#6b7485]">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.09em] text-muted">
           {title}
         </p>
         {Icon ? <IconChip icon={Icon} tone={tone} size="md" /> : null}
@@ -432,7 +439,7 @@ export function OverviewMetricCard({
           {trendBadge ? <div className="mb-0.5">{trendBadge}</div> : null}
         </div>
         {helper ? (
-          <p className="text-[11px] leading-[16px] text-[#50566a]">{helper}</p>
+          <p className="text-[11px] leading-[16px] text-muted/80">{helper}</p>
         ) : null}
       </div>
 
@@ -481,7 +488,7 @@ export function OverviewProgressCard({
             colorClass={TONE_PROGRESS[tone]}
           />
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-[#42485a]">
+            <span className="text-[10px] text-muted/60">
               {progressPercent < 100 ? "In progress" : "Complete"}
             </span>
             <span
@@ -511,16 +518,16 @@ export function PhaseBoardCard({
   return (
     <div className={cn(CARD_BASE, "p-5")}>
       <div className="mb-5 flex items-center justify-between">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.09em] text-[#6b7485]">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.09em] text-muted">
           {title}
         </p>
-        <span className="rounded-full bg-[#1a1d2a] px-2 py-0.5 text-[11px] font-medium text-[#6b7485]">
+        <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-medium text-muted">
           {totalComplete} / {totalTasks}
         </span>
       </div>
 
       {phases.length === 0 ? (
-        <p className="py-4 text-center text-[13px] text-[#50566a]">
+        <p className="py-4 text-center text-[13px] text-muted">
           No phases found — add parent tasks to populate this board.
         </p>
       ) : (
@@ -538,57 +545,57 @@ export function PhaseBoardCard({
                 onKeyDown={
                   phase.onClick
                     ? (e) => {
-                      if (e.key === "Enter" || e.key === " ")
-                        phase.onClick?.();
-                    }
+                        if (e.key === "Enter" || e.key === " ")
+                          phase.onClick?.();
+                      }
                     : undefined
                 }
                 className={cn(
                   "-mx-2 space-y-2 rounded-[7px] p-2 transition-all duration-150",
                   phase.onClick &&
-                  "cursor-pointer hover:bg-[#171929] hover:translate-x-0.5",
+                    "cursor-pointer hover:bg-surface hover:translate-x-0.5",
                 )}
               >
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex min-w-0 items-center gap-2">
                     {done ? (
-                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[#22c55e]" />
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-status-complete" />
                     ) : active ? (
-                      <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#4a7fa5]" />
+                      <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-primary" />
                     ) : (
-                      <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#2a2d3e]" />
+                      <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-border" />
                     )}
                     <span
                       className={cn(
                         "truncate text-[13px] leading-5",
                         done
-                          ? "font-normal text-[#42485a] line-through"
+                          ? "font-normal text-muted/50 line-through"
                           : active
-                            ? "font-semibold text-[rgba(255,255,255,0.88)]"
-                            : "font-medium text-[#6b7485]",
+                            ? "font-semibold text-foreground"
+                            : "font-medium text-muted",
                       )}
                     >
                       {phase.label}
                     </span>
                     {active ? (
-                      <span className="inline-flex shrink-0 items-center rounded-full bg-[#1e2638] px-2 py-px text-[10px] font-semibold text-[#7aa3c2]">
+                      <span className="inline-flex shrink-0 items-center rounded-full bg-primary/[0.1] px-2 py-px text-[10px] font-semibold text-primary dark:bg-[#1e2638] dark:text-[#7aa3c2]">
                         Active
                       </span>
                     ) : null}
                   </div>
 
                   <div className="flex shrink-0 items-center gap-3">
-                    <span className="text-[11px] tabular-nums text-[#42485a]">
+                    <span className="text-[11px] tabular-nums text-muted/60">
                       {phase.complete}/{phase.total}
                     </span>
                     <span
                       className={cn(
                         "w-8 text-right text-[11px] font-semibold tabular-nums",
                         done
-                          ? "text-[#22c55e]"
+                          ? "text-status-complete"
                           : active
-                            ? "text-[#7aa3c2]"
-                            : "text-[#42485a]",
+                            ? "text-primary"
+                            : "text-muted/60",
                       )}
                     >
                       {phase.percent}%
@@ -600,10 +607,10 @@ export function PhaseBoardCard({
                   percent={phase.percent}
                   colorClass={
                     done
-                      ? "bg-[#22c55e]"
+                      ? "bg-status-complete"
                       : active
-                        ? "bg-[#4a7fa5]"
-                        : "bg-[#242636]"
+                        ? "bg-primary"
+                        : "bg-border"
                   }
                 />
               </div>
@@ -627,13 +634,13 @@ export function OverviewListCard({
   return (
     <div className={cn(CARD_BASE, "flex flex-col")}>
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#1e2130] px-5 py-3.5">
+      <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
         <div className="flex items-center gap-2.5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.09em] text-[#6b7485]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.09em] text-muted">
             {title}
           </p>
           {badge != null ? (
-            <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-[#1e2638] px-1.5 py-px text-[10px] font-semibold text-[#7aa3c2]">
+            <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-primary/[0.1] px-1.5 py-px text-[10px] font-semibold text-primary dark:bg-[#1e2638] dark:text-[#7aa3c2]">
               {badge}
             </span>
           ) : null}
@@ -642,7 +649,7 @@ export function OverviewListCard({
           <button
             type="button"
             onClick={viewAllHref}
-            className="inline-flex items-center gap-1 text-[11px] font-medium text-[#50566a] transition-colors hover:text-[#7aa3c2]"
+            className="inline-flex items-center gap-1 text-[11px] font-medium text-muted transition-colors hover:text-primary"
           >
             View all
             <ArrowRight className="h-3 w-3" />
@@ -651,9 +658,9 @@ export function OverviewListCard({
       </div>
 
       {/* List rows */}
-      <div className="flex-1 divide-y divide-[#191c28]">
+      <div className="flex-1 divide-y divide-border">
         {items.length === 0 ? (
-          <p className="px-5 py-8 text-center text-[13px] text-[#50566a]">
+          <p className="px-5 py-8 text-center text-[13px] text-muted">
             {emptyState}
           </p>
         ) : (
@@ -668,36 +675,34 @@ export function OverviewListCard({
                 onKeyDown={
                   item.onClick
                     ? (e) => {
-                      if (e.key === "Enter" || e.key === " ")
-                        item.onClick?.();
-                    }
+                        if (e.key === "Enter" || e.key === " ")
+                          item.onClick?.();
+                      }
                     : undefined
                 }
                 className={cn(
                   "flex items-start gap-3 px-5 py-3 transition-all duration-100",
-                  item.onClick
-                    ? "cursor-pointer hover:bg-[#171929]"
-                    : "",
+                  item.onClick ? "cursor-pointer hover:bg-surface" : "",
                 )}
               >
                 {Icon ? (
                   <span
                     className={cn(
                       "mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px]",
-                      item.iconColor ?? "bg-[#1a1d2a] text-[#6b7485]",
+                      item.iconColor ?? "bg-surface text-muted",
                     )}
                   >
                     <Icon className="h-3 w-3" />
                   </span>
                 ) : (
-                  <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#2a2d3e]" />
+                  <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-border" />
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13px] font-medium leading-[18px] text-[rgba(255,255,255,0.82)]">
+                  <p className="truncate text-[13px] font-medium leading-[18px] text-foreground">
                     {item.primary}
                   </p>
                   {item.secondary ? (
-                    <p className="mt-px truncate text-[11px] leading-[15px] text-[#50566a]">
+                    <p className="mt-px truncate text-[11px] leading-[15px] text-muted">
                       {item.secondary}
                     </p>
                   ) : null}
