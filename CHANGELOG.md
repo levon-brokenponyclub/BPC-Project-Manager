@@ -13,6 +13,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.4.0] - 2026-03-09
+
+### ✅ Added
+
+#### TaskTable — Inline Editing (2026-03-09)
+
+- **Inline Status Editing**: Clicking a task's status pill in the table opens a popover listing all statuses. Selecting one immediately saves via `updateTask` and refetches. Works for both parent tasks and subtasks.
+- **Inline Due Date Editing**: Clicking a task's due date (or the "No date" placeholder) opens a calendar popover. Selecting a date or clearing it saves immediately. Date cell retains the existing overdue colouring.
+- **Inline Priority Editing**: A new **Priority** column shows the task's current priority (Low / Medium / High / Urgent) with colour-coded dots. Clicking opens a popover picker that saves on selection.
+- **Status Picker Colour Parity**: Status option dots in the inline picker exactly match the colours used by the row status pills — Todo (yellow), Upcoming (indigo), In Progress (orange), In Review (pink), Awaiting Client (violet), On Hold (gray), Complete (green), Cancelled (muted gray).
+- **Stop-Propagation on Edit Cells**: All inline edit cells call `e.stopPropagation()` so clicking them does not open the task drawer.
+
+### 🔧 Changed
+
+- **`TaskTable`**: Added `Priority` column between assignee and progress. Status, due date, and priority cells are now interactive wrappers instead of static displays.
+
+---
+
 ## [1.3.0] - 2026-03-09
 
 ### ✅ Added

@@ -12,7 +12,7 @@ A multi-workspace project management and client portal built for support agencie
 
 - **Multi-workspace** — each client maps to a workspace with its own tasks, team and support bucket
 - **Project Overview** — real-time health dashboard (KPI cards, phase board, activity feed)
-- **Task Management** — subtasks, status tracking, file attachments, due date colouring, drawer with full activity history
+- **Task Management** — subtasks, inline status / due date / priority editing (ClickUp-style popovers), file attachments, due date colouring, drawer with full activity history
 - **Time Tracking** — start/stop timers per task, view time reports
 - **Support Buckets** — allocated vs used hours with progress bar
 - **Inbox** — Linear-style 3-pane notification inbox with date-grouped notifications (Today / Yesterday / Earlier), actor avatars, actor-first message formatting, and per-row hover quick actions (mark read/unread, delete)
