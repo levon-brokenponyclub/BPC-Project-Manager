@@ -164,6 +164,13 @@ export const markNotificationRead = (
     ? demoApi.markNotificationRead(...args)
     : notificationsApi.markNotificationRead(...args);
 
+export const markNotificationUnread = (
+  ...args: Parameters<typeof notificationsApi.markNotificationUnread>
+) =>
+  isDemoMode
+    ? notificationsApi.markNotificationUnread(...args)
+    : notificationsApi.markNotificationUnread(...args);
+
 export const markAllNotificationsRead = (
   ...args: Parameters<typeof notificationsApi.markAllNotificationsRead>
 ) =>

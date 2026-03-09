@@ -3,36 +3,28 @@ import {
   useMemo,
   useRef,
   useState,
-  type ComponentType,
   type CSSProperties,
   type ReactElement,
   type ReactNode,
 } from "react";
 import {
-  Bell,
-  Calendar,
   CheckCircle2,
   Clock3,
   ChevronDown,
   ChevronRight,
-  FileText,
-  Flag,
   Inbox,
   LayoutGrid,
   ListTodo,
-  Mail,
+  MailOpen,
   MessageSquare,
   Moon,
   PanelLeftClose,
-  Paperclip,
-  PlusCircle,
   ReceiptText,
   Search,
   Settings,
   Sun,
   Timer,
   Trash2,
-  UserPlus,
   X,
   Users,
   UsersRound,
@@ -47,6 +39,7 @@ import {
   listNotifications,
   markAllNotificationsRead,
   markNotificationRead,
+  markNotificationUnread,
 } from "@/api";
 import { getMyWorkspaceRole } from "@/api/workspaces";
 import { ProfileEditModal } from "@/components/profile/ProfileEditModal";
@@ -107,25 +100,6 @@ function IconButton({
 
 // ─── Inbox helpers ────────────────────────────────────────────────────────────
 
-const NOTIF_ICON_MAP: Record<string, ComponentType<{ className?: string }>> = {
-  Bell,
-  Calendar,
-  CheckCircle2,
-  Clock3,
-  FileText,
-  Flag,
-  Mail,
-  MessageSquare,
-  Paperclip,
-  PlusCircle,
-  Trash2,
-  UserPlus,
-};
-
-function getNotifIcon(name: string): ComponentType<{ className?: string }> {
-  return NOTIF_ICON_MAP[name] ?? Bell;
-}
-
 function getInboxInitials(name: string): string {
   return name
     .split(/\s+/)
@@ -171,22 +145,36 @@ function InboxListItem({
   isActive,
   msg,
   onSelect,
+  onMarkRead,
+  onMarkUnread,
+  onDelete,
 }: {
   notification: Notification;
   isActive: boolean;
   msg: InboxListItemMsg;
   onSelect: () => void;
+  onMarkRead: () => void;
+  onMarkUnread: () => void;
+  onDelete: () => void;
 }): ReactElement {
+  const isUnread = !notification.read_at;
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onSelect}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
       className={cn(
-        "relative w-full border-b border-[#1D1E2C] px-3 py-2.5 text-left transition-colors last:border-b-0",
+        "group relative w-full cursor-pointer border-b border-[#1D1E2C] px-3 py-2.5 text-left transition-colors last:border-b-0",
         isActive ? "bg-[#1F2133]" : "hover:bg-[#1C1D2A]",
       )}
     >
-      {!notification.read_at ? (
+      {isUnread ? (
         <span className="absolute left-1.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-primary" />
       ) : null}
       <div className="flex items-start gap-2.5 pl-2">
@@ -209,16 +197,60 @@ function InboxListItem({
             <p
               className={cn(
                 "truncate text-[13px] font-medium leading-[18px]",
-                isActive || !notification.read_at
-                  ? "text-white"
-                  : "text-[#B8B9C6]",
+                isActive || isUnread ? "text-white" : "text-[#B8B9C6]",
               )}
             >
               {msg.title}
             </p>
-            <span className="shrink-0 text-[11px] leading-[18px] text-[#5F6170]">
-              {timeAgo(notification.created_at)}
-            </span>
+            {/* Right slot: timestamp normally, quick actions on hover/active */}
+            <div className="relative flex shrink-0 items-center">
+              <span
+                className={cn(
+                  "text-[11px] leading-[18px] text-[#5F6170] transition-opacity",
+                  "group-hover:opacity-0",
+                  isActive && "opacity-0",
+                )}
+              >
+                {timeAgo(notification.created_at)}
+              </span>
+              <div
+                className={cn(
+                  "absolute right-0 flex items-center gap-0.5 transition-opacity",
+                  "opacity-0 group-hover:opacity-100",
+                  isActive && "opacity-100",
+                )}
+              >
+                <button
+                  type="button"
+                  aria-label={isUnread ? "Mark as read" : "Mark as unread"}
+                  title={isUnread ? "Mark as read" : "Mark as unread"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (isUnread) onMarkRead();
+                    else onMarkUnread();
+                  }}
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-[4px] text-[#5F6272] transition-colors hover:bg-[#2A2C3A] hover:text-[#B0B1BC]"
+                >
+                  {isUnread ? (
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  ) : (
+                    <MailOpen className="h-3.5 w-3.5" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  aria-label="Delete notification"
+                  title="Delete"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete();
+                  }}
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-[4px] text-[#5F6272] transition-colors hover:bg-[#2A2C3A] hover:text-[#E05C5C]"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
           </div>
           {msg.description ? (
             <p className="mt-0.5 truncate text-[12px] leading-[17px] text-[#5F6272]">
@@ -227,7 +259,7 @@ function InboxListItem({
           ) : null}
         </div>
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -324,18 +356,27 @@ export default function AppShell({
   );
 
   const groupedInboxItems = useMemo(() => {
-    const now = Date.now();
-    const oneDayMs = 86_400_000;
+    const now = new Date();
+    const todayStr = now.toDateString();
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toDateString();
+
     const today: Notification[] = [];
+    const yesterdayItems: Notification[] = [];
     const earlier: Notification[] = [];
+
     for (const item of inboxItems) {
-      if (now - new Date(item.created_at).getTime() < oneDayMs) {
+      const itemStr = new Date(item.created_at).toDateString();
+      if (itemStr === todayStr) {
         today.push(item);
+      } else if (itemStr === yesterdayStr) {
+        yesterdayItems.push(item);
       } else {
         earlier.push(item);
       }
     }
-    return { today, earlier };
+    return { today, yesterday: yesterdayItems, earlier };
   }, [inboxItems]);
 
   const activeNotification =
@@ -394,6 +435,19 @@ export default function AppShell({
   const readMutation = useMutation({
     mutationFn: (notificationId: string) =>
       markNotificationRead(notificationId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.notifications(workspaceId),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.unreadNotifications(workspaceId),
+      });
+    },
+  });
+
+  const unreadMutation = useMutation({
+    mutationFn: (notificationId: string) =>
+      markNotificationUnread(notificationId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.notifications(workspaceId),
@@ -891,46 +945,55 @@ export default function AppShell({
                     </div>
                   ) : (
                     <>
-                      {groupedInboxItems.today.length > 0 ? (
-                        <div>
-                          <div className="sticky top-0 z-10 bg-[#1A1B24] px-3 pb-1 pt-3 text-[11px] font-medium text-[#5F6170]">
-                            Today
+                      {(
+                        [
+                          { label: "Today", items: groupedInboxItems.today },
+                          {
+                            label: "Yesterday",
+                            items: groupedInboxItems.yesterday,
+                          },
+                          {
+                            label: "Earlier",
+                            items: groupedInboxItems.earlier,
+                          },
+                        ] as const
+                      ).map(({ label, items }) =>
+                        items.length > 0 ? (
+                          <div key={label}>
+                            <div className="sticky top-0 z-10 bg-[#1A1B24] px-3 pb-1 pt-3 text-[11px] font-medium uppercase tracking-[0.05em] text-[#4A4C5A]">
+                              {label}
+                            </div>
+                            {items.map((notification) => (
+                              <InboxListItem
+                                key={notification.id}
+                                notification={notification}
+                                isActive={
+                                  activeNotification?.id === notification.id
+                                }
+                                msg={renderInboxMessage(notification)}
+                                onSelect={() =>
+                                  handleSelectInboxItem(notification)
+                                }
+                                onMarkRead={() => {
+                                  void readMutation.mutateAsync(
+                                    notification.id,
+                                  );
+                                }}
+                                onMarkUnread={() => {
+                                  void unreadMutation.mutateAsync(
+                                    notification.id,
+                                  );
+                                }}
+                                onDelete={() => {
+                                  void deleteMutation.mutateAsync(
+                                    notification.id,
+                                  );
+                                }}
+                              />
+                            ))}
                           </div>
-                          {groupedInboxItems.today.map((notification) => (
-                            <InboxListItem
-                              key={notification.id}
-                              notification={notification}
-                              isActive={
-                                activeNotification?.id === notification.id
-                              }
-                              msg={renderInboxMessage(notification)}
-                              onSelect={() =>
-                                handleSelectInboxItem(notification)
-                              }
-                            />
-                          ))}
-                        </div>
-                      ) : null}
-                      {groupedInboxItems.earlier.length > 0 ? (
-                        <div>
-                          <div className="sticky top-0 z-10 bg-[#1A1B24] px-3 pb-1 pt-3 text-[11px] font-medium text-[#5F6170]">
-                            Earlier
-                          </div>
-                          {groupedInboxItems.earlier.map((notification) => (
-                            <InboxListItem
-                              key={notification.id}
-                              notification={notification}
-                              isActive={
-                                activeNotification?.id === notification.id
-                              }
-                              msg={renderInboxMessage(notification)}
-                              onSelect={() =>
-                                handleSelectInboxItem(notification)
-                              }
-                            />
-                          ))}
-                        </div>
-                      ) : null}
+                        ) : null,
+                      )}
                     </>
                   )}
                 </div>
