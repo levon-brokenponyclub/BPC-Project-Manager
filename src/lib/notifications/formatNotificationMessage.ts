@@ -256,6 +256,36 @@ export function formatNotificationMessage(
         : `${actor} was removed from the workspace`;
       break;
     }
+    case "asset.created": {
+      const assetTitle = entityTitle;
+      const typeLabel =
+        (payload.meta?.type_label as string | null) ?? "an asset";
+      title = assetTitle
+        ? `${actor} added ${quoted(assetTitle)} to the Asset Library`
+        : `${actor} added ${typeLabel} to the Asset Library`;
+      break;
+    }
+    case "asset.file_uploaded": {
+      const assetTitle = entityTitle;
+      title = assetTitle
+        ? `${actor} uploaded a file to ${quoted(assetTitle)}`
+        : `${actor} uploaded a file to the Asset Library`;
+      break;
+    }
+    case "asset.updated": {
+      const assetTitle = entityTitle;
+      title = assetTitle
+        ? `${actor} updated ${quoted(assetTitle)} in the Asset Library`
+        : `${actor} updated an asset in the Asset Library`;
+      break;
+    }
+    case "asset.deleted": {
+      const assetTitle = entityTitle;
+      title = assetTitle
+        ? `${actor} removed ${quoted(assetTitle)} from the Asset Library`
+        : `${actor} removed an asset from the Asset Library`;
+      break;
+    }
     default: {
       title = `${actor} updated ${quoted(entityTitle)}`;
       break;

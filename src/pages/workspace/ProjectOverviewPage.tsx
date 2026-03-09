@@ -5,6 +5,7 @@ import {
   Activity,
   AlertCircle,
   AlertTriangle,
+  Archive,
   Calendar,
   CheckCircle2,
   Clock3,
@@ -13,13 +14,16 @@ import {
   Zap,
 } from "lucide-react";
 
-import { getWorkspaceSupportSummary, listTasksWithSubtasks } from "@/api";
+import {
+  getWorkspaceSupportSummary,
+  listTasksWithSubtasks,
+  listWorkspaceAssets,
+} from "@/api";
 import type { TaskWithUsers } from "@/api/tasks";
 import {
   OverviewListCard,
   OverviewMetricCard,
   OverviewProgressCard,
-  PhaseBoardCard,
   ProjectStatusStrip,
 } from "@/components/dashboard/OverviewCards";
 import type {
@@ -27,6 +31,7 @@ import type {
   PhaseEntry,
   ProjectHealth,
 } from "@/components/dashboard/OverviewCards";
+import { cn } from "@/lib/utils";
 import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
 import { DataStateWrapper } from "@/components/ui/DataStateWrapper";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -62,7 +67,7 @@ export function ProjectOverviewPage(): React.ReactElement {
     enabled: Boolean(workspaceId),
   });
 
-  const tasksQuery = useQuery({
+  const tasksQuery = useQuery<TaskWithUsers[]>({
     queryKey: queryKeys.tasks(workspaceId, "All", ""),
     queryFn: () => listTasksWithSubtasks(workspaceId, { status: "All" }),
     enabled: Boolean(workspaceId),
@@ -204,11 +209,6 @@ export function ProjectOverviewPage(): React.ReactElement {
       (currentPhaseComplete / Math.max(1, currentPhaseTotal)) * 100,
     );
 
-    const phases: PhaseEntry[] = phaseEntries.map((p) => ({
-      ...p,
-      isCurrent: p.label === currentPhase,
-    }));
-
     const currentIdx = phaseEntries.findIndex((p) => p.label === currentPhase);
     const nextMilestone =
       phaseEntries.slice(currentIdx + 1).find((p) => p.percent < 100) ?? null;
@@ -328,7 +328,6 @@ export function ProjectOverviewPage(): React.ReactElement {
       overdueFirst: overdueTasks[0]?.title ?? null,
       completedThisWeekCount,
       completedThisWeekHelper,
-      phases,
       currentPhase,
       currentPhaseComplete,
       currentPhaseTotal,
@@ -356,7 +355,6 @@ export function ProjectOverviewPage(): React.ReactElement {
     overdueFirst,
     completedThisWeekCount,
     completedThisWeekHelper,
-    phases,
     currentPhase,
     currentPhaseComplete,
     currentPhaseTotal,
@@ -372,6 +370,19 @@ export function ProjectOverviewPage(): React.ReactElement {
   } = derived;
 
   const tasksHref = () => void navigate(`/w/${workspaceId}/tasks`);
+
+  const assetsQuery = useQuery({
+    queryKey: queryKeys.workspaceAssets(workspaceId),
+    queryFn: () => listWorkspaceAssets(workspaceId),
+    enabled: Boolean(workspaceId),
+  });
+  const assetCount = (assetsQuery.data ?? []).length;
+  const assetsByType = {
+    file: (assetsQuery.data ?? []).filter((a) => a.type === "file").length,
+    link: (assetsQuery.data ?? []).filter((a) => a.type === "link").length,
+    login: (assetsQuery.data ?? []).filter((a) => a.type === "login").length,
+    plugin: (assetsQuery.data ?? []).filter((a) => a.type === "plugin").length,
+  };
 
   return (
     <div className="space-y-0">
@@ -506,8 +517,59 @@ export function ProjectOverviewPage(): React.ReactElement {
             />
           </div>
 
-          {/* ── Row 4: Phase board ────────────────────────────────────── */}
-          <PhaseBoardCard phases={phases} />
+          {/* ── Row 4: Asset Library ──────────────────────────────────── */}
+          <button
+            type="button"
+            onClick={() => void navigate(`/w/${workspaceId}/assets`)}
+            className="w-full rounded-xl border border-[#252636] bg-[#1A1B25] p-5 text-left transition-colors hover:bg-[#1E1F2D]"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                  <Archive className="h-4 w-4 text-primary" />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">
+                    Asset Library
+                  </p>
+                  <p className="text-xs text-muted">
+                    {assetCount === 0
+                      ? "Store project files, links, logins and plugin details"
+                      : `${assetCount} asset${assetCount !== 1 ? "s" : ""} saved`}
+                  </p>
+                </div>
+              </div>
+              {assetCount === 0 ? (
+                <span className="rounded-[6px] border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary">
+                  Set Up Asset Library
+                </span>
+              ) : (
+                <div className="flex items-center gap-4">
+                  {(["file", "link", "login", "plugin"] as const).map((type) =>
+                    assetsByType[type] > 0 ? (
+                      <div key={type} className="text-center">
+                        <p className="text-base font-semibold tabular-nums text-foreground">
+                          {assetsByType[type]}
+                        </p>
+                        <p className="text-[10px] capitalize text-muted">
+                          {type}
+                          {assetsByType[type] !== 1 ? "s" : ""}
+                        </p>
+                      </div>
+                    ) : null,
+                  )}
+                  <span
+                    className={cn(
+                      "rounded-[6px] border border-[#292B38] bg-[#1E1F2D] px-3 py-1.5 text-xs font-medium text-muted",
+                      "transition-colors hover:border-[#3A3B4A] hover:text-foreground",
+                    )}
+                  >
+                    Open Library
+                  </span>
+                </div>
+              )}
+            </div>
+          </button>
         </div>
       </DataStateWrapper>
 

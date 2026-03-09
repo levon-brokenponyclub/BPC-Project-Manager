@@ -11,6 +11,7 @@ import { LoginPage } from "@/pages/LoginPage";
 import { WorkspaceSelectPage } from "@/pages/WorkspaceSelectPage";
 import { DashboardPage } from "@/pages/workspace/DashboardPage";
 import { ProjectOverviewPage } from "@/pages/workspace/ProjectOverviewPage";
+import { AssetLibraryPage } from "@/pages/workspace/AssetLibraryPage";
 import { ClientsPage } from "@/pages/workspace/ClientsPage";
 import { ReportsPage } from "@/pages/workspace/ReportsPage";
 import { SettingsPage } from "@/pages/workspace/SettingsPage";
@@ -50,6 +51,7 @@ const router = createBrowserRouter([
       { path: "project-overview", element: <ProjectOverviewPage /> },
       { path: "clients", element: <ClientsPage /> },
       { path: "tasks", element: <TasksPage /> },
+      { path: "assets", element: <AssetLibraryPage /> },
       { path: "users", element: <UsersPage /> },
       { path: "time", element: <TimePage /> },
       { path: "reports", element: <ReportsPage /> },

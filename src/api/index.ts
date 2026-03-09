@@ -7,6 +7,7 @@ import * as tasksApi from "@/api/tasks";
 import * as timeApi from "@/api/time";
 import * as notificationsApi from "@/api/notifications";
 import * as filesApi from "@/api/files";
+import * as assetsApi from "@/api/assets";
 
 export const getMyWorkspaces = (
   ...args: Parameters<typeof workspacesApi.getMyWorkspaces>
@@ -214,3 +215,31 @@ export const deleteTaskFile = (
 export const getSignedFileUrl = (
   ...args: Parameters<typeof filesApi.getSignedFileUrl>
 ) => filesApi.getSignedFileUrl(...args);
+
+// ─── Asset Library ────────────────────────────────────────────────────────────
+
+export const listWorkspaceAssets = (
+  ...args: Parameters<typeof assetsApi.listWorkspaceAssets>
+) => assetsApi.listWorkspaceAssets(...args);
+
+export const createWorkspaceAsset = (
+  ...args: Parameters<typeof assetsApi.createWorkspaceAsset>
+) => assetsApi.createWorkspaceAsset(...args);
+
+export const updateWorkspaceAsset = (
+  ...args: Parameters<typeof assetsApi.updateWorkspaceAsset>
+) => assetsApi.updateWorkspaceAsset(...args);
+
+export const deleteWorkspaceAsset = (
+  ...args: Parameters<typeof assetsApi.deleteWorkspaceAsset>
+) => assetsApi.deleteWorkspaceAsset(...args);
+
+export const uploadAssetFile = (
+  ...args: Parameters<typeof assetsApi.uploadAssetFile>
+) => assetsApi.uploadAssetFile(...args);
+
+export const createAssetFileDownloadUrl = (
+  ...args: Parameters<typeof assetsApi.createAssetFileDownloadUrl>
+) => assetsApi.createAssetFileDownloadUrl(...args);
+
+export type { AssetType, CreateAssetInput } from "@/api/assets";

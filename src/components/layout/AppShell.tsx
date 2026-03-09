@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  Archive,
   CheckCircle2,
   Clock3,
   ChevronDown,
@@ -70,6 +71,7 @@ const navItems = [
     Icon: LayoutGrid,
   },
   { key: "tasks", label: "Tasks", to: "tasks", Icon: ListTodo },
+  { key: "assets", label: "Asset Library", to: "assets", Icon: Archive },
   { key: "users", label: "Users", to: "users", Icon: UsersRound },
   { key: "clients", label: "Clients", to: "clients", Icon: Users },
   { key: "time", label: "Time", to: "time", Icon: Timer },
@@ -550,7 +552,7 @@ function InboxCommentThread({
                 type="button"
                 onClick={submitComment}
                 disabled={!composerBody.trim() || addCommentMutation.isPending}
-                className="focus-ring inline-flex h-8 items-center rounded-[5px] bg-primary px-3 text-[13px] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+                className="focus-ring inline-flex h-8 items-center rounded-[5px] bg-[#5E69D1] px-3 text-[13px] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40"
               >
                 {addCommentMutation.isPending ? "Sending…" : "Comment"}
               </button>

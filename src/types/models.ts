@@ -92,3 +92,23 @@ export interface Notification {
   read_at: string | null;
   created_at: string;
 }
+
+export interface WorkspaceAsset {
+  id: string;
+  workspace_id: string;
+  type: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  file_name: string | null;
+  file_path: string | null;
+  file_size_bytes: number | null;
+  url: string | null;
+  username: string | null;
+  notes: string | null;
+  vendor: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  client_visible: boolean;
+}

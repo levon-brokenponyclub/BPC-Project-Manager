@@ -19,6 +19,8 @@ export const queryKeys = {
     ["workspace", workspaceId, "notifications"] as const,
   unreadNotifications: (workspaceId: string) =>
     ["workspace", workspaceId, "notifications", "unread"] as const,
+  workspaceAssets: (workspaceId: string) =>
+    ["workspace", workspaceId, "assets"] as const,
   hoursBreakdown: (workspaceId: string) =>
     ["workspace", workspaceId, "hoursBreakdown"] as const,
 };

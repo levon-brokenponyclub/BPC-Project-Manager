@@ -460,6 +460,43 @@ export const notificationCatalog: Record<
     "member removed",
     (p) => (p.meta?.member_name as string | null) ?? null,
   ),
+
+  "asset.created": createDefinition(
+    "asset.created",
+    "Asset Added",
+    "See when a new asset is added to the Asset Library.",
+    "asset",
+    "Paperclip",
+    "added to Asset Library",
+    (p) => (p.meta?.asset_title as string | null) ?? null,
+  ),
+  "asset.file_uploaded": createDefinition(
+    "asset.file_uploaded",
+    "File Uploaded",
+    "See when a file is uploaded to the Asset Library.",
+    "asset",
+    "FileText",
+    "uploaded a file to Asset Library",
+    (p) => (p.meta?.asset_title as string | null) ?? null,
+  ),
+  "asset.updated": createDefinition(
+    "asset.updated",
+    "Asset Updated",
+    "See when an Asset Library entry is updated.",
+    "asset",
+    "PlusCircle",
+    "updated an asset",
+    (p) => (p.meta?.asset_title as string | null) ?? null,
+  ),
+  "asset.deleted": createDefinition(
+    "asset.deleted",
+    "Asset Removed",
+    "See when an asset is removed from the Asset Library.",
+    "asset",
+    "Trash2",
+    "removed an asset",
+    (p) => (p.meta?.asset_title as string | null) ?? null,
+  ),
 };
 
 const fallbackDefinition: NotificationDefinition = {

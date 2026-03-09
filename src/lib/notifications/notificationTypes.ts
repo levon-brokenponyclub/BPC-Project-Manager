@@ -38,6 +38,10 @@ export const notificationTypes = [
   "workspace.invite_sent",
   "workspace.member_joined",
   "workspace.member_removed",
+  "asset.created",
+  "asset.updated",
+  "asset.deleted",
+  "asset.file_uploaded",
 ] as const;
 
 export type NotificationType = (typeof notificationTypes)[number];
@@ -48,7 +52,8 @@ export type NotificationEntity =
   | "file"
   | "list"
   | "workspace"
-  | "integration";
+  | "integration"
+  | "asset";
 
 export interface NotificationPayloadV2 {
   actor: {
