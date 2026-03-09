@@ -497,6 +497,83 @@ Deno.serve(async (req) => {
       return jsonResponse({ ok: true }, 200);
     }
 
+    if (action === "reset_workspace_history") {
+      // Step 1 — collect all task IDs that belong to this workspace
+      const { data: workspaceTasks, error: tasksError } = await supabaseAdmin
+        .from("tasks")
+        .select("id")
+        .eq("workspace_id", workspaceId);
+
+      if (tasksError) {
+        return jsonResponse({ error: tasksError.message }, 500);
+      }
+
+      const taskIds = (workspaceTasks ?? []).map((t: { id: string }) => t.id);
+
+      // Step 2 — delete comments for workspace tasks (safe order: comments first)
+      let deletedComments = 0;
+      if (taskIds.length > 0) {
+        const { data: deletedCommentsData, error: commentsError } =
+          await supabaseAdmin
+            .from("comments")
+            .delete()
+            .in("task_id", taskIds)
+            .select("id");
+
+        if (commentsError) {
+          return jsonResponse({ error: commentsError.message }, 500);
+        }
+
+        deletedComments = deletedCommentsData?.length ?? 0;
+      }
+
+      // Step 3 — delete task_activity for workspace tasks
+      let deletedActivity = 0;
+      if (taskIds.length > 0) {
+        const { data: deletedActivityData, error: activityError } =
+          await supabaseAdmin
+            .from("task_activity")
+            .delete()
+            .in("task_id", taskIds)
+            .select("id");
+
+        if (activityError) {
+          return jsonResponse({ error: activityError.message }, 500);
+        }
+
+        deletedActivity = deletedActivityData?.length ?? 0;
+      }
+
+      // Step 4 — delete notifications for the workspace
+      const { data: deletedNotificationsData, error: notificationsError } =
+        await supabaseAdmin
+          .from("notifications")
+          .delete()
+          .eq("workspace_id", workspaceId)
+          .select("id");
+
+      if (notificationsError) {
+        return jsonResponse({ error: notificationsError.message }, 500);
+      }
+
+      const deletedNotifications = deletedNotificationsData?.length ?? 0;
+
+      console.log(
+        `[admin-users] reset_workspace_history workspace=${workspaceId} ` +
+          `comments=${deletedComments} activity=${deletedActivity} notifications=${deletedNotifications}`,
+      );
+
+      return jsonResponse(
+        {
+          ok: true,
+          deletedComments,
+          deletedActivity,
+          deletedNotifications,
+        },
+        200,
+      );
+    }
+
     return jsonResponse({ error: "Unsupported action" }, 400);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";

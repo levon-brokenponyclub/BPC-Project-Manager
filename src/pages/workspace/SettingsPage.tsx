@@ -1,5 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy, Lock, PencilLine, Plus, Trash2, UserPlus } from "lucide-react";
+import {
+  AlertTriangle,
+  Copy,
+  Lock,
+  PencilLine,
+  Plus,
+  RotateCcw,
+  Trash2,
+  UserPlus,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -88,6 +97,9 @@ export function SettingsPage(): React.ReactElement {
 
   const [roleViewMode, setRoleViewMode] = useState<RoleViewMode>("admin");
   const [deleteConfirmName, setDeleteConfirmName] = useState("");
+
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [resetConfirmName, setResetConfirmName] = useState("");
 
   const navigate = useNavigate();
 
@@ -299,6 +311,53 @@ export function SettingsPage(): React.ReactElement {
     },
   });
 
+  const resetWorkspaceHistoryMutation = useMutation({
+    mutationFn: async () => {
+      return invokeAuthedFunction<{
+        ok: boolean;
+        deletedComments: number;
+        deletedActivity: number;
+        deletedNotifications: number;
+      }>("admin-users", {
+        action: "reset_workspace_history",
+        workspaceId,
+      });
+    },
+    onSuccess: async (data) => {
+      setResetDialogOpen(false);
+      setResetConfirmName("");
+      const {
+        deletedComments = 0,
+        deletedActivity = 0,
+        deletedNotifications = 0,
+      } = data ?? {};
+      notify.success(
+        "Workspace history reset",
+        `Deleted ${deletedNotifications} notification${deletedNotifications !== 1 ? "s" : ""}, ` +
+          `${deletedComments} comment${deletedComments !== 1 ? "s" : ""}, and ` +
+          `${deletedActivity} activity entr${deletedActivity !== 1 ? "ies" : "y"}.`,
+      );
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.notifications(workspaceId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.unreadNotifications(workspaceId),
+        }),
+        queryClient.invalidateQueries({ queryKey: ["task"] }),
+        queryClient.invalidateQueries({
+          queryKey: ["workspace", workspaceId, "tasks"],
+        }),
+      ]);
+    },
+    onError: (err: Error) => {
+      notify.error(
+        "Reset failed",
+        err.message || "Failed to reset workspace history.",
+      );
+    },
+  });
+
   const testInboxRefreshMutation = useMutation({
     mutationFn: async () => {
       const {
@@ -318,7 +377,9 @@ export function SettingsPage(): React.ReactElement {
         [user.user_metadata?.first_name, user.user_metadata?.surname]
           .filter(Boolean)
           .join(" ")
-          .trim() || user.email || "System";
+          .trim() ||
+        user.email ||
+        "System";
 
       const payload = {
         actor: {
@@ -593,7 +654,9 @@ export function SettingsPage(): React.ReactElement {
                       type="button"
                       variant="secondary"
                       size="sm"
-                      disabled={testInboxRefreshMutation.isPending || !workspaceId}
+                      disabled={
+                        testInboxRefreshMutation.isPending || !workspaceId
+                      }
                       onClick={() => testInboxRefreshMutation.mutate()}
                     >
                       {testInboxRefreshMutation.isPending
@@ -603,7 +666,9 @@ export function SettingsPage(): React.ReactElement {
                     <Button
                       type="button"
                       size="sm"
-                      disabled={testRealtimeToastMutation.isPending || !workspaceId}
+                      disabled={
+                        testRealtimeToastMutation.isPending || !workspaceId
+                      }
                       onClick={() => testRealtimeToastMutation.mutate()}
                     >
                       {testRealtimeToastMutation.isPending
@@ -787,7 +852,38 @@ export function SettingsPage(): React.ReactElement {
 
             {/* ── 4. Support Buckets ── */}
 
-            {/* ── 5. Danger Zone ── */}
+            {/* ── 5. Workspace Reset ── */}
+            <SettingsSection className="border-amber-900/40">
+              <SettingsSectionHeader
+                title="Workspace Reset"
+                description="Clear workspace notifications, task comments, and activity history for all users in this workspace."
+              />
+              <div className="mb-4 flex items-start gap-3 rounded-lg border border-amber-800/40 bg-amber-950/20 px-4 py-3">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                <p className="text-xs leading-relaxed text-amber-300/80">
+                  This will permanently delete all notifications, task comments,
+                  and activity history for this workspace for all users.{" "}
+                  <span className="font-semibold text-amber-300">
+                    Tasks and files will not be deleted.
+                  </span>
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                className="border-amber-800/60 bg-amber-950/30 text-amber-400 hover:bg-amber-950/60 hover:text-amber-300"
+                disabled={!workspaceId}
+                onClick={() => {
+                  setResetConfirmName("");
+                  setResetDialogOpen(true);
+                }}
+              >
+                <RotateCcw className="h-4 w-4" />
+                Reset Workspace History
+              </Button>
+            </SettingsSection>
+
+            {/* ── 6. Danger Zone ── */}
             <SettingsSection className="border-red-900/40">
               <SettingsSectionHeader
                 title="Danger Zone"
@@ -889,6 +985,87 @@ export function SettingsPage(): React.ReactElement {
           </>
         )}
       </div>
+      {/* ── Workspace Reset Confirmation Modal ── */}
+      {resetDialogOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setResetDialogOpen(false);
+            }
+          }}
+        >
+          <div className="mx-4 w-full max-w-md rounded-xl border border-[#292B38] bg-[#16172080] shadow-2xl backdrop-blur-md">
+            <div className="border-b border-[#292B38] px-6 py-4">
+              <div className="flex items-center gap-2">
+                <RotateCcw className="h-4 w-4 text-amber-400" />
+                <h3 className="text-sm font-semibold text-foreground">
+                  Reset Workspace History
+                </h3>
+              </div>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              <div className="flex items-start gap-3 rounded-lg border border-amber-800/40 bg-amber-950/20 px-4 py-3">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                <p className="text-xs leading-relaxed text-amber-300/80">
+                  This will permanently delete{" "}
+                  <span className="font-semibold text-amber-300">
+                    all notifications, task comments, and activity history
+                  </span>{" "}
+                  for this workspace for all users. Tasks and files will not be
+                  deleted. This cannot be undone.
+                </p>
+              </div>
+              <div>
+                <p className="mb-2 text-xs text-muted">
+                  To confirm, type{" "}
+                  <span className="font-mono font-semibold text-foreground">
+                    {workspaceName || workspaceId}
+                  </span>{" "}
+                  below.
+                </p>
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder={workspaceName || workspaceId}
+                  value={resetConfirmName}
+                  onChange={(e) => setResetConfirmName(e.target.value)}
+                  className="w-full rounded-md border border-[#292B38] bg-[#191A22] px-3 py-2 text-sm text-foreground placeholder:text-muted/50 focus:border-amber-700 focus:outline-none focus:ring-1 focus:ring-amber-700"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 border-t border-[#292B38] px-6 py-4">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={resetWorkspaceHistoryMutation.isPending}
+                onClick={() => {
+                  setResetDialogOpen(false);
+                  setResetConfirmName("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                className="border-amber-800/60 bg-amber-950/40 text-amber-400 hover:bg-amber-950/70 hover:text-amber-300"
+                disabled={
+                  resetWorkspaceHistoryMutation.isPending ||
+                  resetConfirmName.trim() !== (workspaceName || workspaceId)
+                }
+                onClick={() => resetWorkspaceHistoryMutation.mutate()}
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                {resetWorkspaceHistoryMutation.isPending
+                  ? "Resetting..."
+                  : "Reset Workspace History"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </DataStateWrapper>
   );
 }
