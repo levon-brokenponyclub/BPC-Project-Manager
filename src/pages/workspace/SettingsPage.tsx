@@ -112,8 +112,6 @@ function ProfilePanel({
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [updateStatus, setUpdateStatus] = useState<string | null>(null);
-  const [updateError, setUpdateError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -140,9 +138,6 @@ function ProfilePanel({
 
   const updateProfileMutation = useMutation({
     mutationFn: async () => {
-      setUpdateStatus(null);
-      setUpdateError(null);
-
       const updates: Record<string, any> = {
         data: {
           first_name: firstName,
@@ -166,13 +161,11 @@ function ProfilePanel({
       if (error) throw error;
     },
     onSuccess: () => {
-      setUpdateStatus("Profile updated successfully!");
       setPassword("");
       setConfirmPassword("");
       notify.success("Profile updated");
     },
     onError: (err: Error) => {
-      setUpdateError(err.message || "Update failed");
       notify.error("Update failed", err.message);
     },
   });
@@ -182,7 +175,6 @@ function ProfilePanel({
     if (!file || !user?.id) return;
 
     setUploading(true);
-    setUpdateError(null);
 
     try {
       const fileExt = file.name.split(".").pop() || "png";
@@ -212,7 +204,6 @@ function ProfilePanel({
       setAvatarUrl(publicUrl);
       notify.success("Avatar updated");
     } catch (err: any) {
-      setUpdateError(err.message || "Upload failed");
       notify.error("Upload failed", err.message);
     } finally {
       setUploading(false);
