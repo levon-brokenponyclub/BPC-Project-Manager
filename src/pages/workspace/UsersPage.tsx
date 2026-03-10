@@ -22,14 +22,17 @@ import { getUserPresence, formatRelativeTime } from "@/lib/userPresence";
 
 function UsersSkeleton(): React.ReactElement {
   return (
-    <Card className="border-[#222330] bg-[#191A22]">
-      <div className="flex h-13 items-center justify-between border-b border-[#222330] px-6 py-2">
+    <Card className="border-[#DCDCDC] bg-white dark:border-[#222330] dark:bg-[#191A22]">
+      <div className="flex h-13 items-center justify-between border-b border-[#DCDCDC] px-6 py-2 dark:border-[#222330]">
         <div className="h-4 w-32 animate-pulse rounded bg-muted/20" />
       </div>
       <table className="w-full text-left text-sm">
         <tbody>
           {Array.from({ length: 5 }).map((_, i) => (
-            <tr key={i} className="h-11 border-b border-[#292B38] bg-[#191A22]">
+            <tr
+              key={i}
+              className="h-11 border-b border-[#DCDCDC] bg-white dark:border-[#292B38] dark:bg-[#191A22]"
+            >
               <td className="px-6 py-3.5">
                 <div className="flex items-center gap-3">
                   <div className="h-7 w-7 animate-pulse rounded-full bg-muted/20" />
@@ -75,7 +78,9 @@ function UserAvatar({
         title={email}
         className="h-7 w-7 rounded-full border border-border object-cover"
       />
-      <span className="text-[13px] font-medium text-[#E3E4EA]">{email}</span>
+      <span className="text-[13px] font-medium text-[#1A1A1A] dark:text-[#E3E4EA]">
+        {email}
+      </span>
     </div>
   );
 }
@@ -246,9 +251,9 @@ export function UsersPage(): React.ReactElement {
           />
         }
       >
-        <Card className="relative overflow-visible border-[#222330] bg-[#191A22]">
-          <div className="flex h-13 items-center justify-between border-b border-[#222330] px-6 py-2">
-            <div className="text-sm font-medium text-foreground">
+        <Card className="relative overflow-visible border-[#DCDCDC] bg-white dark:border-[#222330] dark:bg-[#191A22]">
+          <div className="flex h-13 items-center justify-between border-b border-[#DCDCDC] px-6 py-2 dark:border-[#222330]">
+            <div className="text-sm font-medium text-[#1A1A1A] dark:text-foreground">
               {workspaceName} Users
             </div>
 
@@ -272,7 +277,7 @@ export function UsersPage(): React.ReactElement {
                 return (
                   <tr
                     key={user.user_id}
-                    className="h-11 border-b border-[#292B38] bg-[#191A22] transition-colors hover:bg-[#1E2030]"
+                    className="h-11 border-b border-[#DCDCDC] bg-white transition-colors hover:bg-[#F5F5F5] dark:border-[#292B38] dark:bg-[#191A22] dark:hover:bg-[#1E2030]"
                   >
                     <td className="px-6 py-3.5">
                       <UserAvatar
@@ -283,7 +288,7 @@ export function UsersPage(): React.ReactElement {
 
                     {/* First Name */}
                     {!isClient && (
-                      <td className="px-6 py-3.5 text-[#959699]">
+                      <td className="px-6 py-3.5 text-[#666666] dark:text-[#959699]">
                         <span className="text-xs">
                           {user.first_name || "—"}
                         </span>
@@ -292,7 +297,7 @@ export function UsersPage(): React.ReactElement {
 
                     {/* Surname */}
                     {!isClient && (
-                      <td className="px-6 py-3.5 text-[#959699]">
+                      <td className="px-6 py-3.5 text-[#666666] dark:text-[#959699]">
                         <span className="text-xs">{user.surname || "—"}</span>
                       </td>
                     )}
@@ -300,7 +305,7 @@ export function UsersPage(): React.ReactElement {
                     {/* Email (for client view, show as separate column) */}
                     {isClient && (
                       <>
-                        <td className="px-6 py-3.5 text-[#959699]">
+                        <td className="px-6 py-3.5 text-[#666666] dark:text-[#959699]">
                           <span className="text-xs">{user.email || "—"}</span>
                         </td>
 

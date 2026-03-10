@@ -141,7 +141,7 @@ function StatusGroupMarker({
 
 const PRIORITY_CONFIG: Record<TaskPriority, { label: string; color: string }> =
   {
-    Low: { label: "Low", color: "#95A2B3" },
+    Normal: { label: "Normal", color: "#95A2B3" },
     Medium: { label: "Medium", color: "#5E6AD2" },
     High: { label: "High", color: "#F2BE00" },
     Urgent: { label: "Urgent", color: "#E05C5C" },
@@ -152,7 +152,7 @@ function PriorityCell({
 }: {
   priority?: TaskPriority | null;
 }): React.ReactElement {
-  if (!priority) {
+  if (!priority || !PRIORITY_CONFIG[priority]) {
     return <span className="text-[12px] text-[#4A4C5A]">—</span>;
   }
   const { label, color } = PRIORITY_CONFIG[priority];
@@ -256,7 +256,7 @@ const PRIORITY_OPTIONS: {
   { value: "Urgent", label: "Urgent", color: "#E05C5C" },
   { value: "High", label: "High", color: "#F2BE00" },
   { value: "Medium", label: "Medium", color: "#5E6AD2" },
-  { value: "Low", label: "Low", color: "#95A2B3" },
+  { value: "Normal", label: "Normal", color: "#95A2B3" },
 ];
 
 function InlinePriorityEditor({
@@ -469,9 +469,9 @@ export function TaskTable({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[640px] text-left text-sm">
+      <table className="w-full min-w-[640px] text-left text-sm text-[#2D2D2E] dark:text-inherit">
         <thead>
-          <tr className="h-10 border-b border-[#222330] bg-[#1E1F2A]">
+          <tr className="h-10 border-b border-[#DCDCDC] bg-[#FBFBFB] dark:border-[#222330] dark:bg-[#1E1F2A]">
             <th className="px-6 text-xs font-medium uppercase tracking-wide text-[#97989E]">
               <div className="inline-flex items-center gap-2">
                 {hasAnySubtasks ? (
@@ -519,16 +519,16 @@ export function TaskTable({
             <Fragment key={group.status}>
               <tr
                 key={`${group.status}-header`}
-                className="h-10 border-b border-[#222330] bg-[#1E1F2A]"
+                className="h-10 border-b border-[#E7E7E7] bg-[#ECECEC] dark:border-[#222330] dark:bg-[#1E1F2A]"
               >
                 <td className="px-6" colSpan={6}>
                   <div className="flex items-center justify-between">
                     <div className="inline-flex items-center gap-[10px] text-xs">
                       <StatusGroupMarker status={group.status} />
-                      <span className="font-medium text-[#E3E4EA]">
+                      <span className="font-medium text-[#2D2D2E] dark:text-[#E3E4EA]">
                         {group.label}
                       </span>
-                      <span className="font-normal text-[#97989E]">
+                      <span className="font-normal text-[#2D2D2E] dark:text-[#97989E]">
                         {group.tasks.length}
                       </span>
                     </div>
@@ -558,7 +558,7 @@ export function TaskTable({
                   <Fragment key={task.id}>
                     {/* ── Parent task row ── */}
                     <tr
-                      className="h-11 cursor-pointer border-b border-[#292B38] bg-[#191A22] transition-colors hover:bg-[#1E2030]"
+                      className="h-11 cursor-pointer border-b border-[#DCDCDC] bg-[#FBFBFB] transition-colors hover:bg-[#F3F3F3] dark:border-[#292B38] dark:bg-[#191A22] dark:hover:bg-[#1E2030]"
                       onClick={() => onOpen(task)}
                     >
                       <td className="px-6 py-3.5">
@@ -589,7 +589,7 @@ export function TaskTable({
                           </span>
                           <StatusGroupMarker status={task.status} />
                           <div className="flex min-w-0 flex-1 items-center gap-2">
-                            <p className="truncate text-[13px] font-medium leading-4 text-[#E3E4EA]">
+                            <p className="truncate text-[13px] font-medium leading-4 text-[#2D2D2E] dark:text-[#E3E4EA]">
                               {task.title}
                             </p>
                             {hasAnyFiles ? (
@@ -603,7 +603,7 @@ export function TaskTable({
                       </td>
                       {/* Due Date */}
                       <td
-                        className="cursor-pointer px-6 py-3.5 text-[#959699] transition-colors hover:text-[#C4C5D0]"
+                        className="cursor-pointer px-6 py-3.5 text-[#2D2D2E] dark:text-[#959699] transition-colors hover:text-[#C4C5D0]"
                         onClick={(e) => {
                           e.stopPropagation();
                           setOpenEditor({
@@ -702,7 +702,7 @@ export function TaskTable({
                                   <span className="mr-1 inline-flex h-4 w-px shrink-0 bg-[#2E3040]" />
                                   <StatusGroupMarker status={sub.status} />
                                   <div className="flex min-w-0 flex-1 items-center gap-2">
-                                    <p className="max-w-[360px] truncate text-[12px] font-medium leading-4 text-[#C4C5CC]">
+                                    <p className="max-w-[360px] truncate text-[12px] font-medium leading-4 text-[#2D2D2E] dark:text-[#C4C5CC]">
                                       {sub.title}
                                     </p>
                                     {(sub.file_count ?? 0) > 0 ? (
@@ -716,7 +716,7 @@ export function TaskTable({
                               </td>
                               {/* Due Date */}
                               <td
-                                className="cursor-pointer px-6 py-2.5 text-[#959699] transition-colors hover:text-[#C4C5D0]"
+                                className="cursor-pointer px-6 py-2.5 text-[#2D2D2E] dark:text-[#959699] transition-colors hover:text-[#C4C5D0]"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setOpenEditor({

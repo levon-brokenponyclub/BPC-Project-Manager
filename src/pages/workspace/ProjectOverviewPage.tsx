@@ -428,7 +428,7 @@ export function ProjectOverviewPage(): React.ReactElement {
   ];
 
   return (
-    <div className="space-y-0">
+    <div className="space-y-0 bg-white dark:bg-[#15161D]">
       <DataStateWrapper
         isLoading={isPrimaryLoading}
         isError={isPrimaryError}
@@ -575,7 +575,7 @@ export function ProjectOverviewPage(): React.ReactElement {
             type="button"
             onClick={() => void navigate(`/w/${workspaceId}/assets`)}
             className={cn(
-              "group w-full rounded-xl border border-border bg-card p-5 text-left",
+              "group w-full rounded-xl border border-[#292B38] bg-[#191A22] p-5 text-left",
               "transition-all duration-150 hover:-translate-y-[2px] hover:bg-surface hover:shadow-card dark:hover:shadow-[0_4px_24px_rgba(0,0,0,0.35)]",
             )}
           >
@@ -631,7 +631,7 @@ export function ProjectOverviewPage(): React.ReactElement {
                 ) : (
                   <span
                     className={cn(
-                      "inline-flex items-center rounded-[8px] border border-border bg-surface px-4 py-2 text-[12px] font-semibold text-muted",
+                      "inline-flex items-center rounded-[8px] border border-[#292B38] bg-surface px-4 py-2 text-[12px] font-semibold text-muted",
                       "transition-colors group-hover:text-foreground",
                     )}
                   >
@@ -647,7 +647,7 @@ export function ProjectOverviewPage(): React.ReactElement {
       {/* ── Top Up modal ────────────────────────────────────────────────── */}
       {isTopUpModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="mx-4 w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl">
+          <div className="mx-4 w-full max-w-md rounded-xl border border-[#292B38] bg-[#191A22] p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-foreground">
                 Top Up Support Hours
@@ -692,12 +692,12 @@ export function ProjectOverviewPage(): React.ReactElement {
                   value={topUpHours}
                   onChange={(e) => setTopUpHours(e.target.value)}
                   placeholder="Enter hours"
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="w-full rounded-lg border border-[#292B38] bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
               </div>
 
               {hoursNum > 0 ? (
-                <div className="rounded-lg border border-border bg-surface/60 p-4">
+                <div className="rounded-lg border border-[#292B38] bg-surface/60 p-4">
                   <h3 className="mb-3 text-sm font-medium text-foreground">
                     Cost Breakdown
                   </h3>
@@ -710,7 +710,7 @@ export function ProjectOverviewPage(): React.ReactElement {
                       <span>Hours</span>
                       <span>{hoursNum.toFixed(2)}</span>
                     </div>
-                    <div className="mt-2 border-t border-border pt-2" />
+                    <div className="mt-2 border-t border-[#292B38] pt-2" />
                     <div className="flex items-center justify-between font-medium text-foreground">
                       <span>Subtotal ex VAT</span>
                       <span>R{subtotal.toFixed(2)}</span>
@@ -719,7 +719,7 @@ export function ProjectOverviewPage(): React.ReactElement {
                       <span>VAT (15%)</span>
                       <span>R{vatAmount.toFixed(2)}</span>
                     </div>
-                    <div className="mt-2 border-t border-border pt-2" />
+                    <div className="mt-2 border-t border-[#292B38] pt-2" />
                     <div className="flex items-center justify-between text-base font-semibold text-foreground">
                       <span>Total incl VAT</span>
                       <span>R{totalInclVat.toFixed(2)}</span>

@@ -80,7 +80,7 @@ const navItems = [
 ] as const;
 
 const sidebarNavItemClassName =
-  "focus-ring flex items-center rounded-[4px] px-[10px] py-[8px] text-[13px] font-medium leading-4 text-[#E2E3E5] transition-colors";
+  "focus-ring flex items-center rounded-[4px] px-[10px] py-[8px] text-[13px] font-medium leading-4 text-[#2D2D2E] dark:text-[#E2E3E5] transition-colors";
 
 function IconButton({
   label,
@@ -175,8 +175,10 @@ function InboxListItem({
         }
       }}
       className={cn(
-        "group relative w-full cursor-pointer border-b border-[#1D1E2C] px-3 py-2.5 text-left transition-colors last:border-b-0",
-        isActive ? "bg-[#1F2133]" : "hover:bg-[#1C1D2A]",
+        "group relative w-full cursor-pointer border-b border-[#DCDCDC] dark:border-[#292B38] px-3 py-3.5 text-left transition-colors last:border-b-0",
+        isActive
+          ? "bg-[#F5F5F5] dark:bg-[#1F2133]"
+          : "hover:bg-[#F5F5F5] dark:hover:bg-[#1C1D2A]",
       )}
     >
       {isUnread ? (
@@ -192,7 +194,7 @@ function InboxListItem({
               className="h-7 w-7 rounded-full object-cover"
             />
           ) : (
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#2A2C38] bg-[#191A22] text-[10px] font-medium text-[#8B8C9E]">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#DCDCDC] dark:border-[#2A2C38] bg-white dark:bg-[#191A22] text-[10px] font-medium text-[#666666] dark:text-[#8B8C9E]">
               {getInboxInitials(msg.actor)}
             </span>
           )}
@@ -202,7 +204,9 @@ function InboxListItem({
             <p
               className={cn(
                 "truncate text-[13px] font-medium leading-[18px]",
-                isActive || isUnread ? "text-white" : "text-[#B8B9C6]",
+                isActive || isUnread
+                  ? "text-[#1A1A1A] dark:text-white"
+                  : "text-[#666666] dark:text-[#B8B9C6]",
               )}
             >
               {msg.title}
@@ -211,7 +215,7 @@ function InboxListItem({
             <div className="relative flex shrink-0 items-center">
               <span
                 className={cn(
-                  "text-[11px] leading-[18px] text-[#5F6170] transition-opacity",
+                  "text-[11px] leading-[18px] text-[#666666] dark:text-[#5F6170] transition-opacity",
                   "group-hover:opacity-0",
                   isActive && "opacity-0",
                 )}
@@ -234,7 +238,7 @@ function InboxListItem({
                     if (isUnread) onMarkRead();
                     else onMarkUnread();
                   }}
-                  className="inline-flex h-6 w-6 items-center justify-center rounded-[4px] text-[#5F6272] transition-colors hover:bg-[#2A2C3A] hover:text-[#B0B1BC]"
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-[4px] text-[#666666] dark:text-[#5F6272] transition-colors hover:bg-[#DCDCDC] dark:hover:bg-[#2A2C3A] hover:text-[#1A1A1A] dark:hover:text-[#B0B1BC]"
                 >
                   {isUnread ? (
                     <CheckCircle2 className="h-3.5 w-3.5" />
@@ -250,7 +254,7 @@ function InboxListItem({
                     e.stopPropagation();
                     onDelete();
                   }}
-                  className="inline-flex h-6 w-6 items-center justify-center rounded-[4px] text-[#5F6272] transition-colors hover:bg-[#2A2C3A] hover:text-[#E05C5C]"
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-[4px] text-[#666666] dark:text-[#5F6272] transition-colors hover:bg-red-50 dark:hover:bg-[#2A2C3A] hover:text-red-600 dark:hover:text-[#E05C5C]"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -258,7 +262,7 @@ function InboxListItem({
             </div>
           </div>
           {msg.description ? (
-            <p className="mt-0.5 truncate text-[12px] leading-[17px] text-[#5F6272]">
+            <p className="mt-0.5 truncate text-[12px] leading-[17px] text-[#666666] dark:text-[#5F6272]">
               {msg.description}
             </p>
           ) : null}
@@ -409,7 +413,9 @@ function InboxCommentThread({
   if (commentsQuery.isLoading) {
     return (
       <div className="flex flex-1 items-center justify-center py-12">
-        <p className="text-[13px] text-[#5F6272]">Loading comments…</p>
+        <p className="text-[13px] text-[#5F6272] dark:text-[#5F6272]">
+          Loading comments…
+        </p>
       </div>
     );
   }
@@ -417,7 +423,7 @@ function InboxCommentThread({
   if (commentsQuery.isError) {
     return (
       <div className="flex flex-1 items-center justify-center py-12">
-        <p className="text-[13px] text-[#E05C5C]">
+        <p className="text-[13px] text-[#E05C5C] dark:text-[#E05C5C]">
           Could not load comments for this task.
         </p>
       </div>
@@ -433,8 +439,8 @@ function InboxCommentThread({
       >
         {comments.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <MessageSquare className="mb-2 h-7 w-7 text-[#2E3040]" />
-            <p className="text-[13px] text-[#5F6272]">
+            <MessageSquare className="mb-2 h-7 w-7 text-[#2E3040] dark:text-[#2E3040]" />
+            <p className="text-[13px] text-[#666666] dark:text-[#5F6272]">
               No comments yet. Be the first to reply.
             </p>
           </div>
@@ -462,45 +468,47 @@ function InboxCommentThread({
                   {/* connector line */}
                   <div className="relative flex justify-center">
                     {!isLast ? (
-                      <span className="absolute bottom-[-16px] top-8 w-px bg-[#222330]" />
+                      <span className="absolute bottom-[-16px] top-8 w-px bg-[#DCDCDC] dark:bg-[#222330]" />
                     ) : null}
                     {actor.avatar ? (
                       <img
                         src={actor.avatar}
                         alt={actor.name}
-                        className="relative z-10 mt-0.5 h-7 w-7 rounded-full border border-[#2c2e42] bg-[#191A22] object-cover"
+                        className="relative z-10 mt-0.5 h-7 w-7 rounded-full border border-[#DCDCDC] bg-white object-cover dark:border-[#2c2e42] dark:bg-[#191A22]"
                         loading="lazy"
                       />
                     ) : (
-                      <span className="relative z-10 mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#2A2C38] bg-[#191A22] text-[10px] font-medium text-[#8B8C9E]">
+                      <span className="relative z-10 mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#DCDCDC] bg-white text-[10px] font-medium text-[#666666] dark:border-[#2A2C38] dark:bg-[#191A22] dark:text-[#8B8C9E]">
                         {getInboxInitials(actor.name)}
                       </span>
                     )}
                   </div>
 
                   {/* Comment card */}
-                  <div className="rounded-2xl border border-[#2c2e42] bg-[#1A1B25] px-4 py-3">
+                  <div className="rounded-2xl border border-[#DCDCDC] bg-white px-4 py-3 dark:border-[#2c2e42] dark:bg-[#1A1B25]">
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm leading-5 text-white">
+                      <p className="text-sm leading-5 text-[#1A1A1A] dark:text-white">
                         <span className="font-semibold">{actor.name}</span>{" "}
-                        <span className="text-[#5F6272]">commented</span>
+                        <span className="text-[#666666] dark:text-[#5F6272]">
+                          commented
+                        </span>
                       </p>
                       <time
                         dateTime={comment.created_at}
                         title={absTime}
-                        className="shrink-0 text-xs text-[#5F6272]"
+                        className="shrink-0 text-xs text-[#666666] dark:text-[#5F6272]"
                       >
                         {relTime}
                       </time>
                     </div>
-                    <p className="mt-2 whitespace-pre-wrap text-[14px] leading-[22px] text-[#D4D5DE]">
+                    <p className="mt-2 whitespace-pre-wrap text-[14px] leading-[22px] text-[#1A1A1A] dark:text-[#D4D5DE]">
                       {comment.body}
                     </p>
                     <div className="mt-2 flex justify-end">
                       <button
                         type="button"
                         onClick={() => handleReply(comment)}
-                        className="text-[12px] text-[#5F6272] transition-colors hover:text-[#B0B1BC]"
+                        className="text-[12px] text-[#666666] transition-colors hover:text-[#1A1A1A] dark:text-[#5F6272] dark:hover:text-[#B0B1BC]"
                       >
                         Reply
                       </button>
@@ -514,16 +522,16 @@ function InboxCommentThread({
       </div>
 
       {/* Composer */}
-      <div className="shrink-0 border-t border-[#222330] bg-[#1A1B25] px-5 py-4">
-        <div className="flex items-start gap-3 rounded-2xl border border-[#2c2e42] bg-[#191A22] p-3">
+      <div className="shrink-0 border-t border-[#DCDCDC] bg-white px-5 py-4 dark:border-[#222330] dark:bg-[#1A1B25]">
+        <div className="flex items-start gap-3 rounded-2xl border border-[#DCDCDC] bg-[#FBFBFB] p-3 dark:border-[#2c2e42] dark:bg-[#191A22]">
           {currentUserAvatar ? (
             <img
               src={currentUserAvatar}
               alt={currentUserName}
-              className="mt-0.5 h-8 w-8 shrink-0 rounded-full border border-[#2A2C38] object-cover"
+              className="mt-0.5 h-8 w-8 shrink-0 rounded-full border border-[#DCDCDC] object-cover dark:border-[#2A2C38]"
             />
           ) : (
-            <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#2A2C38] bg-[#191A22] text-[10px] font-semibold text-[#8B8C9E]">
+            <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#DCDCDC] bg-white text-[10px] font-semibold text-[#666666] dark:border-[#2A2C38] dark:bg-[#191A22] dark:text-[#8B8C9E]">
               {getInboxInitials(currentUserName)}
             </span>
           )}
@@ -538,7 +546,7 @@ function InboxCommentThread({
               onChange={(e) => setComposerBody(e.target.value)}
               placeholder="Add your comment…"
               rows={3}
-              className="w-full resize-none bg-transparent px-0 py-0 text-[14px] leading-[22px] text-white outline-none placeholder:text-[#5F6272]"
+              className="w-full resize-none bg-transparent px-0 py-0 text-[14px] leading-[22px] text-[#1A1A1A] outline-none placeholder:text-[#666666] dark:text-white dark:placeholder:text-[#5F6272]"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
                   e.preventDefault();
@@ -920,7 +928,9 @@ export default function AppShell({
                     onClick={() => setInboxOpen(false)}
                     className={cn(
                       sidebarNavItemClassName,
-                      active ? "bg-[#1E1F2A]" : "hover:bg-[#1E1F2A]",
+                      active
+                        ? "bg-[#DEDEDE] dark:bg-[#1E1F2A]"
+                        : "hover:bg-[#DEDEDE] dark:hover:bg-[#1E1F2A]",
                       collapsed ? "h-10 justify-center px-0" : "gap-[10px]",
                     )}
                   >
@@ -947,7 +957,9 @@ export default function AppShell({
               title="Inbox"
               className={cn(
                 sidebarNavItemClassName,
-                inboxOpen ? "bg-[#1E1F2A]" : "hover:bg-[#1E1F2A]",
+                inboxOpen
+                  ? "bg-[#DEDEDE] dark:bg-[#1E1F2A]"
+                  : "hover:bg-[#DEDEDE] dark:hover:bg-[#1E1F2A]",
                 collapsed ? "h-10 justify-center px-0" : "gap-[10px]",
               )}
             >
@@ -964,9 +976,11 @@ export default function AppShell({
               {!collapsed ? (
                 <>
                   <span className="flex-1 truncate text-left">Inbox</span>
-                  <span className="inline-flex min-w-[26px] items-center justify-center rounded-[4px] bg-[#5E69D1] px-[6px] py-[3px] text-[11px] font-normal leading-[13px] text-white">
-                    {unreadCount > 99 ? "99+" : unreadCount}
-                  </span>
+                  {unreadCount > 0 ? (
+                    <span className="inline-flex min-w-[26px] items-center justify-center rounded-[4px] bg-[#5E69D1] px-[6px] py-[3px] text-[11px] font-normal leading-[13px] text-white">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  ) : null}
                 </>
               ) : null}
             </button>
@@ -984,7 +998,9 @@ export default function AppShell({
                     onClick={() => setInboxOpen(false)}
                     className={cn(
                       sidebarNavItemClassName,
-                      active ? "bg-[#1E1F2A]" : "hover:bg-[#1E1F2A]",
+                      active
+                        ? "bg-[#DEDEDE] dark:bg-[#1E1F2A]"
+                        : "hover:bg-[#DEDEDE] dark:hover:bg-[#1E1F2A]",
                       collapsed ? "h-10 justify-center px-0" : "gap-[10px]",
                     )}
                   >
@@ -1020,8 +1036,8 @@ export default function AppShell({
                   className={cn(
                     sidebarNavItemClassName,
                     ws.id === workspaceId
-                      ? "bg-[#1E1F2A]"
-                      : "hover:bg-[#1E1F2A]",
+                      ? "bg-[#DEDEDE] dark:bg-[#1E1F2A]"
+                      : "hover:bg-[#DEDEDE] dark:hover:bg-[#1E1F2A]",
                     "gap-[10px]",
                   )}
                 >
@@ -1047,7 +1063,9 @@ export default function AppShell({
                     onClick={() => setInboxOpen(false)}
                     className={cn(
                       sidebarNavItemClassName,
-                      active ? "bg-[#1E1F2A]" : "hover:bg-[#1E1F2A]",
+                      active
+                        ? "bg-[#DEDEDE] dark:bg-[#1E1F2A]"
+                        : "hover:bg-[#DEDEDE] dark:hover:bg-[#1E1F2A]",
                       "gap-[10px]",
                     )}
                   >
@@ -1077,7 +1095,7 @@ export default function AppShell({
               )}
             </button>
             <span className="inline-flex h-2 w-2 rounded-full bg-primary" />
-            <h1 className="text-[18px] font-medium leading-[22px] text-white">
+            <h1 className="text-[18px] font-medium leading-[22px] text-[#1A1A1A] dark:text-white">
               {selectedWorkspaceName}
             </h1>
           </div>
@@ -1197,19 +1215,19 @@ export default function AppShell({
         </header>
 
         {inboxOpen ? (
-          <section className="absolute inset-x-0 bottom-0 top-14 z-40 overflow-hidden bg-[#15161D]">
+          <section className="absolute inset-x-0 bottom-0 top-14 z-40 overflow-hidden bg-white dark:bg-[#15161D]">
             <div className="grid h-full min-h-0 grid-cols-[280px_minmax(0,1fr)_260px]">
               {/* ── LEFT: Inbox list ── */}
-              <div className="flex min-h-0 flex-col border-r border-[#222330] bg-[#1A1B24]">
+              <div className="flex min-h-0 flex-col border-r border-[#DCDCDC] dark:border-[#222330] bg-[#ECECEC] dark:bg-[#1A1B24]">
                 {/* Header */}
-                <div className="flex items-center justify-between border-b border-[#222330] px-3 py-2.5">
+                <div className="flex items-center justify-between border-b border-[#DCDCDC] dark:border-[#222330] px-3 py-2.5 h-[61px]">
                   <div className="flex items-center gap-2">
-                    <Inbox className="h-[15px] w-[15px] text-[#6B6E7B]" />
-                    <span className="text-[13px] font-semibold text-white">
+                    <Inbox className="h-[15px] w-[15px] text-[#666666] dark:text-[#6B6E7B]" />
+                    <span className="text-[13px] font-semibold text-[#1A1A1A] dark:text-white">
                       Inbox
                     </span>
                     {unreadCount > 0 ? (
-                      <span className="inline-flex min-w-[18px] items-center justify-center rounded-[3px] bg-[#2D2E3A] px-1 py-px text-[11px] font-medium leading-[16px] text-[#A8A9B5]">
+                      <span className="inline-flex min-w-[18px] items-center justify-center rounded-[3px] bg-[#DCDCDC] dark:bg-[#2D2E3A] px-1 py-px text-[11px] font-medium leading-[16px] text-[#666666] dark:text-[#A8A9B5]">
                         {unreadCount > 99 ? "99+" : unreadCount}
                       </span>
                     ) : null}
@@ -1217,7 +1235,7 @@ export default function AppShell({
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      className="text-[11px] text-[#6B6E7B] transition-colors hover:text-[#B0B1BC]"
+                      className="text-[11px] text-[#666666] dark:text-[#6B6E7B] transition-colors hover:text-[#1A1A1A] dark:hover:text-[#B0B1BC]"
                       onClick={() => {
                         if (markAllReadMutation.isPending) return;
                         void markAllReadMutation.mutateAsync();
@@ -1228,7 +1246,7 @@ export default function AppShell({
                     <button
                       type="button"
                       onClick={() => setInboxOpen(false)}
-                      className="focus-ring inline-flex h-6 w-6 items-center justify-center rounded-[4px] text-[#5F6170] transition-colors hover:bg-[#252630] hover:text-white"
+                      className="focus-ring inline-flex h-6 w-6 items-center justify-center rounded-[4px] text-[#666666] dark:text-[#5F6170] transition-colors hover:bg-[#F5F5F5] dark:hover:bg-[#252630] hover:text-[#1A1A1A] dark:hover:text-white"
                       aria-label="Close inbox"
                     >
                       <X className="h-3.5 w-3.5" />
@@ -1240,8 +1258,8 @@ export default function AppShell({
                 <div className="min-h-0 flex-1 overflow-y-auto">
                   {inboxItems.length === 0 ? (
                     <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
-                      <Inbox className="mb-3 h-8 w-8 text-[#2E2F3E]" />
-                      <p className="text-[13px] text-[#5F6170]">
+                      <Inbox className="mb-3 h-8 w-8 text-[#DCDCDC] dark:text-[#2E2F3E]" />
+                      <p className="text-[13px] text-[#666666] dark:text-[#5F6170]">
                         All caught up
                       </p>
                     </div>
@@ -1262,7 +1280,7 @@ export default function AppShell({
                       ).map(({ label, items }) =>
                         items.length > 0 ? (
                           <div key={label}>
-                            <div className="sticky top-0 z-10 bg-[#1A1B24] px-3 pb-1 pt-3 text-[11px] font-medium uppercase tracking-[0.05em] text-[#4A4C5A]">
+                            <div className="sticky top-0 z-10 bg-[#ECECEC] dark:bg-[#1A1B24] px-3 pb-1 pt-3 text-[11px] font-medium uppercase tracking-[0.05em] text-[#666666] dark:text-[#4A4C5A]">
                               {label}
                             </div>
                             {items.map((notification) => (
@@ -1304,10 +1322,10 @@ export default function AppShell({
               {/* ── MIDDLE + RIGHT ── */}
               <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] md:col-span-2 md:grid-cols-[minmax(0,1fr)_260px]">
                 {/* Shared header bar */}
-                <header className="flex items-center justify-between gap-3 border-b border-[#222330] bg-[#191A22] px-5 py-[11px] md:col-span-2">
+                <header className="flex items-center justify-between gap-3 border-b border-[#DCDCDC] dark:border-[#222330] bg-[#ECECEC] dark:bg-[#191A22] px-5 py-[11px] md:col-span-2">
                   <div className="min-w-0 flex-1">
                     {activeNotification ? (
-                      <p className="mb-0.5 flex items-center gap-1 truncate text-[11px] text-[#5F6272]">
+                      <p className="mb-0.5 flex items-center gap-1 truncate text-[11px] text-[#666666] dark:text-[#5F6272]">
                         <span>{selectedWorkspaceName}</span>
                         <ChevronRight className="h-3 w-3 shrink-0" />
                         <span className="truncate">
@@ -1315,7 +1333,7 @@ export default function AppShell({
                         </span>
                       </p>
                     ) : null}
-                    <h3 className="truncate text-[14px] font-semibold leading-[20px] text-white">
+                    <h3 className="truncate text-[14px] font-semibold leading-[20px] text-[#1A1A1A] dark:text-white">
                       {activeNotification
                         ? renderInboxMessage(activeNotification).title
                         : "Select a notification"}
@@ -1363,7 +1381,7 @@ export default function AppShell({
                 </header>
 
                 {/* Middle: task-drawer-style content pane */}
-                <div className="flex min-h-0 flex-col border-r border-[#222330]">
+                <div className="flex min-h-0 flex-col border-r border-[#DCDCDC] dark:border-[#222330] bg-white dark:bg-[#15161D]">
                   {activeNotification ? (
                     (() => {
                       const message = renderInboxMessage(activeNotification);
@@ -1390,14 +1408,14 @@ export default function AppShell({
                         return (
                           <>
                             {/* Compact context header */}
-                            <div className="shrink-0 border-b border-[#222330] px-6 py-5">
-                              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5F6272]">
+                            <div className="shrink-0 border-b border-[#DCDCDC] dark:border-[#222330] bg-[#FBFBFB] dark:bg-[#191A22] px-6 py-5">
+                              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#666666] dark:text-[#5F6272]">
                                 {typeLabel}
                               </p>
-                              <h2 className="text-[18px] font-medium leading-[24px] tracking-[-0.2px] text-white">
+                              <h2 className="text-[18px] font-medium leading-[24px] tracking-[-0.2px] text-[#1A1A1A] dark:text-white">
                                 {message.title}
                               </h2>
-                              <div className="mt-2 flex items-center gap-2 text-[12px] text-[#6B6D7A]">
+                              <div className="mt-2 flex items-center gap-2 text-[12px] text-[#666666] dark:text-[#6B6D7A]">
                                 {message.actorAvatarUrl ? (
                                   <img
                                     src={message.actorAvatarUrl}
@@ -1405,7 +1423,7 @@ export default function AppShell({
                                     className="h-5 w-5 rounded-full object-cover"
                                   />
                                 ) : (
-                                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#2A2C3A] text-[9px] font-bold text-[#A0A2B0]">
+                                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#F5F5F5] dark:bg-[#2A2C3A] text-[9px] font-bold text-[#666666] dark:text-[#A0A2B0]">
                                     {getInboxInitials(message.actor)}
                                   </span>
                                 )}
@@ -1433,14 +1451,14 @@ export default function AppShell({
                           <div className="space-y-6 px-6 py-6">
                             {/* Title block */}
                             <div>
-                              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5F6272]">
+                              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#666666] dark:text-[#5F6272]">
                                 {typeLabel}
                               </p>
-                              <h2 className="text-[22px] font-medium leading-[28px] tracking-[-0.3px] text-white">
+                              <h2 className="text-[22px] font-medium leading-[28px] tracking-[-0.3px] text-[#1A1A1A] dark:text-white">
                                 {message.title}
                               </h2>
-                              <div className="mt-2 flex items-center gap-2 text-[12px] text-[#6B6D7A]">
-                                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#2A2C3A] text-[9px] font-bold text-[#A0A2B0]">
+                              <div className="mt-2 flex items-center gap-2 text-[12px] text-[#666666] dark:text-[#6B6D7A]">
+                                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#F5F5F5] dark:bg-[#2A2C3A] text-[9px] font-bold text-[#666666] dark:text-[#A0A2B0]">
                                   {getInboxInitials(message.actor)}
                                 </span>
                                 <span>{message.actor}</span>
@@ -1451,7 +1469,7 @@ export default function AppShell({
                               </div>
                             </div>
 
-                            <div className="border-t border-[#222330]" />
+                            <div className="border-t border-[#DCDCDC] dark:border-[#222330]" />
 
                             {/* Content block — comment fallback (no task ID) or fields */}
                             {isCommentType && message.description ? (
@@ -1464,49 +1482,49 @@ export default function AppShell({
                                     className="mt-0.5 h-7 w-7 shrink-0 rounded-full object-cover"
                                   />
                                 ) : (
-                                  <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#252636] text-[10px] font-bold text-[#8B8C9E]">
+                                  <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#F5F5F5] dark:bg-[#252636] text-[10px] font-bold text-[#666666] dark:text-[#8B8C9E]">
                                     {getInboxInitials(message.actor)}
                                   </span>
                                 )}
-                                <div className="flex-1 rounded-[6px] border border-[#292B38] bg-[#1E1F2D] px-4 py-3">
-                                  <p className="mb-1.5 text-[12px] font-medium text-[#A0A2B0]">
+                                <div className="flex-1 rounded-[6px] border border-[#DCDCDC] dark:border-[#292B38] bg-[#FBFBFB] dark:bg-[#1E1F2D] px-4 py-3">
+                                  <p className="mb-1.5 text-[12px] font-medium text-[#666666] dark:text-[#A0A2B0]">
                                     {message.actor}
                                   </p>
-                                  <p className="text-[14px] leading-[22px] text-[#D4D5DE]">
+                                  <p className="text-[14px] leading-[22px] text-[#1A1A1A] dark:text-[#D4D5DE]">
                                     {message.description}
                                   </p>
                                 </div>
                               </div>
                             ) : (
                               /* Fields block — TaskDrawer-style rows */
-                              <div className="overflow-hidden rounded-[4px] border border-[#292B38] bg-[#191A22]">
+                              <div className="overflow-hidden rounded-[4px] border border-[#DCDCDC] dark:border-[#292B38] bg-white dark:bg-[#191A22]">
                                 {message.entity &&
                                 message.entity !== "General update" ? (
-                                  <div className="grid grid-cols-[120px_1fr] border-b border-[#292B38]">
-                                    <div className="px-3 py-2.5 text-[13px] font-medium text-[#6B6D7A]">
+                                  <div className="grid grid-cols-[120px_1fr] border-b border-[#DCDCDC] dark:border-[#292B38]">
+                                    <div className="px-3 py-2.5 text-[13px] font-medium text-[#666666] dark:text-[#6B6D7A]">
                                       {activeNotification.type.startsWith(
                                         "comment.",
                                       )
                                         ? "Comment on"
                                         : "Task"}
                                     </div>
-                                    <div className="px-3 py-2.5 text-[13px] font-medium text-white">
+                                    <div className="px-3 py-2.5 text-[13px] font-medium text-[#1A1A1A] dark:text-white">
                                       {message.entity}
                                     </div>
                                   </div>
                                 ) : null}
                                 {message.description ? (
-                                  <div className="grid grid-cols-[120px_1fr] border-b border-[#292B38]">
-                                    <div className="px-3 py-2.5 text-[13px] font-medium text-[#6B6D7A]">
+                                  <div className="grid grid-cols-[120px_1fr] border-b border-[#DCDCDC] dark:border-[#292B38]">
+                                    <div className="px-3 py-2.5 text-[13px] font-medium text-[#666666] dark:text-[#6B6D7A]">
                                       {isChangedField ? "Change" : "Detail"}
                                     </div>
-                                    <div className="px-3 py-2.5 text-[13px] font-medium text-white">
+                                    <div className="px-3 py-2.5 text-[13px] font-medium text-[#1A1A1A] dark:text-white">
                                       {message.description}
                                     </div>
                                   </div>
                                 ) : null}
                                 <div className="grid grid-cols-[120px_1fr]">
-                                  <div className="px-3 py-2.5 text-[13px] font-medium text-[#6B6D7A]">
+                                  <div className="px-3 py-2.5 text-[13px] font-medium text-[#666666] dark:text-[#6B6D7A]">
                                     From
                                   </div>
                                   <div className="flex items-center gap-1.5 px-3 py-2.5">
@@ -1517,11 +1535,11 @@ export default function AppShell({
                                         className="h-4 w-4 rounded-full object-cover"
                                       />
                                     ) : (
-                                      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#252636] text-[8px] font-bold text-[#8B8C9E]">
+                                      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#F5F5F5] dark:bg-[#252636] text-[8px] font-bold text-[#666666] dark:text-[#8B8C9E]">
                                         {getInboxInitials(message.actor)}
                                       </span>
                                     )}
-                                    <span className="text-[13px] font-medium text-white">
+                                    <span className="text-[13px] font-medium text-[#1A1A1A] dark:text-white">
                                       {message.actor}
                                     </span>
                                   </div>
@@ -1534,8 +1552,8 @@ export default function AppShell({
                     })()
                   ) : (
                     <div className="flex flex-1 flex-col items-center justify-center text-center">
-                      <MessageSquare className="mb-3 h-8 w-8 text-[#2E3040]" />
-                      <p className="text-[13px] text-[#5F6170]">
+                      <MessageSquare className="mb-3 h-8 w-8 text-[#DCDCDC] dark:text-[#2E3040]" />
+                      <p className="text-[13px] text-[#666666] dark:text-[#5F6170]">
                         Select an item to view details
                       </p>
                     </div>
@@ -1543,9 +1561,9 @@ export default function AppShell({
                 </div>
 
                 {/* Right: properties rail */}
-                <div className="hidden min-h-0 bg-[#191A22] md:flex md:flex-col">
-                  <div className="border-b border-[#222330] px-4 py-2.5">
-                    <h3 className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5F6272]">
+                <div className="hidden min-h-0 border-l border-[#DCDCDC] dark:border-[#222330] bg-[#ECECEC] dark:bg-[#191A22] md:flex md:flex-col">
+                  <div className="border-b border-[#DCDCDC] dark:border-[#222330] px-4 py-2.5">
+                    <h3 className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#666666] dark:text-[#5F6272]">
                       Properties
                     </h3>
                   </div>
@@ -1553,21 +1571,21 @@ export default function AppShell({
                     (() => {
                       const message = renderInboxMessage(activeNotification);
                       return (
-                        <div className="min-h-0 flex-1 divide-y divide-[#1F2030] overflow-y-auto">
+                        <div className="min-h-0 flex-1 divide-y divide-[#DCDCDC] dark:divide-[#1F2030] overflow-y-auto">
                           <InboxPropertyRow label="Status">
                             <span
                               className={cn(
                                 "inline-flex items-center rounded-[4px] px-2 py-0.5 text-[12px] font-medium",
                                 message.status === "Unread"
                                   ? "bg-primary/15 text-primary"
-                                  : "bg-[#252530] text-[#8B8C9E]",
+                                  : "bg-[#DCDCDC] dark:bg-[#252530] text-[#666666] dark:text-[#8B8C9E]",
                               )}
                             >
                               {message.status}
                             </span>
                           </InboxPropertyRow>
                           <InboxPropertyRow label="Type">
-                            <span className="text-[13px] text-[#C4C5D0]">
+                            <span className="text-[13px] text-[#1A1A1A] dark:text-[#C4C5D0]">
                               {getNotificationTypeLabel(
                                 activeNotification.type,
                               )}
@@ -1582,24 +1600,24 @@ export default function AppShell({
                                   className="h-5 w-5 rounded-full object-cover"
                                 />
                               ) : (
-                                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#252636] text-[9px] font-bold text-[#8B8C9E]">
+                                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#F5F5F5] dark:bg-[#252636] text-[9px] font-bold text-[#666666] dark:text-[#8B8C9E]">
                                   {getInboxInitials(message.actor)}
                                 </span>
                               )}
-                              <span className="text-[13px] text-[#C4C5D0]">
+                              <span className="text-[13px] text-[#1A1A1A] dark:text-[#C4C5D0]">
                                 {message.actor}
                               </span>
                             </div>
                           </InboxPropertyRow>
                           <InboxPropertyRow label="Received">
-                            <span className="text-[13px] text-[#C4C5D0]">
+                            <span className="text-[13px] text-[#1A1A1A] dark:text-[#C4C5D0]">
                               {timeAgo(activeNotification.created_at)}
                             </span>
                           </InboxPropertyRow>
                           {message.entity &&
                           message.entity !== "General update" ? (
                             <InboxPropertyRow label="Related">
-                              <span className="text-[13px] text-[#C4C5D0]">
+                              <span className="text-[13px] text-[#1A1A1A] dark:text-[#C4C5D0]">
                                 {message.entity}
                               </span>
                             </InboxPropertyRow>

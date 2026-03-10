@@ -19,7 +19,7 @@ A multi-workspace project management and client portal built for support agencie
 - **User Presence** — Online status indicators and last-seen timestamps on the Users page; green dot + "Online" for users active in the last 5 minutes, gray dot + relative timestamp ("2 min ago", "1 hour ago") for offline users; workspace-scoped, inferred from last sign-in
 - **Admin tools** — invite users (email / magic link), manage clients, create / delete workspaces, role-based access
 - **Asset Library** — per-workspace repository of files, links, logins and plugins; grouped 2×2 section card layout; file upload with signed-URL download, copy-to-clipboard for links/credentials, inline notes; notifications on add/delete
-- **Dark mode default** — persisted theme preference
+- **Dark mode by default** — persisted theme preference with high-contrast light mode support
 
 ---
 

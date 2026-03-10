@@ -65,95 +65,83 @@ export interface OverviewListCardProps {
 }
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
-// All hardcoded based on the premium data-sets.css direction:
-// card bg: #0B0D12 → use the existing --background / #0e1016 style
-// Card surface:  slightly lifted from bg: #13151e
-// Border:        very subtle cool gray: #1e2130
-// Hover surface: #171929
-// Label:         #6b7485 (cool slate, calmer than the orange system)
-// Value:         rgba(255,255,255,0.88) — soft off-white
+// Surfaces use semantic CSS-variable tokens from the project theme:
+// Card surface:  bg-card  (--card)
+// Inner surface: bg-surface (--surface)
+// Border:        border-border (--border)
+// Label:         text-muted (--muted)
+// Value:         text-foreground (--foreground)
+// Tones:         Tailwind named colors (emerald/amber/red/violet) with dark: variants
 
 // Card container base classes (shared across all card types)
 const CARD_BASE =
   "rounded-xl border bg-card border-border transition-all duration-150";
 
 const CARD_CLICKABLE =
-  "cursor-pointer hover:bg-surface hover:-translate-y-[2px] hover:shadow-card dark:hover:shadow-[0_4px_24px_rgba(0,0,0,0.35)]";
+  "cursor-pointer hover:bg-surface hover:-translate-y-[2px]";
 
 // ─── Tone maps ────────────────────────────────────────────────────────────────
 
 // Metric value color per tone
 const TONE_VALUE: Record<CardTone, string> = {
   default: "text-foreground",
-  success: "text-[#4ade80]", // emerald — elegant, not neon
-  warning: "text-[#d4a84b]", // warm amber/bronze, not loud orange
-  danger: "text-[#f87171]", // muted coral-red, not alarm red
-  purple: "text-[#a78bfa]", // soft violet, not candy purple
+  success: "text-emerald-600 dark:text-emerald-400",
+  warning: "text-amber-600 dark:text-amber-400",
+  danger: "text-red-500 dark:text-red-400",
+  purple: "text-violet-600 dark:text-violet-400",
 };
 
 // Icon chip: background + foreground
 const TONE_ICON_BG: Record<CardTone, string> = {
-  default:
-    "bg-primary/[0.1] text-primary dark:bg-[#1e2638] dark:text-[#7aa3c2]",
-  success:
-    "bg-emerald-100 text-emerald-600 dark:bg-[#162820] dark:text-[#4ade80]",
-  warning: "bg-amber-100 text-amber-600 dark:bg-[#231c10] dark:text-[#d4a84b]",
-  danger: "bg-red-100 text-red-500 dark:bg-[#28141a] dark:text-[#f87171]",
-  purple: "bg-violet-100 text-violet-600 dark:bg-[#1c1730] dark:text-[#a78bfa]",
+  default: "bg-primary/10 text-primary",
+  success: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  warning: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  danger: "bg-red-500/10 text-red-500 dark:text-red-400",
+  purple: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
 };
 
 // Progress bar fill per tone
 const TONE_PROGRESS: Record<CardTone, string> = {
-  default: "bg-[#4a7fa5]", // cool steel-blue
-  success: "bg-[#22c55e]", // rich emerald
-  warning: "bg-[#c49a3a]", // warm bronze
-  danger: "bg-[#e05c5c]", // muted rose-red
-  purple: "bg-[#8b5cf6]", // medium violet
+  default: "bg-primary",
+  success: "bg-emerald-500",
+  warning: "bg-amber-500",
+  danger: "bg-red-500",
+  purple: "bg-violet-500",
 };
 
 // Tonal border tint (subtle accent on card edge)
 const TONE_BORDER: Record<CardTone, string> = {
   default: "border-border",
-  success: "border-border dark:border-[#1e3028]",
-  warning: "border-border dark:border-[#2e2015]",
-  danger: "border-border dark:border-[#2e1a1f]",
-  purple: "border-border dark:border-[#201830]",
-};
-
-// Inset shadow glow — only for danger/warning, very restrained
-const TONE_GLOW: Record<CardTone, string> = {
-  default: "",
-  success: "",
-  warning: "shadow-[inset_0_0_0_1px_rgba(196,154,58,0.07)]",
-  danger: "shadow-[inset_0_0_0_1px_rgba(224,92,92,0.07)]",
-  purple: "",
+  success: "border-border dark:border-emerald-500/20",
+  warning: "border-border dark:border-amber-500/20",
+  danger: "border-border dark:border-red-500/20",
+  purple: "border-border dark:border-violet-500/20",
 };
 
 // Mini bar chart bar tint (non-active bars)
 const TONE_BAR_MUTED: Record<CardTone, string> = {
-  default: "bg-border dark:bg-[#2a3a4a]",
-  success: "bg-emerald-200 dark:bg-[#163826]",
-  warning: "bg-amber-200 dark:bg-[#2e2010]",
-  danger: "bg-red-200 dark:bg-[#2e1820]",
-  purple: "bg-violet-200 dark:bg-[#201838]",
+  default: "bg-border",
+  success: "bg-emerald-500/20",
+  warning: "bg-amber-500/20",
+  danger: "bg-red-500/20",
+  purple: "bg-violet-500/20",
 };
 
 // Health badge config
 const HEALTH_CONFIG: Record<ProjectHealth, { badge: string; dot: string }> = {
   "On Track": {
     badge:
-      "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-[#162820] dark:text-[#4ade80] dark:border-[#1e3828]",
-    dot: "bg-emerald-500 dark:bg-[#22c55e]",
+      "bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:text-emerald-400",
+    dot: "bg-emerald-500",
   },
   "At Risk": {
     badge:
-      "bg-amber-50 text-amber-700 border-amber-200 dark:bg-[#231c10] dark:text-[#d4a84b] dark:border-[#2e2415]",
-    dot: "bg-amber-500 dark:bg-[#c49a3a]",
+      "bg-amber-500/10 text-amber-700 border-amber-500/20 dark:text-amber-400",
+    dot: "bg-amber-500",
   },
   Critical: {
-    badge:
-      "bg-red-50 text-red-600 border-red-200 dark:bg-[#28141a] dark:text-[#f87171] dark:border-[#36181e]",
-    dot: "bg-red-500 dark:bg-[#e05c5c]",
+    badge: "bg-red-500/10 text-red-700 border-red-500/20 dark:text-red-400",
+    dot: "bg-red-500",
   },
 };
 
@@ -162,7 +150,7 @@ const HEALTH_CONFIG: Record<ProjectHealth, { badge: string; dot: string }> = {
 export function TrendBadge({ diff }: { diff: number }): ReactElement {
   if (diff === 0) {
     return (
-      <span className="inline-flex items-center rounded-full bg-surface px-2 py-0.5 text-[10px] font-semibold text-muted dark:bg-[#1e2130]">
+      <span className="inline-flex items-center rounded-full bg-surface px-2 py-0.5 text-[10px] font-semibold text-muted">
         Same as last wk
       </span>
     );
@@ -173,8 +161,8 @@ export function TrendBadge({ diff }: { diff: number }): ReactElement {
       className={cn(
         "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold",
         positive
-          ? "bg-emerald-100 text-emerald-700 dark:bg-[#162820] dark:text-[#4ade80]"
-          : "bg-red-100 text-red-600 dark:bg-[#28141a] dark:text-[#f87171]",
+          ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+          : "bg-red-500/10 text-red-600 dark:text-red-400",
       )}
     >
       {positive ? "+" : ""}
@@ -217,13 +205,13 @@ export function IconChip({
 
 export function MiniProgressBar({
   percent,
-  colorClass = "bg-[#4a7fa5]",
+  colorClass = "bg-primary",
 }: {
   percent: number;
   colorClass?: string;
 }): ReactElement {
   return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-border/60 dark:bg-[#1a1d2a]">
+    <div className="h-1.5 w-full overflow-hidden rounded-full bg-border/60">
       <div
         className={cn(
           "h-full rounded-full transition-[width] duration-700 ease-out",
@@ -306,12 +294,12 @@ export function ProjectStatusStrip({
 
   const daysChipClass =
     daysRemaining == null
-      ? "bg-surface text-muted dark:bg-[#1a1d2a]"
+      ? "bg-surface text-muted"
       : daysRemaining < 7
-        ? "bg-red-50 text-red-600 dark:bg-[#28141a] dark:text-[#f87171]"
+        ? "bg-red-500/10 text-red-600 dark:text-red-400"
         : daysRemaining < 30
-          ? "bg-amber-50 text-amber-600 dark:bg-[#231c10] dark:text-[#d4a84b]"
-          : "bg-surface text-muted dark:bg-[#1a1d2a]";
+          ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+          : "bg-surface text-muted";
 
   return (
     <div className="relative overflow-hidden rounded-xl border border-border bg-card px-6 py-4">
@@ -357,7 +345,7 @@ export function ProjectStatusStrip({
 
           <span className="inline-flex items-center gap-1.5 rounded-[6px] bg-surface px-2.5 py-[5px] text-[11px]">
             <span className="text-[10px] text-muted">Progress</span>
-            <span className="font-semibold text-[#4a7fa5]">
+            <span className="font-semibold text-primary">
               {completionPercent}%
             </span>
           </span>
@@ -412,7 +400,6 @@ export function OverviewMetricCard({
       className={cn(
         CARD_BASE,
         TONE_BORDER[tone],
-        TONE_GLOW[tone],
         "p-5",
         onClick ? CARD_CLICKABLE : "",
       )}
@@ -578,7 +565,7 @@ export function PhaseBoardCard({
                       {phase.label}
                     </span>
                     {active ? (
-                      <span className="inline-flex shrink-0 items-center rounded-full bg-primary/[0.1] px-2 py-px text-[10px] font-semibold text-primary dark:bg-[#1e2638] dark:text-[#7aa3c2]">
+                      <span className="inline-flex shrink-0 items-center rounded-full bg-primary/10 px-2 py-px text-[10px] font-semibold text-primary">
                         Active
                       </span>
                     ) : null}
@@ -640,7 +627,7 @@ export function OverviewListCard({
             {title}
           </p>
           {badge != null ? (
-            <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-primary/[0.1] px-1.5 py-px text-[10px] font-semibold text-primary dark:bg-[#1e2638] dark:text-[#7aa3c2]">
+            <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-primary/10 px-1.5 py-px text-[10px] font-semibold text-primary">
               {badge}
             </span>
           ) : null}

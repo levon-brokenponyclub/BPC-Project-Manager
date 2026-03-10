@@ -117,7 +117,7 @@ export function TasksPage(): React.ReactElement {
     setRoleViewMode(getStoredRoleView(workspaceId) ?? "admin");
   }, [workspaceId]);
 
-  const tasksQuery = useQuery({
+  const tasksQuery = useQuery<TaskWithUsers[]>({
     queryKey: queryKeys.tasks(workspaceId, "All", ""),
     queryFn: () => listTasksWithSubtasks(workspaceId, { status: "All" }),
     enabled: Boolean(workspaceId),
@@ -219,8 +219,6 @@ export function TasksPage(): React.ReactElement {
       return createdTask;
     },
     onSuccess: async (task) => {
-      setIsNewTaskModalOpen(false);
-      setSelectedTask(null);
       await logTaskActivity(task.id, "task_created", { title: task.title });
       await notifyWorkspaceEvent(workspaceId, "task.created", {
         taskId: task.id,
@@ -513,9 +511,9 @@ export function TasksPage(): React.ReactElement {
         : Number.MAX_SAFE_INTEGER;
       comparison = aDate - bDate;
     } else if (sortBy === "priority") {
-      const priorityOrder = { Low: 0, Medium: 1, High: 2, Urgent: 3 };
-      const aPriority = a.priority ?? "Low";
-      const bPriority = b.priority ?? "Low";
+      const priorityOrder = { Normal: 0, Medium: 1, High: 2, Urgent: 3 };
+      const aPriority = a.priority ?? "Normal";
+      const bPriority = b.priority ?? "Normal";
       comparison =
         (priorityOrder[aPriority as keyof typeof priorityOrder] ?? 0) -
         (priorityOrder[bPriority as keyof typeof priorityOrder] ?? 0);
@@ -631,7 +629,7 @@ export function TasksPage(): React.ReactElement {
           }
         >
           <Card className="relative overflow-visible border-border bg-card">
-            <div className="flex h-13 items-center justify-between border-b border-border px-6 py-2">
+            <div className="flex h-13 items-center justify-between border-b border-[#DCDCDC] bg-[#FBFBFB] dark:border-[#222330] dark:bg-[#191A22] px-6 py-2">
               <div className="relative">
                 <button
                   ref={filterButtonRef}
@@ -762,7 +760,13 @@ export function TasksPage(): React.ReactElement {
                         </div>
                         <div className="space-y-1">
                           {(
-                            ["All", "Low", "Medium", "High", "Urgent"] as const
+                            [
+                              "All",
+                              "Normal",
+                              "Medium",
+                              "High",
+                              "Urgent",
+                            ] as const
                           ).map((priority) => (
                             <button
                               key={priority}
@@ -1009,12 +1013,16 @@ export function TasksPage(): React.ReactElement {
             setNewTaskParentTitle(null);
           }}
           onCreateTask={async (input, files) => {
-            await createTaskMutation.mutateAsync({ input, files });
+            const createdTask = await createTaskMutation.mutateAsync({
+              input,
+              files,
+            });
             if (input.parent_task_id) {
               await queryClient.invalidateQueries({
                 queryKey: ["task", input.parent_task_id, "subtasks"],
               });
             }
+            return createdTask;
           }}
         />
       </div>
@@ -1036,6 +1044,7 @@ export function TasksPage(): React.ReactElement {
         }}
         onCreateTask={async (input, files) => {
           await createTaskMutation.mutateAsync({ input, files });
+          setSelectedTask(null);
         }}
         onSaveTask={async (taskId, patch) => {
           await updateTaskMutation.mutateAsync({ taskId, patch });

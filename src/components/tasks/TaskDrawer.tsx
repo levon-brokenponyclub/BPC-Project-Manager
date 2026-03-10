@@ -37,7 +37,7 @@ const statuses: TaskStatus[] = [
   "Complete",
   "Cancelled",
 ];
-const priorities: TaskPriority[] = ["Low", "Medium", "High", "Urgent"];
+const priorities: TaskPriority[] = ["Normal", "Medium", "High", "Urgent"];
 
 type TimelineEntry =
   | {
@@ -636,19 +636,19 @@ export function TaskDrawer({
 
   return (
     <section
-      className="fixed bottom-0 right-0 top-14 z-40 overflow-hidden bg-[#15161D]"
+      className="fixed bottom-0 right-0 top-14 z-40 overflow-hidden bg-white dark:bg-[#15161D]"
       style={{ left: "var(--sidebar-w, 275px)" }}
     >
       <div className="grid h-full min-h-0 grid-cols-1 md:grid-cols-[300px_minmax(0,1fr)_280px]">
-        <div className="flex min-h-0 flex-col bg-[#1E1F2A] md:border-r md:border-[#222330]">
-          <div className="flex items-center justify-between border-b border-[#222330] px-4 py-3">
-            <h3 className="text-[15px] leading-[22px] font-medium text-foreground">
+        <div className="flex min-h-0 flex-col bg-[#ECECEC] dark:bg-[#1E1F2A] md:border-r md:border-[#DCDCDC] dark:md:border-[#222330]">
+          <div className="flex items-center justify-between border-b border-[#DCDCDC] dark:border-[#222330] px-4 py-3">
+            <h3 className="text-[15px] leading-[22px] font-medium text-[#1A1A1A] dark:text-foreground">
               Task Panel
             </h3>
             <button
               type="button"
               onClick={onClose}
-              className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-[5px] border border-[#313339] bg-[#15161D] text-[#939496] transition-colors hover:bg-[#1A1C23] hover:text-white"
+              className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-[5px] border border-[#DCDCDC] dark:border-[#313339] bg-white dark:bg-[#15161D] text-[#666666] dark:text-[#939496] transition-colors hover:bg-[#F5F5F5] dark:hover:bg-[#1A1C23] hover:text-[#1A1A1A] dark:hover:text-white"
               aria-label="Close task panel"
             >
               <X className="h-4 w-4" />
@@ -656,7 +656,7 @@ export function TaskDrawer({
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
             {isNewTask ? (
-              <div className="rounded-[5px] border border-[#25262B] bg-[#15161D] px-4 py-3 text-[15px] font-medium leading-[22px] text-[#97989E]">
+              <div className="rounded-[5px] border border-[#DCDCDC] dark:border-[#25262B] bg-white dark:bg-[#15161D] px-4 py-3 text-[15px] font-medium leading-[22px] text-[#666666] dark:text-[#97989E]">
                 Creating a new task
               </div>
             ) : (
@@ -670,8 +670,8 @@ export function TaskDrawer({
                       onClick={() => setActiveTab(key)}
                       className={`focus-ring flex w-full items-center gap-2 rounded-[5px] border px-4 py-3 text-left text-[15px] font-medium leading-[22px] transition-colors ${
                         isActive
-                          ? "border-[#2A2C31] bg-[#15161D] text-white"
-                          : "border-transparent text-[#97989E] hover:bg-[#15161D] hover:text-white"
+                          ? "border-[#DCDCDC] dark:border-[#2A2C31] bg-white dark:bg-[#15161D] text-[#1A1A1A] dark:text-white"
+                          : "border-transparent text-[#666666] dark:text-[#97989E] hover:bg-white dark:hover:bg-[#15161D] hover:text-[#1A1A1A] dark:hover:text-white"
                       }`}
                     >
                       <Icon className="h-4 w-4" />
@@ -683,7 +683,7 @@ export function TaskDrawer({
                   <button
                     type="button"
                     onClick={() => onAddSubtask(task.id)}
-                    className="focus-ring flex w-full items-center gap-2 rounded-[5px] border border-transparent px-4 py-3 text-left text-[15px] font-medium leading-[22px] text-[#97989E] transition-colors hover:bg-[#15161D] hover:text-white"
+                    className="focus-ring flex w-full items-center gap-2 rounded-[5px] border border-transparent px-4 py-3 text-left text-[15px] font-medium leading-[22px] text-[#666666] dark:text-[#97989E] transition-colors hover:bg-white dark:hover:bg-[#15161D] hover:text-[#1A1A1A] dark:hover:text-white"
                   >
                     <Plus className="h-4 w-4" />
                     <span>Add Sub Task</span>
@@ -694,8 +694,8 @@ export function TaskDrawer({
           </div>
         </div>
 
-        <div className="grid min-h-0 grid-cols-1 grid-rows-[auto_minmax(0,1fr)] bg-[#1A1B25] md:col-span-2 md:grid-cols-[minmax(0,1fr)_280px]">
-          <header className="flex items-center justify-between gap-3 border-b border-[#222330] bg-[#191A22] px-5 py-3 md:col-span-2">
+        <div className="grid min-h-0 grid-cols-1 grid-rows-[auto_minmax(0,1fr)] bg-white dark:bg-[#1A1B25] md:col-span-2 md:grid-cols-[minmax(0,1fr)_280px]">
+          <header className="flex items-center justify-between gap-3 border-b border-[#DCDCDC] dark:border-[#222330] bg-[#ECECEC] dark:bg-[#191A22] px-5 py-3 md:col-span-2">
             <div className="min-w-0 flex-1">
               {!isNewTask && workspaceName ? (
                 <p className="mb-0.5 flex items-center gap-1 truncate text-[11px] text-muted">
@@ -776,7 +776,7 @@ export function TaskDrawer({
             </div>
           </header>
 
-          <div className="min-h-0 flex flex-col md:border-r md:border-[#222330]">
+          <div className="min-h-0 flex flex-col md:border-r md:border-[#DCDCDC] dark:md:border-[#222330]">
             {isNewTask ? (
               <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 pr-2">
                 <div className="space-y-6 pb-6">
@@ -786,17 +786,17 @@ export function TaskDrawer({
                       onChange={(event) => setDraftTitle(event.target.value)}
                       placeholder="Task title"
                       rows={2}
-                      className="min-h-[72px] resize-none border-0 bg-transparent px-0 text-xl font-medium leading-8 tracking-[-0.16px] text-foreground shadow-none focus-visible:ring-0"
+                      className="min-h-[72px] resize-none border-0 bg-transparent px-0 text-xl font-medium leading-8 tracking-[-0.16px] text-[#1A1A1A] dark:text-foreground shadow-none focus-visible:ring-0"
                     />
 
-                    <div className="space-y-5 rounded-[4px] border border-[#292B38] bg-[#191A22] p-5">
-                      <h3 className="text-[13px] font-medium uppercase tracking-wide text-muted">
+                    <div className="space-y-5 rounded-[4px] border border-[#DCDCDC] dark:border-[#292B38] bg-[#FBFBFB] dark:bg-[#191A22] p-5">
+                      <h3 className="text-[13px] font-medium uppercase tracking-wide text-[#666666] dark:text-muted">
                         Fields
                       </h3>
 
-                      <div className="overflow-hidden rounded-[4px] border border-[#292B38] bg-[#191A22]">
-                        <div className="grid grid-cols-[140px_1fr] border-b border-[#292B38]">
-                          <div className="px-3 py-2.5 text-[13px] font-medium text-muted">
+                      <div className="overflow-hidden rounded-[4px] border border-[#DCDCDC] dark:border-[#292B38] bg-white dark:bg-[#191A22]">
+                        <div className="grid grid-cols-[140px_1fr] border-b border-[#DCDCDC] dark:border-[#292B38]">
+                          <div className="px-3 py-2.5 text-[13px] font-medium text-[#666666] dark:text-muted">
                             Status
                           </div>
                           <div className="px-3 py-2">
@@ -820,7 +820,7 @@ export function TaskDrawer({
                       </div>
 
                       <div className="space-y-2">
-                        <p className="text-[13px] font-medium text-muted">
+                        <p className="text-[13px] font-medium text-[#666666] dark:text-muted">
                           Due date
                         </p>
                         <Input
@@ -834,7 +834,7 @@ export function TaskDrawer({
                       </div>
 
                       <div className="space-y-2">
-                        <p className="text-[13px] font-medium text-muted">
+                        <p className="text-[13px] font-medium text-[#666666] dark:text-muted">
                           Description
                         </p>
                         <Textarea
@@ -843,12 +843,12 @@ export function TaskDrawer({
                             setDraftDescription(event.target.value)
                           }
                           placeholder="Task description"
-                          className="rounded-[5px] border border-border bg-card px-3 py-2 text-[13px] font-medium leading-4 text-foreground placeholder:text-muted"
+                          className="rounded-[5px] border border-[#DCDCDC] dark:border-border bg-white dark:bg-card px-3 py-2 text-[13px] font-medium leading-4 text-[#1A1A1A] dark:text-foreground placeholder:text-[#666666] dark:placeholder:text-muted"
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <p className="text-[13px] font-medium text-muted">
+                        <p className="text-[13px] font-medium text-[#666666] dark:text-muted">
                           Assigned To
                         </p>
                         <select
@@ -869,9 +869,9 @@ export function TaskDrawer({
                       </div>
                     </div>
 
-                    <div className="space-y-3 rounded-[4px] border border-[#292B38] bg-[#191A22] p-4">
+                    <div className="space-y-3 rounded-[4px] border border-[#DCDCDC] dark:border-[#292B38] bg-[#FBFBFB] dark:bg-[#191A22] p-4">
                       <div className="flex items-center justify-between">
-                        <p className="text-[13px] font-medium text-foreground">
+                        <p className="text-[13px] font-medium text-[#1A1A1A] dark:text-foreground">
                           Files for this task
                         </p>
                         <input
@@ -902,9 +902,9 @@ export function TaskDrawer({
                           {draftFiles.map((file, index) => (
                             <div
                               key={`${file.name}-${index}`}
-                              className="flex items-center justify-between rounded-[4px] border border-[#292B38] bg-[#191A22] px-3 py-2 text-[13px]"
+                              className="flex items-center justify-between rounded-[4px] border border-[#DCDCDC] dark:border-[#292B38] bg-white dark:bg-[#191A22] px-3 py-2 text-[13px]"
                             >
-                              <span className="truncate text-foreground">
+                              <span className="truncate text-[#1A1A1A] dark:text-foreground">
                                 {file.name}
                               </span>
                               <Button
@@ -979,22 +979,28 @@ export function TaskDrawer({
                         onChange={(event) => setDraftTitle(event.target.value)}
                         placeholder="Task title"
                         rows={2}
-                        className="min-h-[72px] resize-none border-0 bg-transparent px-0 text-2xl font-medium leading-8 tracking-[-0.16px] text-foreground shadow-none focus-visible:ring-0"
+                        className="min-h-[72px] resize-none border-0 bg-transparent px-0 text-2xl font-medium leading-8 tracking-[-0.16px] text-[#1A1A1A] dark:text-foreground shadow-none focus-visible:ring-0"
                       />
                     ) : (
-                      <h2 className="break-words text-2xl font-medium leading-8 tracking-[-0.16px] text-foreground">
+                      <h2 className="break-words text-2xl font-medium leading-8 tracking-[-0.16px] text-[#1A1A1A] dark:text-foreground">
                         {task.title || "Untitled task"}
                       </h2>
                     )}
 
-                    <div className="space-y-3 rounded-[4px] border border-[#292B38] bg-[#191A22] p-5">
+                    <div className="space-y-3 rounded-[4px] border border-[#DCDCDC] dark:border-[#292B38] bg-[#FBFBFB] dark:bg-[#191A22] p-5">
                       <div className="flex items-center justify-between gap-4 text-[15px] font-medium">
-                        <span className="text-muted">Assignee</span>
-                        <span className="text-foreground">{assigneeLabel}</span>
+                        <span className="text-[#666666] dark:text-muted">
+                          Assignee
+                        </span>
+                        <span className="text-[#1A1A1A] dark:text-foreground">
+                          {assigneeLabel}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between gap-4 text-[15px] font-medium">
-                        <span className="text-muted">Due Date</span>
-                        <span className="text-foreground">
+                        <span className="text-[#666666] dark:text-muted">
+                          Due Date
+                        </span>
+                        <span className="text-[#1A1A1A] dark:text-foreground">
                           {task.due_date
                             ? new Date(task.due_date).toLocaleDateString()
                             : "No due date"}
@@ -1003,14 +1009,14 @@ export function TaskDrawer({
                     </div>
                   </section>
 
-                  <section className="space-y-5 rounded-[4px] border border-[#292B38] bg-[#191A22] p-5">
-                    <h3 className="text-[13px] font-medium uppercase tracking-wide text-muted">
+                  <section className="space-y-5 rounded-[4px] border border-[#DCDCDC] dark:border-[#292B38] bg-[#FBFBFB] dark:bg-[#191A22] p-5">
+                    <h3 className="text-[13px] font-medium uppercase tracking-wide text-[#666666] dark:text-muted">
                       Fields
                     </h3>
 
-                    <div className="overflow-hidden rounded-[4px] border border-[#292B38] bg-[#191A22]">
-                      <div className="grid grid-cols-[140px_1fr] border-b border-[#292B38]">
-                        <div className="px-3 py-2.5 text-[13px] font-medium text-muted">
+                    <div className="overflow-hidden rounded-[4px] border border-[#DCDCDC] dark:border-[#292B38] bg-white dark:bg-[#191A22]">
+                      <div className="grid grid-cols-[140px_1fr] border-b border-[#DCDCDC] dark:border-[#292B38]">
+                        <div className="px-3 py-2.5 text-[13px] font-medium text-[#666666] dark:text-muted">
                           Status
                         </div>
                         <div className="px-3 py-2">
@@ -1040,7 +1046,7 @@ export function TaskDrawer({
                       </div>
 
                       <div className="grid grid-cols-[140px_1fr]">
-                        <div className="px-3 py-2.5 text-[13px] font-medium text-muted">
+                        <div className="px-3 py-2.5 text-[13px] font-medium text-[#666666] dark:text-muted">
                           Priority
                         </div>
                         <div className="px-3 py-2">
@@ -1066,7 +1072,7 @@ export function TaskDrawer({
 
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
-                        <p className="text-[13px] font-medium text-muted">
+                        <p className="text-[13px] font-medium text-[#666666] dark:text-muted">
                           Due date
                         </p>
                         <Input
@@ -1092,7 +1098,7 @@ export function TaskDrawer({
                       </div>
 
                       <div className="space-y-2">
-                        <p className="text-[13px] font-medium text-muted">
+                        <p className="text-[13px] font-medium text-[#666666] dark:text-muted">
                           Estimated hours
                         </p>
                         <Input
@@ -1110,7 +1116,7 @@ export function TaskDrawer({
                     </div>
 
                     <div className="space-y-2">
-                      <p className="text-[13px] font-medium text-muted">
+                      <p className="text-[13px] font-medium text-[#666666] dark:text-muted">
                         Description
                       </p>
                       <Textarea
@@ -1120,13 +1126,13 @@ export function TaskDrawer({
                         }
                         placeholder="Task description"
                         disabled={!isEditingTask || !canManageTasks}
-                        className="rounded-[5px] border border-border bg-card px-3 py-2 text-[13px] font-medium leading-4 text-foreground placeholder:text-muted"
+                        className="rounded-[5px] border border-[#DCDCDC] dark:border-border bg-white dark:bg-card px-3 py-2 text-[13px] font-medium leading-4 text-[#1A1A1A] dark:text-foreground placeholder:text-[#666666] dark:placeholder:text-muted"
                       />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
-                        <p className="text-[13px] font-medium text-muted">
+                        <p className="text-[13px] font-medium text-[#666666] dark:text-muted">
                           Owner
                         </p>
                         {isEditingTask && effectiveRole === "admin" ? (
@@ -1153,7 +1159,7 @@ export function TaskDrawer({
                       </div>
 
                       <div className="space-y-2">
-                        <p className="text-[13px] font-medium text-muted">
+                        <p className="text-[13px] font-medium text-[#666666] dark:text-muted">
                           Assigned To
                         </p>
                         {isEditingTask ? (
@@ -1181,7 +1187,7 @@ export function TaskDrawer({
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 text-[13px]">
-                      <label className="flex items-center gap-2 rounded-[4px] border border-border bg-surface px-3 py-2">
+                      <label className="flex items-center gap-2 rounded-[4px] border border-[#DCDCDC] dark:border-border bg-white dark:bg-surface px-3 py-2">
                         <input
                           type="checkbox"
                           className="h-4 w-4"
@@ -1191,9 +1197,11 @@ export function TaskDrawer({
                           }
                           disabled={!isEditingTask || !canManageTasks}
                         />
-                        <span className="text-foreground">Billable</span>
+                        <span className="text-[#1A1A1A] dark:text-foreground">
+                          Billable
+                        </span>
                       </label>
-                      <label className="flex items-center gap-2 rounded-[4px] border border-border bg-surface px-3 py-2">
+                      <label className="flex items-center gap-2 rounded-[4px] border border-[#DCDCDC] dark:border-border bg-white dark:bg-surface px-3 py-2">
                         <input
                           type="checkbox"
                           className="h-4 w-4"
@@ -1203,11 +1211,13 @@ export function TaskDrawer({
                           }
                           disabled={!isEditingTask || !canManageTasks}
                         />
-                        <span className="text-foreground">Client visible</span>
+                        <span className="text-[#1A1A1A] dark:text-foreground">
+                          Client visible
+                        </span>
                       </label>
                     </div>
 
-                    <label className="flex items-center gap-2 rounded-[4px] border border-border bg-surface px-3 py-2 text-[13px] text-foreground">
+                    <label className="flex items-center gap-2 rounded-[4px] border border-[#DCDCDC] dark:border-border bg-white dark:bg-surface px-3 py-2 text-[13px] text-[#1A1A1A] dark:text-foreground">
                       <input
                         type="checkbox"
                         className="h-4 w-4"
@@ -1233,11 +1243,11 @@ export function TaskDrawer({
                     ) : null}
                   </section>
 
-                  <section className="space-y-4 rounded-[4px] border border-[#292B38] bg-[#191A22] p-5">
-                    <h3 className="text-[13px] font-medium uppercase tracking-wide text-muted">
+                  <section className="space-y-4 rounded-[4px] border border-[#DCDCDC] dark:border-[#292B38] bg-[#FBFBFB] dark:bg-[#191A22] p-5">
+                    <h3 className="text-[13px] font-medium uppercase tracking-wide text-[#666666] dark:text-muted">
                       Time Logged
                     </h3>
-                    <p className="inline-flex items-center gap-2 text-2xl font-medium tracking-tight text-foreground">
+                    <p className="inline-flex items-center gap-2 text-2xl font-medium tracking-tight text-[#1A1A1A] dark:text-foreground">
                       <Clock3 className="h-5 w-5 text-primary" />
                       {secondsToHms(taskTimeSeconds)}
                     </p>
@@ -1249,7 +1259,7 @@ export function TaskDrawer({
             {/* ACTIVITY TAB: unified timeline + composer */}
             {!isNewTask && activeTab === "activity" ? (
               <div className="flex min-h-0 flex-1 flex-col px-5 py-5">
-                <h2 className="pb-6 text-2xl font-medium leading-8 tracking-[-0.16px] text-foreground">
+                <h2 className="pb-6 text-2xl font-medium leading-8 tracking-[-0.16px] text-[#1A1A1A] dark:text-foreground">
                   Activity
                 </h2>
 
@@ -1452,18 +1462,18 @@ export function TaskDrawer({
             ) : null}
           </div>
 
-          <div className="hidden min-h-0 bg-[#1E1F2A] md:flex md:flex-col">
+          <div className="hidden min-h-0 bg-[#ECECEC] dark:bg-[#1E1F2A] md:flex md:flex-col">
             <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5">
               {/* ── Sub Tasks ── */}
               {!isNewTask ? (
                 <div className="pt-2">
                   <div className="mb-2 flex items-center gap-2">
-                    <ListChecks className="h-3.5 w-3.5 text-muted" />
-                    <p className="text-xs uppercase tracking-wide text-muted">
+                    <ListChecks className="h-3.5 w-3.5 text-[#666666] dark:text-muted" />
+                    <p className="text-xs uppercase tracking-wide text-[#666666] dark:text-muted">
                       Sub Tasks
                     </p>
                     {subtasks.length > 0 ? (
-                      <span className="text-xs text-muted">
+                      <span className="text-xs text-[#666666] dark:text-muted">
                         (
                         {subtasks.filter((s) => s.status === "Complete").length}
                         /{subtasks.length})
@@ -1471,16 +1481,20 @@ export function TaskDrawer({
                     ) : null}
                   </div>
                   {subtasksQuery.isLoading ? (
-                    <p className="text-xs text-muted">Loading…</p>
+                    <p className="text-xs text-[#666666] dark:text-muted">
+                      Loading…
+                    </p>
                   ) : subtasks.length === 0 ? (
-                    <p className="text-xs text-muted">No subtasks yet.</p>
+                    <p className="text-xs text-[#666666] dark:text-muted">
+                      No subtasks yet.
+                    </p>
                   ) : (
                     <div className="space-y-1.5">
                       {subtasks.map((sub) => (
                         <button
                           key={sub.id}
                           type="button"
-                          className="flex w-full items-center gap-2 rounded border border-[#292B38] bg-[#15161D] px-2.5 py-1.5 text-left transition-colors hover:bg-[#1A1C23]"
+                          className="flex w-full items-center gap-2 rounded border border-[#DCDCDC] dark:border-[#292B38] bg-white dark:bg-[#15161D] px-2.5 py-1.5 text-left transition-colors hover:bg-[#F5F5F5] dark:hover:bg-[#1A1C23]"
                           onClick={() => onOpenSubtask?.(sub)}
                         >
                           <span
@@ -1497,8 +1511,8 @@ export function TaskDrawer({
                             className={[
                               "flex-1 truncate text-xs",
                               sub.status === "Complete"
-                                ? "text-muted line-through"
-                                : "text-foreground",
+                                ? "text-[#666666] dark:text-muted line-through"
+                                : "text-[#1A1A1A] dark:text-foreground",
                             ].join(" ")}
                           >
                             {sub.title}
@@ -1514,29 +1528,31 @@ export function TaskDrawer({
               {!isNewTask ? (
                 <div className="pt-2">
                   <div className="mb-2 flex items-center gap-2">
-                    <Paperclip className="h-3.5 w-3.5 text-muted" />
-                    <p className="text-xs uppercase tracking-wide text-muted">
+                    <Paperclip className="h-3.5 w-3.5 text-[#666666] dark:text-muted" />
+                    <p className="text-xs uppercase tracking-wide text-[#666666] dark:text-muted">
                       Files
                     </p>
                     {files.length > 0 ? (
-                      <span className="text-xs text-muted">
+                      <span className="text-xs text-[#666666] dark:text-muted">
                         ({files.length})
                       </span>
                     ) : null}
                   </div>
                   {files.length === 0 ? (
-                    <p className="text-xs text-muted">No files attached.</p>
+                    <p className="text-xs text-[#666666] dark:text-muted">
+                      No files attached.
+                    </p>
                   ) : (
                     <div className="space-y-1.5">
                       {files.map((file) => (
                         <div
                           key={file.id}
-                          className="flex w-full items-center gap-2 rounded border border-[#292B38] bg-[#15161D] px-2.5 py-1.5"
+                          className="flex w-full items-center gap-2 rounded border border-[#DCDCDC] dark:border-[#292B38] bg-white dark:bg-[#15161D] px-2.5 py-1.5"
                         >
-                          <Paperclip className="h-3 w-3 shrink-0 text-muted" />
+                          <Paperclip className="h-3 w-3 shrink-0 text-[#666666] dark:text-muted" />
                           <button
                             type="button"
-                            className="flex-1 truncate text-left text-xs text-foreground hover:text-foreground"
+                            className="flex-1 truncate text-left text-xs text-[#1A1A1A] dark:text-foreground hover:text-[#1A1A1A] dark:hover:text-foreground"
                             onClick={() =>
                               onDownloadFile(file.storage_path, file.file_name)
                             }
@@ -1549,7 +1565,7 @@ export function TaskDrawer({
                               type="button"
                               onClick={() => onDeleteFile(file.id, task.id)}
                               disabled={isDeletingFile}
-                              className="shrink-0 text-muted transition-colors hover:text-red-400"
+                              className="shrink-0 text-[#666666] dark:text-muted transition-colors hover:text-red-600 dark:hover:text-red-400"
                               title="Delete file"
                             >
                               <Trash2 className="h-3 w-3" />
@@ -1575,7 +1591,7 @@ export function TaskDrawer({
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={isUploadingFile}
-                      className="focus-ring inline-flex w-full items-center justify-center gap-1.5 rounded border border-[#2A2C31] bg-[#15161D] py-1.5 text-xs text-[#97989E] transition-colors hover:text-white disabled:opacity-50"
+                      className="focus-ring inline-flex w-full items-center justify-center gap-1.5 rounded border border-[#DCDCDC] dark:border-[#2A2C31] bg-white dark:bg-[#15161D] py-1.5 text-xs text-[#666666] dark:text-[#97989E] transition-colors hover:bg-[#F5F5F5] dark:hover:bg-[#1A1C23] hover:text-[#1A1A1A] dark:hover:text-white disabled:opacity-50"
                     >
                       <Paperclip className="h-3 w-3" />
                       {isUploadingFile ? "Uploading..." : "Upload File"}
@@ -1584,27 +1600,31 @@ export function TaskDrawer({
                 </div>
               ) : null}
 
-              {!isNewTask ? <hr className="border-border" /> : null}
+              {!isNewTask ? (
+                <hr className="border-[#DCDCDC] dark:border-border" />
+              ) : null}
 
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted">
+                <p className="text-xs uppercase tracking-wide text-[#666666] dark:text-muted">
                   Status
                 </p>
-                <p className="mt-1 text-foreground">
+                <p className="mt-1 text-[#1A1A1A] dark:text-foreground">
                   {isNewTask ? draftStatus : task.status}
                 </p>
               </div>
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted">
+                <p className="text-xs uppercase tracking-wide text-[#666666] dark:text-muted">
                   Priority
                 </p>
-                <p className="mt-1 text-foreground">{draftPriority}</p>
+                <p className="mt-1 text-[#1A1A1A] dark:text-foreground">
+                  {draftPriority}
+                </p>
               </div>
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted">
+                <p className="text-xs uppercase tracking-wide text-[#666666] dark:text-muted">
                   Owner
                 </p>
-                <p className="mt-1 text-foreground">
+                <p className="mt-1 text-[#1A1A1A] dark:text-foreground">
                   {isNewTask
                     ? formatUserDisplayName(
                         workspaceUsers.find(
@@ -1615,10 +1635,10 @@ export function TaskDrawer({
                 </p>
               </div>
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted">
+                <p className="text-xs uppercase tracking-wide text-[#666666] dark:text-muted">
                   Assigned To
                 </p>
-                <p className="mt-1 text-foreground">
+                <p className="mt-1 text-[#1A1A1A] dark:text-foreground">
                   {isNewTask
                     ? formatUserDisplayName(
                         workspaceUsers.find(
@@ -1629,10 +1649,10 @@ export function TaskDrawer({
                 </p>
               </div>
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted">
+                <p className="text-xs uppercase tracking-wide text-[#666666] dark:text-muted">
                   Due Date
                 </p>
-                <p className="mt-1 text-foreground">
+                <p className="mt-1 text-[#1A1A1A] dark:text-foreground">
                   {isNewTask
                     ? draftDueDate || "No due date"
                     : task.due_date
@@ -1642,10 +1662,10 @@ export function TaskDrawer({
               </div>
               {!isNewTask ? (
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-muted">
+                  <p className="text-xs uppercase tracking-wide text-[#666666] dark:text-muted">
                     Logged Time
                   </p>
-                  <p className="mt-1 text-foreground">
+                  <p className="mt-1 text-[#1A1A1A] dark:text-foreground">
                     {secondsToHms(taskTimeSeconds)}
                   </p>
                 </div>

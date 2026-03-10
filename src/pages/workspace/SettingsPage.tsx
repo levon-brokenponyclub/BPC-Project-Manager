@@ -61,7 +61,13 @@ function SettingsSection({
   children: React.ReactNode;
   className?: string;
 }): React.ReactElement {
-  return <Card className={`p-6 ${className}`}>{children}</Card>;
+  return (
+    <Card
+      className={`border-[#DCDCDC] bg-white p-6 dark:border-[#222330] dark:bg-[#191A22] ${className}`}
+    >
+      {children}
+    </Card>
+  );
 }
 
 function SettingsSectionHeader({
@@ -72,10 +78,14 @@ function SettingsSectionHeader({
   description?: string;
 }): React.ReactElement {
   return (
-    <div className="mb-5 border-b border-[#292B38] pb-4">
-      <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+    <div className="mb-5 border-b border-[#DCDCDC] pb-4 dark:border-[#292B38]">
+      <h2 className="text-sm font-semibold text-[#1A1A1A] dark:text-foreground">
+        {title}
+      </h2>
       {description ? (
-        <p className="mt-0.5 text-xs text-muted">{description}</p>
+        <p className="mt-0.5 text-xs text-[#666666] dark:text-muted">
+          {description}
+        </p>
       ) : null}
     </div>
   );
@@ -92,9 +102,13 @@ function ProfilePanel({
   workspaceId: string;
   role: string | null;
 }) {
-  const [firstName, setFirstName] = useState(user?.user_metadata?.first_name || "");
+  const [firstName, setFirstName] = useState(
+    user?.user_metadata?.first_name || "",
+  );
   const [surname, setSurname] = useState(user?.user_metadata?.surname || "");
-  const [avatarUrl, setAvatarUrl] = useState(user?.user_metadata?.avatar_url || "");
+  const [avatarUrl, setAvatarUrl] = useState(
+    user?.user_metadata?.avatar_url || "",
+  );
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -187,8 +201,16 @@ function ProfilePanel({
         data: { publicUrl },
       } = supabase.storage.from("avatars").getPublicUrl(data.path);
 
+      // Immediately persist the new avatar_url to auth metadata so it
+      // propagates everywhere (header, auth context) without requiring
+      // a separate "Save Profile" click.
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { avatar_url: publicUrl },
+      });
+      if (updateError) throw updateError;
+
       setAvatarUrl(publicUrl);
-      notify.success("Avatar uploaded");
+      notify.success("Avatar updated");
     } catch (err: any) {
       setUpdateError(err.message || "Upload failed");
       notify.error("Upload failed", err.message);
@@ -210,7 +232,7 @@ function ProfilePanel({
               <img
                 src={avatarUrl || "/defaultAvatar.png"}
                 alt="Avatar"
-                className="h-20 w-20 rounded-full border-2 border-[#292B38] object-cover bg-[#191A22]"
+                className="h-20 w-20 rounded-full border-2 border-[#DCDCDC] object-cover bg-white dark:border-[#292B38] dark:bg-[#191A22]"
               />
               {uploading && (
                 <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50">
@@ -219,7 +241,7 @@ function ProfilePanel({
               )}
             </div>
             <div className="flex-1 space-y-2">
-              <label className="text-xs font-medium text-muted uppercase tracking-wider">
+              <label className="text-xs font-medium text-[#666666] uppercase tracking-wider dark:text-muted">
                 Profile Image
               </label>
               <Input
@@ -227,7 +249,7 @@ function ProfilePanel({
                 accept="image/*"
                 onChange={handleImageUpload}
                 disabled={uploading}
-                className="max-w-xs text-xs file:mr-3 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-primary hover:file:bg-primary/20"
+                className="max-w-xs text-xs file:mr-3 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-primary hover:file:bg-primary/20 bg-white dark:bg-transparent"
               />
             </div>
           </div>
@@ -237,11 +259,11 @@ function ProfilePanel({
               e.preventDefault();
               updateProfileMutation.mutate();
             }}
-            className="space-y-4"
+            className="space-y-4 text-[#1A1A1A] dark:text-foreground"
           >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted uppercase tracking-wider">
+                <label className="text-xs font-medium text-[#666666] uppercase tracking-wider dark:text-muted">
                   First Name
                 </label>
                 <Input
@@ -252,7 +274,7 @@ function ProfilePanel({
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted uppercase tracking-wider">
+                <label className="text-xs font-medium text-[#666666] uppercase tracking-wider dark:text-muted">
                   Surname
                 </label>
                 <Input
@@ -265,30 +287,30 @@ function ProfilePanel({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted uppercase tracking-wider">
+              <label className="text-xs font-medium text-[#666666] uppercase tracking-wider dark:text-muted">
                 Email Address
               </label>
               <Input
                 type="email"
                 value={user?.email || ""}
                 disabled
-                className="bg-[#191A22]/50 text-muted"
+                className="bg-[#F5F5F5] text-[#1A1A1A] dark:bg-[#191A22]/50 dark:text-muted border-[#DCDCDC] dark:border-border"
               />
-              <p className="text-[10px] text-muted/50 italic">
+              <p className="text-[10px] text-[#666666]/50 italic dark:text-muted/50">
                 Email cannot be changed currently.
               </p>
             </div>
 
             {role === "client" && workspaceId && (
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted uppercase tracking-wider">
+                <label className="text-xs font-medium text-[#666666] uppercase tracking-wider dark:text-muted">
                   Workspace / Company
                 </label>
                 <Input
                   type="text"
                   value={workspaceNameQuery.data || ""}
                   disabled
-                  className="bg-[#191A22]/50 text-muted"
+                  className="bg-[#F5F5F5] text-[#1A1A1A] dark:bg-[#191A22]/50 dark:text-muted border-[#DCDCDC] dark:border-border"
                 />
               </div>
             )}
@@ -318,8 +340,8 @@ function ProfilePanel({
           className="space-y-4"
         >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted uppercase tracking-wider">
+            <div className="space-y-1.5 text-[#1A1A1A] dark:text-foreground">
+              <label className="text-xs font-medium text-[#666666] dark:text-muted uppercase tracking-wider">
                 New Password
               </label>
               <Input
@@ -329,8 +351,8 @@ function ProfilePanel({
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted uppercase tracking-wider">
+            <div className="space-y-1.5 text-[#1A1A1A] dark:text-foreground">
+              <label className="text-xs font-medium text-[#666666] dark:text-muted uppercase tracking-wider">
                 Confirm Password
               </label>
               <Input
@@ -367,7 +389,9 @@ function NotificationsPanel({
   workspaceId: string;
   workspaceName: string;
 }) {
-  const [notifPermission, setNotifPermission] = useState(getBrowserNotificationPermission());
+  const [notifPermission, setNotifPermission] = useState(
+    getBrowserNotificationPermission(),
+  );
   const [notifPaused, setNotifPaused] = useState(isDesktopNotificationPaused());
 
   const emailPrefsQuery = useQuery({
@@ -432,13 +456,13 @@ function NotificationsPanel({
           title="Desktop Notifications"
           description="Browser-level alerts for important workspace activity."
         />
-        <div className="flex items-center justify-between gap-4 rounded-lg border border-[#292B38] bg-[#191A22]/40 p-4">
+        <div className="flex items-center justify-between gap-4 rounded-lg border border-[#DCDCDC] bg-[#F5F5F5]/40 p-4 dark:border-[#292B38] dark:bg-[#191A22]/40">
           <div className="flex items-start gap-3">
             <div className="mt-0.5 rounded-full bg-primary/10 p-2">
               <Smartphone className="size-4 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-medium text-foreground">
+              <p className="text-sm font-medium text-[#1A1A1A] dark:text-foreground">
                 {notifPermission === "granted"
                   ? notifPaused
                     ? "Notifications Paused"
@@ -447,7 +471,7 @@ function NotificationsPanel({
                     ? "Notifications Blocked"
                     : "Not Configured"}
               </p>
-              <p className="text-xs text-muted">
+              <p className="text-xs text-[#666666] dark:text-muted">
                 {notifPermission === "granted"
                   ? "You will receive alerts while the portal is open."
                   : notifPermission === "denied"
@@ -458,7 +482,11 @@ function NotificationsPanel({
           </div>
           <div className="flex gap-2">
             {notifPermission === "granted" ? (
-              <Button size="sm" variant="secondary" onClick={handleTogglePaused}>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={handleTogglePaused}
+              >
                 {notifPaused ? (
                   <>
                     <Bell className="mr-2 size-3" /> Resume
@@ -478,14 +506,18 @@ function NotificationsPanel({
         </div>
 
         {role === "admin" && (
-          <div className="mt-6 border-t border-[#292B38] pt-6">
-            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">
+          <div className="mt-6 border-t border-[#DCDCDC] pt-6 dark:border-[#292B38]">
+            <h4 className="text-xs font-semibold text-[#1A1A1A] uppercase tracking-wider mb-3 dark:text-foreground">
               Admin Controls
             </h4>
-            <div className="flex items-center justify-between rounded-lg border border-[#292B38] bg-[#191A22]/20 p-4">
+            <div className="flex items-center justify-between rounded-lg border border-[#DCDCDC] bg-[#F5F5F5]/20 p-4 dark:border-[#292B38] dark:bg-[#191A22]/20">
               <div>
-                <p className="text-sm font-medium text-foreground">Desktop Test</p>
-                <p className="text-xs text-muted">Send a local test alert.</p>
+                <p className="text-sm font-medium text-[#1A1A1A] dark:text-foreground">
+                  Desktop Test
+                </p>
+                <p className="text-xs text-[#666666] dark:text-muted">
+                  Send a local test alert.
+                </p>
               </div>
               <Button size="sm" variant="secondary" onClick={handleDesktopTest}>
                 Send Test
@@ -503,8 +535,10 @@ function NotificationsPanel({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Mail className="size-4 text-muted" />
-              <label className="text-sm font-medium text-foreground">Enable Email Notifications</label>
+              <Mail className="size-4 text-[#666666] dark:text-muted" />
+              <label className="text-sm font-medium text-[#1A1A1A] dark:text-foreground">
+                Enable Email Notifications
+              </label>
             </div>
             <button
               onClick={() =>
@@ -512,42 +546,62 @@ function NotificationsPanel({
                   email_enabled: !emailPrefsQuery.data?.email_enabled,
                 })
               }
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${emailPrefsQuery.data?.email_enabled ? "bg-primary" : "bg-[#292B38]"
-                }`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                emailPrefsQuery.data?.email_enabled
+                  ? "bg-primary"
+                  : "bg-[#DCDCDC] dark:bg-[#292B38]"
+              }`}
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${emailPrefsQuery.data?.email_enabled ? "translate-x-6" : "translate-x-1"
-                  }`}
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  emailPrefsQuery.data?.email_enabled
+                    ? "translate-x-6"
+                    : "translate-x-1"
+                }`}
               />
             </button>
           </div>
 
           {emailPrefsQuery.data?.email_enabled && (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mt-4 pt-4 border-t border-[#292B38]">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mt-4 pt-4 border-t border-[#DCDCDC] dark:border-[#292B38]">
               {[
                 { label: "Task Created", key: "task_created" },
                 { label: "Status Changed", key: "task_status_changed" },
                 { label: "Assigned to You", key: "task_assignee_added" },
                 { label: "Comments Added", key: "comment_created" },
               ].map((item) => (
-                <div key={item.key} className="flex items-center justify-between rounded-lg bg-[#191A22]/40 px-3 py-2">
-                  <span className="text-xs text-muted">{item.label}</span>
+                <div
+                  key={item.key}
+                  className="flex items-center justify-between rounded-lg bg-[#F5F5F5]/40 p-3 dark:bg-[#191A22]/40"
+                >
+                  <span className="text-xs text-[#666666] dark:text-muted">
+                    {item.label}
+                  </span>
                   <button
                     onClick={() =>
                       updateEmailPrefsMutation.mutate({
-                        [item.key]: !emailPrefsQuery.data?.[item.key as keyof typeof emailPrefsQuery.data],
+                        [item.key]:
+                          !emailPrefsQuery.data?.[
+                            item.key as keyof typeof emailPrefsQuery.data
+                          ],
                       })
                     }
-                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${emailPrefsQuery.data?.[item.key as keyof typeof emailPrefsQuery.data]
-                      ? "bg-primary"
-                      : "bg-[#292B38]"
-                      }`}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                      emailPrefsQuery.data?.[
+                        item.key as keyof typeof emailPrefsQuery.data
+                      ]
+                        ? "bg-primary"
+                        : "bg-[#DCDCDC] dark:bg-[#292B38]"
+                    }`}
                   >
                     <span
-                      className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${emailPrefsQuery.data?.[item.key as keyof typeof emailPrefsQuery.data]
-                        ? "translate-x-5"
-                        : "translate-x-1"
-                        }`}
+                      className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                        emailPrefsQuery.data?.[
+                          item.key as keyof typeof emailPrefsQuery.data
+                        ]
+                          ? "translate-x-5"
+                          : "translate-x-1"
+                      }`}
                     />
                   </button>
                 </div>
@@ -556,14 +610,18 @@ function NotificationsPanel({
           )}
 
           {role === "admin" && (
-            <div className="mt-6 border-t border-[#292B38] pt-6">
-              <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">
+            <div className="mt-6 border-t border-[#DCDCDC] pt-6 dark:border-[#292B38]">
+              <h4 className="text-xs font-semibold text-[#1A1A1A] dark:text-foreground uppercase tracking-wider mb-3">
                 Admin Controls
               </h4>
-              <div className="flex items-center justify-between rounded-lg border border-[#292B38] bg-[#191A22]/20 p-4">
+              <div className="flex items-center justify-between rounded-lg border border-[#DCDCDC] bg-[#F5F5F5]/20 p-4 dark:border-[#292B38] dark:bg-[#191A22]/20">
                 <div>
-                  <p className="text-sm font-medium text-foreground">Email Test</p>
-                  <p className="text-xs text-muted">Send a test email to yourself.</p>
+                  <p className="text-sm font-medium text-[#1A1A1A] dark:text-foreground">
+                    Email Test
+                  </p>
+                  <p className="text-xs text-[#666666] dark:text-muted">
+                    Send a test email to yourself.
+                  </p>
                 </div>
                 <Button
                   size="sm"
@@ -628,7 +686,11 @@ function WorkspacePanel({
               required
               className="flex-1"
             />
-            <Button type="submit" size="sm" disabled={updateNameMutation.isPending}>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={updateNameMutation.isPending}
+            >
               {updateNameMutation.isPending ? "Saving..." : "Save"}
             </Button>
             <Button
@@ -646,21 +708,31 @@ function WorkspacePanel({
         ) : (
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-muted font-semibold mb-0.5">
+              <p className="text-[10px] uppercase tracking-wider text-[#666666] dark:text-muted font-semibold mb-0.5">
                 Workspace Name
               </p>
-              <p className="text-sm font-medium text-foreground">
-                {workspaceName || <span className="italic text-muted line-clamp-1">Untitled Workspace</span>}
+              <p className="text-sm font-medium text-[#1A1A1A] dark:text-foreground">
+                {workspaceName || (
+                  <span className="italic text-[#666666] dark:text-muted line-clamp-1">
+                    Untitled Workspace
+                  </span>
+                )}
               </p>
             </div>
-            <Button size="sm" variant="secondary" onClick={() => setEditingName(true)}>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setEditingName(true)}
+            >
               <PencilLine className="size-3.5 mr-2" />
               Edit
             </Button>
           </div>
         )}
         {(updateNameStatus || updateNameError) && (
-          <p className={`mt-3 text-xs ${updateNameStatus ? "text-green-500" : "text-red-400"}`}>
+          <p
+            className={`mt-3 text-xs ${updateNameStatus ? "text-green-500" : "text-red-400"}`}
+          >
             {updateNameStatus || updateNameError}
           </p>
         )}
@@ -672,7 +744,7 @@ function WorkspacePanel({
           description="Prepaid support hour allocations for this workspace."
         />
         {(bucketsQuery.data ?? []).length === 0 ? (
-          <p className="text-sm text-muted bg-[#191A22]/20 rounded-lg p-4 border border-[#292B38] border-dashed text-center">
+          <p className="text-sm text-[#666666] bg-[#F5F5F5]/40 rounded-lg p-4 border border-[#DCDCDC] border-dashed text-center dark:text-muted dark:bg-[#191A22]/20 dark:border-[#292B38]">
             No support buckets allocated yet.
           </p>
         ) : (
@@ -681,28 +753,40 @@ function WorkspacePanel({
               const used = bucket.hours_used_cached;
               const allocated = bucket.hours_allocated;
               const remaining = Math.max(0, allocated - used);
-              const pct = allocated > 0 ? Math.min(100, (used / allocated) * 100) : 0;
+              const pct =
+                allocated > 0 ? Math.min(100, (used / allocated) * 100) : 0;
 
               return (
-                <div key={bucket.id} className="rounded-lg border border-[#292B38] bg-[#191A22]/40 p-4">
+                <div
+                  key={bucket.id}
+                  className="rounded-lg border border-[#DCDCDC] bg-[#F5F5F5]/40 p-4 dark:border-[#292B38] dark:bg-[#191A22]/40"
+                >
                   <div className="mb-2 flex items-center justify-between">
-                    <p className="text-xs font-semibold text-foreground">
+                    <p className="text-xs font-semibold text-[#1A1A1A] dark:text-foreground">
                       {new Date(bucket.period_start).toLocaleDateString()} –{" "}
                       {new Date(bucket.period_end).toLocaleDateString()}
                     </p>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${remaining === 0 ? "bg-red-500/10 text-red-400" : "bg-green-500/10 text-green-400"}`}>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${remaining === 0 ? "bg-red-500/10 text-red-400" : "bg-green-500/10 text-green-400"}`}
+                    >
                       {remaining}h remaining
                     </span>
                   </div>
-                  <div className="mb-3 flex gap-4 text-[11px] text-muted">
+                  <div className="mb-3 flex gap-4 text-[11px] text-[#666666] dark:text-muted">
                     <span>
-                      Allocated: <span className="font-medium text-foreground">{allocated}h</span>
+                      Allocated:{" "}
+                      <span className="font-medium text-[#1A1A1A] dark:text-foreground">
+                        {allocated}h
+                      </span>
                     </span>
                     <span>
-                      Used: <span className="font-medium text-foreground">{used}h</span>
+                      Used:{" "}
+                      <span className="font-medium text-[#1A1A1A] dark:text-foreground">
+                        {used}h
+                      </span>
                     </span>
                   </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-[#292B38]">
+                  <div className="h-1.5 overflow-hidden rounded-full bg-[#DCDCDC] dark:bg-[#292B38]">
                     <div
                       className="h-full rounded-full bg-primary transition-all duration-500"
                       style={{ width: `${pct}%` }}
@@ -715,22 +799,25 @@ function WorkspacePanel({
         )}
       </SettingsSection>
 
-      <SettingsSection className="border-amber-900/30 bg-amber-950/5">
+      <SettingsSection className="border-amber-900/30 bg-amber-950/5 dark:border-amber-900/30 dark:bg-amber-950/5">
         <SettingsSectionHeader
           title="Workspace Reset"
           description="Clear activity history and notifications."
         />
         <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-800/20 bg-amber-950/10 p-4">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-          <p className="text-xs leading-relaxed text-amber-200/70">
-            This will permanently delete all notifications, task comments, and activity history.
-            <strong className="block mt-1 text-amber-400">Tasks and files will not be deleted.</strong>
+          <p className="text-xs leading-relaxed text-amber-900 dark:text-amber-200/70">
+            This will permanently delete all notifications, task comments, and
+            activity history.
+            <strong className="block mt-1 text-amber-600 dark:text-amber-400">
+              Tasks and files will not be deleted.
+            </strong>
           </p>
         </div>
         <Button
           type="button"
           variant="secondary"
-          className="w-full sm:w-auto border-amber-800/40 bg-amber-950/20 text-amber-400 hover:bg-amber-950/40 hover:text-amber-300"
+          className="w-full sm:w-auto border-amber-800/40 bg-amber-950/20 text-amber-600 hover:bg-amber-950/30 hover:text-amber-700 dark:text-amber-400 dark:hover:bg-amber-950/40 dark:hover:text-amber-300"
           disabled={!workspaceId}
           onClick={() => {
             setResetConfirmName("");
@@ -754,7 +841,7 @@ function WorkspacePanel({
             createWorkspaceMutation.mutate();
           }}
         >
-          <label className="text-[10px] uppercase tracking-wider text-muted font-semibold">
+          <label className="text-[10px] uppercase tracking-wider text-[#666666] dark:text-muted font-semibold">
             Create New Workspace
           </label>
           <div className="flex gap-2">
@@ -768,7 +855,9 @@ function WorkspacePanel({
             />
             <Button
               type="submit"
-              disabled={createWorkspaceMutation.isPending || !newWorkspaceName.trim()}
+              disabled={
+                createWorkspaceMutation.isPending || !newWorkspaceName.trim()
+              }
             >
               <Plus className="size-4 mr-2" />
               {createWorkspaceMutation.isPending ? "Creating..." : "Create"}
@@ -776,21 +865,27 @@ function WorkspacePanel({
           </div>
         </form>
         {(createWorkspaceStatus || createWorkspaceError) && (
-          <p className={`mt-3 text-xs ${createWorkspaceStatus ? "text-green-500" : "text-red-400"}`}>
+          <p
+            className={`mt-3 text-xs ${createWorkspaceStatus ? "text-green-500" : "text-red-400"}`}
+          >
             {createWorkspaceStatus || createWorkspaceError}
           </p>
         )}
       </SettingsSection>
 
-      <SettingsSection className="border-red-900/30 bg-red-950/5">
+      <SettingsSection className="border-red-900/30 bg-red-950/5 dark:border-red-900/30 dark:bg-red-950/5">
         <SettingsSectionHeader
           title="Danger Zone"
           description="Irreversible actions for this workspace."
         />
         <div className="space-y-4">
           <div className="rounded-lg border border-red-800/20 bg-red-950/10 p-4">
-            <p className="text-xs text-red-200/70 mb-3">
-              To delete this workspace, type <strong className="text-red-400 font-mono">{workspaceName || workspaceId}</strong> below.
+            <p className="text-xs text-red-900 dark:text-red-200/70 mb-3">
+              To delete this workspace, type{" "}
+              <strong className="text-red-600 dark:text-red-400 font-mono">
+                {workspaceName || workspaceId}
+              </strong>{" "}
+              below.
             </p>
             <Input
               type="text"
@@ -802,7 +897,7 @@ function WorkspacePanel({
             <Button
               type="button"
               variant="secondary"
-              className="w-full sm:w-auto border-red-800/40 bg-red-950/30 text-red-400 hover:bg-red-950/50 hover:text-red-300"
+              className="w-full sm:w-auto border-red-800/40 bg-red-950/30 text-red-600 hover:bg-red-950/40 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/50 dark:hover:text-red-300"
               disabled={
                 deleteWorkspaceMutation.isPending ||
                 deleteConfirmName.trim() !== (workspaceName || workspaceId)
@@ -810,7 +905,9 @@ function WorkspacePanel({
               onClick={() => deleteWorkspaceMutation.mutate()}
             >
               <Trash2 className="mr-2 h-4 w-4" />
-              {deleteWorkspaceMutation.isPending ? "Deleting..." : "Delete Workspace"}
+              {deleteWorkspaceMutation.isPending
+                ? "Deleting..."
+                : "Delete Workspace"}
             </Button>
           </div>
         </div>
@@ -851,7 +948,7 @@ function ClientAccessPanel({
         >
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted uppercase tracking-wider">
+              <label className="text-xs font-semibold text-[#666666] dark:text-muted uppercase tracking-wider">
                 Email Address
               </label>
               <Input
@@ -864,7 +961,7 @@ function ClientAccessPanel({
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted uppercase tracking-wider">
+                <label className="text-xs font-semibold text-[#666666] dark:text-muted uppercase tracking-wider">
                   First Name
                 </label>
                 <Input
@@ -875,7 +972,7 @@ function ClientAccessPanel({
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted uppercase tracking-wider">
+                <label className="text-xs font-semibold text-[#666666] dark:text-muted uppercase tracking-wider">
                   Surname
                 </label>
                 <Input
@@ -889,7 +986,10 @@ function ClientAccessPanel({
           </div>
 
           <div className="flex flex-wrap gap-3 pt-2">
-            <Button type="submit" disabled={inviteMutation.isPending || !inviteEmail}>
+            <Button
+              type="submit"
+              disabled={inviteMutation.isPending || !inviteEmail}
+            >
               <UserPlus className="mr-2 size-4" />
               {inviteMutation.isPending ? "Sending..." : "Send Email Invite"}
             </Button>
@@ -900,13 +1000,17 @@ function ClientAccessPanel({
               onClick={() => generateMagicLinkMutation.mutate()}
             >
               <Key className="mr-2 size-4" />
-              {generateMagicLinkMutation.isPending ? "Generating..." : "Generate Magic Link"}
+              {generateMagicLinkMutation.isPending
+                ? "Generating..."
+                : "Generate Magic Link"}
             </Button>
           </div>
         </form>
 
         {(inviteStatus || inviteError) && (
-          <p className={`mt-4 text-xs ${inviteStatus ? "text-green-500" : "text-red-400"}`}>
+          <p
+            className={`mt-4 text-xs ${inviteStatus ? "text-green-500" : "text-red-400"}`}
+          >
             {inviteStatus || inviteError}
           </p>
         )}
@@ -917,7 +1021,9 @@ function ClientAccessPanel({
               <p className="text-xs font-semibold text-foreground uppercase tracking-wider">
                 Magic Link
               </p>
-              <span className="text-[10px] text-muted italic">Click to copy</span>
+              <span className="text-[10px] text-muted italic">
+                Click to copy
+              </span>
             </div>
             <div className="flex gap-2">
               <Input
@@ -925,7 +1031,11 @@ function ClientAccessPanel({
                 readOnly
                 className="flex-1 font-mono text-[11px] bg-[#191A22] border-[#292B38]"
               />
-              <Button size="sm" variant="secondary" onClick={handleCopyMagicLink}>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={handleCopyMagicLink}
+              >
                 <Copy className="size-3.5" />
               </Button>
             </div>
@@ -953,9 +1063,12 @@ function TestingPanel({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="rounded-xl border border-[#292B38] bg-[#191A22]/40 p-5 flex flex-col items-start gap-4 h-full">
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-foreground">Inbox Refresh</p>
+              <p className="text-sm font-semibold text-foreground">
+                Inbox Refresh
+              </p>
               <p className="text-xs text-muted leading-relaxed">
-                Creates a notification using your account as actor. Verifies database reactivity and unread counts.
+                Creates a notification using your account as actor. Verifies
+                database reactivity and unread counts.
               </p>
             </div>
             <Button
@@ -971,9 +1084,12 @@ function TestingPanel({
 
           <div className="rounded-xl border border-[#292B38] bg-[#191A22]/40 p-5 flex flex-col items-start gap-4 h-full">
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-foreground">Realtime Toast</p>
+              <p className="text-sm font-semibold text-foreground">
+                Realtime Toast
+              </p>
               <p className="text-xs text-muted leading-relaxed">
-                Uses a system actor ID to trigger the immediate Sonner toast notification.
+                Uses a system actor ID to trigger the immediate Sonner toast
+                notification.
               </p>
             </div>
             <Button
@@ -1286,8 +1402,8 @@ export function SettingsPage(): React.ReactElement {
       notify.success(
         "Workspace history reset",
         `Deleted ${deletedNotifications} notification${deletedNotifications !== 1 ? "s" : ""}, ` +
-        `${deletedComments} comment${deletedComments !== 1 ? "s" : ""}, and ` +
-        `${deletedActivity} activity entr${deletedActivity !== 1 ? "ies" : "y"}.`,
+          `${deletedComments} comment${deletedComments !== 1 ? "s" : ""}, and ` +
+          `${deletedActivity} activity entr${deletedActivity !== 1 ? "ies" : "y"}.`,
       );
       await Promise.all([
         queryClient.invalidateQueries({
@@ -1480,7 +1596,10 @@ export function SettingsPage(): React.ReactElement {
 
   // Fallback if role changes or current section is invalid
   useEffect(() => {
-    if (effectiveRole === "client" && ["workspace", "client_access", "testing"].includes(activeSection)) {
+    if (
+      effectiveRole === "client" &&
+      ["workspace", "client_access", "testing"].includes(activeSection)
+    ) {
       setActiveSection("profile");
     }
   }, [effectiveRole, activeSection]);
@@ -1506,100 +1625,107 @@ export function SettingsPage(): React.ReactElement {
         />
       }
     >
-      <div className="flex min-h-full flex-col p-6 lg:p-10 bg-[#15161D]">
+      <div className="flex min-h-full flex-col px-6 pt-6 pb-10 lg:px-10 lg:pt-8 bg-[#FBFBFB] dark:bg-[#15161D]">
         {/* Page Header */}
-        <div className="mb-10">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold tracking-tight text-[#1A1A1A] dark:text-foreground">
             Settings
           </h1>
-          <p className="mt-1 text-sm text-muted">
+          <p className="mt-1 text-sm text-[#666666] dark:text-muted">
             Manage your account preferences and workspace settings.
-          </p>
-          <p className="mt-2 font-mono text-[11px] text-muted/30">
-            {workspaceId}
           </p>
         </div>
 
-        <div className="flex flex-col gap-10 lg:flex-row lg:items-start">
-          {/* Internal Sidebar Nav */}
-          <nav className="w-full lg:w-64 lg:shrink-0">
-            <div className="flex flex-row overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:pb-0 gap-1">
-              {visibleNavItems.map((item) => {
-                const isActive = activeSection === item.id;
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveSection(item.id as any)}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all whitespace-nowrap lg:whitespace-normal ${isActive
-                      ? "bg-primary/10 text-primary shadow-sm ring-1 ring-inset ring-primary/20"
-                      : "text-muted hover:bg-[#191A22] hover:text-foreground"
-                      }`}
-                  >
-                    <Icon className={`size-4 ${isActive ? "text-primary" : ""}`} />
-                    {item.label}
-                  </button>
-                );
-              })}
-            </div>
-          </nav>
-
-          {/* Content Area */}
-          <div className="max-w-3xl flex-1 space-y-8">
-            {activeSection === "profile" && (
-              <ProfilePanel user={user} workspaceId={workspaceId} role={effectiveRole} />
-            )}
-            {activeSection === "notifications" && (
-              <NotificationsPanel role={effectiveRole} workspaceId={workspaceId} workspaceName={workspaceName} />
-            )}
-            {activeSection === "workspace" && (
-              <WorkspacePanel
-                workspaceId={workspaceId}
-                workspaceName={workspaceName}
-                editingName={editingName}
-                setEditingName={setEditingName}
-                setWorkspaceName={setWorkspaceName}
-                updateNameMutation={updateNameMutation}
-                updateNameStatus={updateNameStatus}
-                updateNameError={updateNameError}
-                workspaceQuery={workspaceQuery}
-                newWorkspaceName={newWorkspaceName}
-                setNewWorkspaceName={setNewWorkspaceName}
-                createWorkspaceMutation={createWorkspaceMutation}
-                createWorkspaceStatus={createWorkspaceStatus}
-                createWorkspaceError={createWorkspaceError}
-                bucketsQuery={bucketsQuery}
-                setResetDialogOpen={setResetDialogOpen}
-                setResetConfirmName={setResetConfirmName}
-                deleteConfirmName={deleteConfirmName}
-                setDeleteConfirmName={setDeleteConfirmName}
-                deleteWorkspaceMutation={deleteWorkspaceMutation}
-              />
-            )}
-            {activeSection === "client_access" && (
-              <ClientAccessPanel
-                inviteEmail={inviteEmail}
-                setInviteEmail={setInviteEmail}
-                inviteFirstName={inviteFirstName}
-                setInviteFirstName={setInviteFirstName}
-                inviteSurname={inviteSurname}
-                setInviteSurname={setInviteSurname}
-                inviteMutation={inviteMutation}
-                generateMagicLinkMutation={generateMagicLinkMutation}
-                generatedMagicLink={generatedMagicLink}
-                handleCopyMagicLink={handleCopyMagicLink}
-                inviteStatus={inviteStatus}
-                inviteError={inviteError}
-              />
-            )}
-            {activeSection === "testing" && (
-              <TestingPanel
-                workspaceId={workspaceId}
-                testInboxRefreshMutation={testInboxRefreshMutation}
-                testRealtimeToastMutation={testRealtimeToastMutation}
-              />
-            )}
+        {/* Horizontal tab bar */}
+        <nav
+          className="border-b border-[#DCDCDC] dark:border-[#222330]"
+          aria-label="Settings sections"
+        >
+          <div className="flex items-end gap-0 overflow-x-auto">
+            {visibleNavItems.map((item) => {
+              const isActive = activeSection === item.id;
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveSection(item.id as any)}
+                  className={`inline-flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
+                    isActive
+                      ? "border-primary text-primary"
+                      : "border-transparent text-[#666666] hover:border-[#DCDCDC] hover:text-[#1A1A1A] dark:text-muted dark:hover:border-border dark:hover:text-foreground"
+                  }`}
+                >
+                  <Icon className="size-3.5 shrink-0" />
+                  {item.label}
+                </button>
+              );
+            })}
           </div>
+        </nav>
+
+        {/* Active tab content */}
+        <div className="mt-8 w-full max-w-3xl space-y-8">
+          {activeSection === "profile" && (
+            <ProfilePanel
+              user={user}
+              workspaceId={workspaceId}
+              role={effectiveRole}
+            />
+          )}
+          {activeSection === "notifications" && (
+            <NotificationsPanel
+              role={effectiveRole}
+              workspaceId={workspaceId}
+              workspaceName={workspaceName}
+            />
+          )}
+          {activeSection === "workspace" && (
+            <WorkspacePanel
+              workspaceId={workspaceId}
+              workspaceName={workspaceName}
+              editingName={editingName}
+              setEditingName={setEditingName}
+              setWorkspaceName={setWorkspaceName}
+              updateNameMutation={updateNameMutation}
+              updateNameStatus={updateNameStatus}
+              updateNameError={updateNameError}
+              workspaceQuery={workspaceQuery}
+              newWorkspaceName={newWorkspaceName}
+              setNewWorkspaceName={setNewWorkspaceName}
+              createWorkspaceMutation={createWorkspaceMutation}
+              createWorkspaceStatus={createWorkspaceStatus}
+              createWorkspaceError={createWorkspaceError}
+              bucketsQuery={bucketsQuery}
+              setResetDialogOpen={setResetDialogOpen}
+              setResetConfirmName={setResetConfirmName}
+              deleteConfirmName={deleteConfirmName}
+              setDeleteConfirmName={setDeleteConfirmName}
+              deleteWorkspaceMutation={deleteWorkspaceMutation}
+            />
+          )}
+          {activeSection === "client_access" && (
+            <ClientAccessPanel
+              inviteEmail={inviteEmail}
+              setInviteEmail={setInviteEmail}
+              inviteFirstName={inviteFirstName}
+              setInviteFirstName={setInviteFirstName}
+              inviteSurname={inviteSurname}
+              setInviteSurname={setInviteSurname}
+              inviteMutation={inviteMutation}
+              generateMagicLinkMutation={generateMagicLinkMutation}
+              generatedMagicLink={generatedMagicLink}
+              handleCopyMagicLink={handleCopyMagicLink}
+              inviteStatus={inviteStatus}
+              inviteError={inviteError}
+            />
+          )}
+          {activeSection === "testing" && (
+            <TestingPanel
+              workspaceId={workspaceId}
+              testInboxRefreshMutation={testInboxRefreshMutation}
+              testRealtimeToastMutation={testRealtimeToastMutation}
+            />
+          )}
         </div>
       </div>
       {/* ── Workspace Reset Confirmation Modal ── */}

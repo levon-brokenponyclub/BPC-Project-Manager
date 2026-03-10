@@ -1,5 +1,4 @@
 import { supabase } from "@/lib/supabase";
-import { invokeAuthedFunction } from "@/lib/invokeAuthedFunction";
 import type { Notification } from "@/types/models";
 import { normalizeNotificationPayloadV2 } from "@/lib/notifications/notificationTypes";
 
@@ -186,10 +185,7 @@ export async function notifyWorkspaceEvent(
     payload: payloadV2 as unknown as Record<string, unknown>,
   }));
 
-  const { data: insertedRows, error } = await supabase
-    .from("notifications")
-    .insert(rows)
-    .select("id, user_id, type");
+  const { error } = await supabase.from("notifications").insert(rows);
 
   if (error) {
     throw error;
@@ -204,18 +200,10 @@ export async function notifyWorkspaceEvent(
     "comment.created",
   ]);
 
-  if (insertedRows && emailEnabledTypes.has(type)) {
-    // Fire and forget - don't await or block on email sending
-    for (const row of insertedRows) {
-      // Skip email for self-actions (actor === recipient)
-      if (actorUser?.id !== row.user_id) {
-        invokeAuthedFunction("send-email-notification", {
-          notificationId: row.id,
-        }).catch((err) => {
-          // Log but don't throw - email failures shouldn't break notification creation
-          console.error("Error sending email notification:", err);
-        });
-      }
-    }
-  }
+  // NOTE:
+  // Avoid selecting inserted rows here. Returning rows for multi-recipient
+  // inserts can fail under SELECT RLS (403) even when INSERT itself is valid.
+  // Email fan-out should be triggered server-side (DB trigger/Edge function)
+  // where inserted IDs are available without client-side row reads.
+  void emailEnabledTypes;
 }

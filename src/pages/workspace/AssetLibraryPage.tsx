@@ -137,7 +137,7 @@ function Tooltip({
   return (
     <div className="group/tip relative inline-flex">
       {children}
-      <span className="pointer-events-none absolute bottom-full left-1/2 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded border border-[#2A2C3A] bg-[#0F0F16] px-2 py-1 text-[10px] leading-none text-[#B0B1BC] opacity-0 shadow-lg transition-opacity group-hover/tip:opacity-100">
+      <span className="pointer-events-none absolute bottom-full left-1/2 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded border border-[#DCDCDC] bg-white px-2 py-1 text-[10px] leading-none text-[#1A1A1A] opacity-0 shadow-lg transition-opacity group-hover/tip:opacity-100 dark:border-[#2A2C3A] dark:bg-[#0F0F16] dark:text-[#B0B1BC]">
         {label}
       </span>
     </div>
@@ -165,8 +165,8 @@ function ActionBtn({
         className={cn(
           "inline-flex h-7 w-7 items-center justify-center rounded-[4px] transition-colors",
           danger
-            ? "text-[#5F6272] hover:bg-red-950/50 hover:text-red-400"
-            : "text-[#5F6272] hover:bg-[#2A2C3A] hover:text-[#B0B1BC]",
+            ? "text-[#666666] hover:bg-red-50 hover:text-red-500 dark:text-[#5F6272] dark:hover:bg-red-950/50 dark:hover:text-red-400"
+            : "text-[#666666] hover:bg-[#ECECEC] hover:text-[#1A1A1A] dark:text-[#5F6272] dark:hover:bg-[#2A2C3A] dark:hover:text-[#B0B1BC]",
         )}
       >
         {children}
@@ -212,33 +212,33 @@ function AssetRow({
       : null;
 
   return (
-    <div className="group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-[#1E1F2D]">
+    <div className="group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-[#ECECEC] dark:hover:bg-[#1E1F2D]">
       {/* Content */}
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
-          <p className="truncate text-[13px] font-medium text-foreground leading-snug">
+          <p className="truncate text-[13px] font-medium text-[#1A1A1A] dark:text-foreground leading-snug">
             {asset.title}
           </p>
           {asset.category && assetType !== "link" ? (
-            <span className="shrink-0 rounded-[3px] border border-[#292B38] px-1.5 py-px text-[9px] font-medium uppercase tracking-wide text-[#5F6272]">
+            <span className="shrink-0 rounded-[3px] border border-[#DCDCDC] px-1.5 py-px text-[9px] font-medium uppercase tracking-wide text-[#666666] dark:border-[#292B38] dark:text-[#5F6272]">
               {asset.category}
             </span>
           ) : null}
         </div>
         {secondaryParts.length > 0 ? (
-          <p className="mt-0.5 truncate text-[11px] text-[#5F6272]">
+          <p className="mt-0.5 truncate text-[11px] text-[#666666] dark:text-[#5F6272]">
             {secondaryParts.join(" · ")}
           </p>
         ) : null}
         {notesSnippet ? (
-          <p className="mt-0.5 truncate text-[11px] italic text-[#4A4B5A]">
+          <p className="mt-0.5 truncate text-[11px] italic text-[#666666] dark:text-[#4A4B5A]">
             {notesSnippet}
           </p>
         ) : null}
       </div>
 
       {/* Time — hidden when actions visible */}
-      <span className="shrink-0 text-[11px] text-[#4A4B5A] transition-opacity group-hover:opacity-0">
+      <span className="shrink-0 text-[11px] text-[#666666] transition-opacity group-hover:opacity-0 dark:text-[#4A4B5A]">
         {timeAgo(asset.created_at)}
       </span>
 
@@ -313,7 +313,7 @@ function SectionEmptyState({
       >
         <Icon className={cn("h-5 w-5 opacity-60", cfg.color)} />
       </div>
-      <p className="max-w-[200px] text-xs leading-relaxed text-[#4A4B5A]">
+      <p className="max-w-[200px] text-xs leading-relaxed text-[#666666] dark:text-[#4A4B5A]">
         {cfg.emptyDescription}
       </p>
       <button
@@ -355,9 +355,9 @@ function SectionCard({
   const { Icon } = cfg;
 
   return (
-    <div className="flex flex-col rounded-xl border border-[#222330] bg-[#16171F] shadow-sm">
+    <div className="flex flex-col rounded-xl border border-[#DCDCDC] bg-white shadow-sm dark:border-[#292B38] dark:bg-[#191A22]">
       {/* Card header */}
-      <div className="flex items-center gap-2.5 border-b border-[#1E1F2C] px-4 py-3">
+      <div className="flex items-center gap-2.5 border-b border-[#F5F5F5] px-4 py-3 dark:border-[#1E1F2C]">
         <span
           className={cn(
             "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
@@ -366,7 +366,7 @@ function SectionCard({
         >
           <Icon className={cn("h-3.5 w-3.5", cfg.color)} />
         </span>
-        <span className="flex-1 text-[13px] font-semibold text-foreground">
+        <span className="flex-1 text-[13px] font-semibold text-[#1A1A1A] dark:text-foreground">
           {cfg.plural}
         </span>
         {assets.length > 0 ? (
@@ -384,7 +384,7 @@ function SectionCard({
           <button
             type="button"
             onClick={() => onAdd(type)}
-            className="inline-flex h-6 w-6 items-center justify-center rounded text-[#4A4B5A] transition-colors hover:bg-[#1E1F2C] hover:text-[#B0B1BC]"
+            className="inline-flex h-6 w-6 items-center justify-center rounded text-[#666666] transition-colors hover:bg-[#F5F5F5] hover:text-[#1A1A1A] dark:text-[#4A4B5A] dark:hover:bg-[#1E1F2C] dark:hover:text-[#B0B1BC]"
           >
             <Plus className="h-3.5 w-3.5" />
           </button>
@@ -610,28 +610,31 @@ export function AssetLibraryPage(): React.ReactElement {
           {[...Array(4)].map((_, i) => (
             <div
               key={i}
-              className="h-52 animate-pulse rounded-xl bg-[#16171F]"
+              className="h-52 animate-pulse rounded-xl bg-[#ECECEC] dark:bg-[#16171F]"
             />
           ))}
         </div>
       }
       empty={<span />}
     >
-      <div className="flex flex-col space-y-5 p-6">
+      <div className="flex flex-col space-y-5 p-6 bg-[#FBFBFB] dark:bg-[#15161D]">
         {/* ── Header ───────────────────────────────────────────────────── */}
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
               <Archive className="h-5 w-5 text-primary" />
-              <h1 className="text-xl font-semibold tracking-tight text-foreground">
+              <h1 className="text-xl font-semibold tracking-tight text-[#1A1A1A] dark:text-foreground">
                 Asset Library
               </h1>
             </div>
-            <p className="mt-1 text-sm text-muted">
+            <p className="mt-1 text-sm text-[#666666] dark:text-muted">
               Shared project resources — files, links, logins, and plugins.
             </p>
           </div>
-          <Button onClick={() => openCreate()} className="shrink-0">
+          <Button
+            onClick={() => openCreate()}
+            className="shrink-0 bg-primary text-white hover:bg-primary/90"
+          >
             <Plus className="h-4 w-4" />
             Add Asset
           </Button>
@@ -639,9 +642,9 @@ export function AssetLibraryPage(): React.ReactElement {
 
         {/* ── Stat bar ─────────────────────────────────────────────────── */}
         {counts.total > 0 ? (
-          <div className="flex flex-wrap gap-4 rounded-lg border border-[#1E1F2C] bg-[#13141C] px-4 py-3">
-            <div className="flex items-center gap-1.5 text-xs text-muted">
-              <span className="text-sm font-semibold tabular-nums text-foreground">
+          <div className="flex flex-wrap gap-4 rounded-lg border border-[#DCDCDC] bg-white px-4 py-3 dark:border-[#1E1F2C] dark:bg-[#13141C]">
+            <div className="flex items-center gap-1.5 text-xs text-[#666666] dark:text-muted">
+              <span className="text-sm font-semibold tabular-nums text-[#1A1A1A] dark:text-foreground">
                 {counts.total}
               </span>
               Total
@@ -653,7 +656,7 @@ export function AssetLibraryPage(): React.ReactElement {
               return (
                 <div
                   key={t}
-                  className="flex items-center gap-1.5 text-xs text-muted"
+                  className="flex items-center gap-1.5 text-xs text-[#666666] dark:text-muted"
                 >
                   <Icon className={cn("h-3 w-3", cfg.color)} />
                   <span className={cn("font-semibold tabular-nums", cfg.color)}>
@@ -690,16 +693,16 @@ export function AssetLibraryPage(): React.ReactElement {
             if (e.target === e.currentTarget) closeModal();
           }}
         >
-          <div className="w-full max-w-lg rounded-xl border border-[#292B38] bg-[#181921] shadow-2xl">
+          <div className="w-full max-w-lg rounded-xl border border-[#DCDCDC] bg-white shadow-2xl dark:border-[#292B38] dark:bg-[#181921]">
             {/* Modal header */}
-            <div className="flex items-center justify-between border-b border-[#292B38] px-6 py-4">
-              <h3 className="text-sm font-semibold text-foreground">
+            <div className="flex items-center justify-between border-b border-[#DCDCDC] px-6 py-4 dark:border-[#292B38]">
+              <h3 className="text-sm font-semibold text-[#1A1A1A] dark:text-foreground">
                 {editingAsset ? "Edit Asset" : "Add Asset"}
               </h3>
               <button
                 type="button"
                 onClick={closeModal}
-                className="inline-flex h-6 w-6 items-center justify-center rounded text-muted hover:text-foreground"
+                className="inline-flex h-6 w-6 items-center justify-center rounded text-[#666666] hover:text-[#1A1A1A] dark:text-muted dark:hover:text-foreground"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -709,7 +712,7 @@ export function AssetLibraryPage(): React.ReactElement {
               {/* Type selector (create-only) */}
               {!editingAsset ? (
                 <div className="mb-5">
-                  <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-muted">
+                  <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-[#666666] dark:text-muted">
                     Type
                   </label>
                   <div className="grid grid-cols-4 gap-2">
@@ -726,7 +729,7 @@ export function AssetLibraryPage(): React.ReactElement {
                               "flex flex-col items-center gap-1.5 rounded-lg border py-3 text-xs font-medium transition-colors",
                               formType === type
                                 ? `border-primary/60 ${cfg.bgColor} ${cfg.color}`
-                                : "border-[#292B38] bg-[#1E1F2D] text-muted hover:border-[#3A3B4A]",
+                                : "border-[#DCDCDC] bg-[#F5F5F5] text-[#666666] hover:border-[#CCCCCC] dark:border-[#292B38] dark:bg-[#1E1F2D] dark:text-muted dark:hover:border-[#3A3B4A]",
                             )}
                           >
                             <Icon className="h-4 w-4" />
@@ -771,7 +774,7 @@ export function AssetLibraryPage(): React.ReactElement {
                 <div>
                   <label
                     htmlFor="asset-modal-title"
-                    className="mb-1 block text-[11px] uppercase tracking-wider text-muted"
+                    className="mb-1 block text-[11px] uppercase tracking-wider text-[#666666] dark:text-muted"
                   >
                     Title <span className="text-red-500">*</span>
                   </label>
@@ -782,12 +785,13 @@ export function AssetLibraryPage(): React.ReactElement {
                     placeholder="e.g. Brand Guidelines"
                     value={formTitle}
                     onChange={(e) => setFormTitle(e.target.value)}
+                    className="bg-[#FBFBFB] border-[#DCDCDC] text-[#1A1A1A] dark:bg-[#191A22] dark:border-[#292B38] dark:text-foreground"
                   />
                 </div>
 
                 {/* Description */}
                 <div>
-                  <label className="mb-1 block text-[11px] uppercase tracking-wider text-muted">
+                  <label className="mb-1 block text-[11px] uppercase tracking-wider text-[#666666] dark:text-muted">
                     Description
                   </label>
                   <textarea
@@ -795,7 +799,7 @@ export function AssetLibraryPage(): React.ReactElement {
                     placeholder="Optional description…"
                     value={formDescription}
                     onChange={(e) => setFormDescription(e.target.value)}
-                    className="w-full resize-none rounded-md border border-[#292B38] bg-[#191A22] px-3 py-2 text-sm text-foreground placeholder:text-muted/50 focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/30"
+                    className="w-full resize-none rounded-md border border-[#DCDCDC] bg-[#FBFBFB] px-3 py-2 text-sm text-[#1A1A1A] placeholder:text-[#666666]/50 focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/30 dark:border-[#292B38] dark:bg-[#191A22] dark:text-foreground dark:placeholder:text-muted/50"
                   />
                 </div>
 
@@ -813,12 +817,12 @@ export function AssetLibraryPage(): React.ReactElement {
                       id="asset-file-input"
                     />
                     {formFile ? (
-                      <div className="flex items-center gap-2 rounded-md border border-[#292B38] bg-[#1E1F2D] px-3 py-2">
-                        <FileText className="h-4 w-4 shrink-0 text-blue-400" />
-                        <span className="min-w-0 flex-1 truncate text-xs text-foreground">
+                      <div className="flex items-center gap-2 rounded-md border border-[#DCDCDC] bg-[#F5F5F5] px-3 py-2 dark:border-[#292B38] dark:bg-[#1E1F2D]">
+                        <FileText className="h-4 w-4 shrink-0 text-blue-500 dark:text-blue-400" />
+                        <span className="min-w-0 flex-1 truncate text-xs text-[#1A1A1A] dark:text-foreground">
                           {formFile.name}
                         </span>
-                        <span className="shrink-0 text-[11px] text-muted">
+                        <span className="shrink-0 text-[11px] text-[#666666] dark:text-muted">
                           {formatFileSize(formFile.size)}
                         </span>
                         <button
@@ -828,15 +832,15 @@ export function AssetLibraryPage(): React.ReactElement {
                             if (fileInputRef.current)
                               fileInputRef.current.value = "";
                           }}
-                          className="shrink-0 text-muted hover:text-foreground"
+                          className="shrink-0 text-[#666666] hover:text-[#1A1A1A] dark:text-muted dark:hover:text-foreground"
                         >
                           <X className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     ) : editingAsset?.file_name ? (
-                      <div className="flex items-center gap-2 rounded-md border border-[#292B38] bg-[#1E1F2D] px-3 py-2">
-                        <FileText className="h-4 w-4 shrink-0 text-blue-400" />
-                        <span className="min-w-0 flex-1 truncate text-xs text-muted">
+                      <div className="flex items-center gap-2 rounded-md border border-[#DCDCDC] bg-[#F5F5F5] px-3 py-2 dark:border-[#292B38] dark:bg-[#1E1F2D]">
+                        <FileText className="h-4 w-4 shrink-0 text-blue-500 dark:text-blue-400" />
+                        <span className="min-w-0 flex-1 truncate text-xs text-[#666666] dark:text-muted">
                           {editingAsset.file_name}
                         </span>
                         <label
@@ -849,10 +853,10 @@ export function AssetLibraryPage(): React.ReactElement {
                     ) : (
                       <label
                         htmlFor="asset-file-input"
-                        className="flex cursor-pointer items-center gap-2 rounded-md border border-dashed border-[#292B38] bg-[#191A22] px-3 py-3 transition-colors hover:border-primary/40"
+                        className="flex cursor-pointer items-center gap-2 rounded-md border border-dashed border-[#DCDCDC] bg-[#FBFBFB] px-3 py-3 transition-colors hover:border-primary/40 dark:border-[#292B38] dark:bg-[#191A22]"
                       >
-                        <Upload className="h-4 w-4 shrink-0 text-muted" />
-                        <span className="text-xs text-muted">
+                        <Upload className="h-4 w-4 shrink-0 text-[#666666] dark:text-muted" />
+                        <span className="text-xs text-[#666666] dark:text-muted">
                           Click to select a file
                         </span>
                       </label>

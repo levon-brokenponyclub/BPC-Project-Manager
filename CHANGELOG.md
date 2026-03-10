@@ -4,13 +4,12 @@ All notable changes to the Broken Pony Club Client Portal are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.11.0] - 2026-03-10
 
-### Planned
+### ✅ Changed
 
-- CSV/PDF exports for reports
-- Advanced analytics and SLA dashboards
-- Real-time presence with live heartbeat updates
+- **Default Theme**: Set Dark Mode as the default system theme for all new users.
+- **Login UI**: Removed the manual theme switcher from the Login page to maintain brand consistency for guests.
 
 ---
 

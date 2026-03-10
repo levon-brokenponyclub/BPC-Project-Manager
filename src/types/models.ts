@@ -7,7 +7,7 @@ export type TaskStatus =
   | "On Hold"
   | "Complete"
   | "Cancelled";
-export type TaskPriority = "Low" | "Medium" | "High" | "Urgent";
+export type TaskPriority = "Normal" | "Medium" | "High" | "Urgent";
 
 export interface Workspace {
   id: string;

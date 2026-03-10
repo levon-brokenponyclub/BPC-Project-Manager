@@ -21,20 +21,20 @@ export function LoginPage(): React.ReactElement {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   return (
-    <div className="dark flex min-h-screen items-start justify-center bg-[#15161D] px-4 pb-8 pt-8 text-white md:pt-[68px]">
-      <Card className="w-full max-w-[520px] rounded-[4px] border border-[#292B38] bg-[#191A22] p-0 shadow-none">
+    <div className="flex min-h-screen items-start justify-center bg-[#ECECEC] dark:bg-[#0B0C10] px-4 pb-8 pt-8 md:pt-[68px]">
+      <Card className="w-full max-w-[520px] rounded-[4px] border border-[#DCDCDC] dark:border-[#222330] bg-[#FBFBFB] dark:bg-[#15161D] p-0 shadow-none">
         <div className="mx-auto w-full max-w-[440px] px-5 pb-10 pt-11 md:px-0">
-          <div className="flex items-center gap-3 border-b border-[#25262B] pb-6">
+          <div className="flex items-center gap-3 border-b border-[#DCDCDC] dark:border-[#222330] pb-6">
             <img
               src="/BPC-Logo.jpg"
               alt="BPC"
               className="h-10 w-10 rounded-md"
             />
             <div>
-              <p className="text-2xl font-medium leading-8 tracking-[-0.16px] text-white">
+              <p className="text-2xl font-medium leading-8 tracking-[-0.16px] text-[#1A1A1A] dark:text-[#E3E4EA]">
                 {authMode === "signin" ? "Sign in" : "Sign up"}
               </p>
-              <p className="text-[13px] font-medium leading-4 text-[#939496]">
+              <p className="text-[13px] font-medium leading-4 text-[#575859] dark:text-[#888A93]">
                 Access your workspace portal
               </p>
             </div>
@@ -100,6 +100,7 @@ export function LoginPage(): React.ReactElement {
 
           <form
             className="mt-6 space-y-4"
+            autoComplete="on"
             onSubmit={async (event) => {
               event.preventDefault();
               setError("");
@@ -143,27 +144,32 @@ export function LoginPage(): React.ReactElement {
             }}
           >
             <div className="space-y-1">
-              <p className="text-[13px] font-medium leading-4 text-white mb-2">
+              <p className="text-[13px] font-medium leading-4 text-[#1A1A1A] dark:text-[#E3E4EA] mb-2">
                 Email
               </p>
               <Input
+                id="email"
+                name="email"
                 type="email"
+                inputMode="email"
                 required
                 placeholder="Email Address"
                 autoComplete="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                className="h-[46px] rounded-[5px] border border-[#25262B] bg-[#15161D] px-3 text-[13px] text-white placeholder:text-[#939496]"
+                className="h-[46px] rounded-[5px] border border-[#DCDCDC] dark:border-[#222330] bg-white dark:bg-[#1C1C26] px-3 text-[13px] text-[#1A1A1A] dark:text-[#E3E4EA] placeholder:text-[#ADADAD] dark:placeholder:text-[#52525B]"
               />
             </div>
 
             {!isDemoMode ? (
               <>
                 <div className="space-y-1">
-                  <p className="text-[13px] font-medium leading-4 text-white mb-2">
+                  <p className="text-[13px] font-medium leading-4 text-[#1A1A1A] dark:text-[#E3E4EA] mb-2">
                     Password
                   </p>
                   <Input
+                    id="password"
+                    name="password"
                     type="password"
                     required
                     placeholder="Password"
@@ -174,16 +180,18 @@ export function LoginPage(): React.ReactElement {
                     }
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
-                    className="h-[46px] rounded-[5px] border border-[#25262B] bg-[#15161D] px-3 text-[13px] text-white placeholder:text-[#939496]"
+                    className="h-[46px] rounded-[5px] border border-[#DCDCDC] dark:border-[#222330] bg-white dark:bg-[#1C1C26] px-3 text-[13px] text-[#1A1A1A] dark:text-[#E3E4EA] placeholder:text-[#ADADAD] dark:placeholder:text-[#52525B]"
                   />
                 </div>
 
                 {authMode === "signup" ? (
                   <div className="space-y-1">
-                    <p className="text-[13px] font-medium leading-4 text-white mb-2">
+                    <p className="text-[13px] font-medium leading-4 text-[#1A1A1A] dark:text-[#E3E4EA] mb-2">
                       Confirm password
                     </p>
                     <Input
+                      id="confirmPassword"
+                      name="confirmPassword"
                       type="password"
                       required
                       placeholder="Confirm Password"
@@ -192,7 +200,7 @@ export function LoginPage(): React.ReactElement {
                       onChange={(event) =>
                         setConfirmPassword(event.target.value)
                       }
-                      className="h-[46px] rounded-[5px] border border-[#25262B] bg-[#15161D] px-3 text-[13px] text-white placeholder:text-[#939496]"
+                      className="h-[46px] rounded-[5px] border border-[#DCDCDC] dark:border-[#222330] bg-white dark:bg-[#1C1C26] px-3 text-[13px] text-[#1A1A1A] dark:text-[#E3E4EA] placeholder:text-[#ADADAD] dark:placeholder:text-[#52525B]"
                     />
                   </div>
                 ) : null}

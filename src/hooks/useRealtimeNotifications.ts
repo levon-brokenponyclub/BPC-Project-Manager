@@ -29,7 +29,6 @@ export function useRealtimeNotifications({
 }: UseRealtimeNotificationsOptions): void {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  // Keep a stable ref so the effect closure always has the latest userId
   const userIdRef = useRef(userId);
   userIdRef.current = userId;
 
@@ -49,30 +48,19 @@ export function useRealtimeNotifications({
         (event) => {
           const notification = event.new as Notification;
 
-          // Always refresh inbox + unread count so the badge is up to date
-          void queryClient.invalidateQueries({
-            queryKey: queryKeys.notifications(workspaceId),
-          });
           void queryClient.invalidateQueries({
             queryKey: queryKeys.unreadNotifications(workspaceId),
           });
+          void queryClient.invalidateQueries({
+            queryKey: queryKeys.notifications(workspaceId),
+          });
 
-          // Determine the actor from the normalised payload
           const actorId =
-            (notification.payload as Record<string, unknown> | null | undefined)
-              ?.actor &&
-            typeof (notification.payload as Record<string, unknown>).actor ===
-              "object"
-              ? (
-                  (notification.payload as Record<string, unknown>).actor as
-                    | Record<string, unknown>
-                    | null
-                    | undefined
-                )?.id
+            notification.payload?.actor &&
+            typeof notification.payload.actor === "object"
+              ? (notification.payload.actor as Record<string, unknown>)?.id
               : null;
 
-          // Skip toast when the acting user triggered the event themselves —
-          // they already received immediate Sonner feedback from the mutation.
           const isSelfAction = actorId != null && actorId === userIdRef.current;
 
           console.log("[RealtimeNotif] received", {
@@ -88,6 +76,7 @@ export function useRealtimeNotifications({
           }
 
           const mapped = mapNotificationToToast(notification);
+
           if (!mapped) {
             console.log(
               "[RealtimeNotif] skipped — not on toast allow-list",
