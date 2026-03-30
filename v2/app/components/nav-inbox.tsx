@@ -72,6 +72,7 @@ export function NavInbox({
   const navigate = useNavigate()
   const ws = searchParams.get("ws")
   const inboxHref = ws ? `/inbox?ws=${ws}` : "/inbox"
+  const [inboxOpen, setInboxOpen] = React.useState(false)
 
   function withWs(url: string) {
     if (!ws) return url
@@ -256,21 +257,17 @@ export function NavInbox({
     <>
       {/* Row 1: Quick Create */}
       <SidebarMenuItem>
-        <SidebarMenuButton
-          className="bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
-          onClick={() => setOpen(true)}
-          tooltip="Quick Create"
-        >
-          <PlusCircle className="fill-current" />
+        <SidebarMenuButton onClick={() => setOpen(true)} tooltip="Quick Create">
+          <PlusCircle />
           <span>Quick Create</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
 
       {/* Row 2: Inbox with submenus */}
-      <Collapsible asChild defaultOpen>
+      <Collapsible asChild open={inboxOpen} onOpenChange={setInboxOpen}>
         <SidebarMenuItem>
-          <SidebarMenuButton asChild tooltip="Inbox">
-            <Link to={inboxHref} className="relative">
+          <CollapsibleTrigger asChild>
+            <SidebarMenuButton tooltip="Inbox" className="relative">
               <Inbox />
               <span>Inbox</span>
               {unreadCount > 0 && (
@@ -278,16 +275,22 @@ export function NavInbox({
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               )}
-            </Link>
-          </SidebarMenuButton>
-          <CollapsibleTrigger asChild>
-            <SidebarMenuAction className="data-[state=open]:rotate-90">
-              <ChevronRight />
-              <span className="sr-only">Toggle Inbox sections</span>
-            </SidebarMenuAction>
+            </SidebarMenuButton>
           </CollapsibleTrigger>
+          <SidebarMenuAction
+            aria-hidden="true"
+            className={`transition-transform ${inboxOpen ? "rotate-90" : ""}`}
+          >
+            <ChevronRight />
+            <span className="sr-only">Toggle Inbox sections</span>
+          </SidebarMenuAction>
           <CollapsibleContent>
             <SidebarMenuSub>
+              <SidebarMenuSubItem>
+                <SidebarMenuSubButton asChild>
+                  <Link to={inboxHref}>Inbox</Link>
+                </SidebarMenuSubButton>
+              </SidebarMenuSubItem>
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton asChild>
                   <Link to={withWs("/inbox?box=sent")}>Sent</Link>

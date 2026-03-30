@@ -201,7 +201,7 @@ export default function Home() {
           </div>
           <ModeToggle className="mr-2 ml-auto" />
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+        <div className="flex flex-1 flex-col gap-4 px-6 py-4 pt-0">
           <TaskStatCards
             tasks={tasks}
             inboxUnreadCount={inboxUnreadCount}

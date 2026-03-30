@@ -31,10 +31,16 @@ import { Separator } from "~/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs"
 import { Textarea } from "~/components/ui/textarea"
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "~/components/ui/collapsible"
+import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "~/components/ui/sidebar"
+import { ChevronDown } from "lucide-react"
 import {
   IconCircleCheckFilled,
   IconCircleDashed,
@@ -42,8 +48,8 @@ import {
   IconClock,
   IconDownload,
   IconFile,
-  IconLayoutSidebarLeftCollapse,
-  IconLayoutSidebarLeftExpand,
+  IconLayoutSidebarRightCollapse,
+  IconLayoutSidebarRightExpand,
   IconLoader,
   IconMessage,
   IconPaperclip,
@@ -60,6 +66,22 @@ interface WorkspaceUser {
   user_id: string
   email: string
   role?: string | null
+}
+
+interface TaskActivityEntry {
+  id: string
+  type: string
+  created_at: string
+  payload?: {
+    actor?: {
+      name?: string | null
+      email?: string | null
+    }
+    entity?: {
+      id?: string | null
+      name?: string | null
+    }
+  }
 }
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
@@ -274,26 +296,6 @@ function toDateInputValue(iso: string | null): string {
   return iso.split("T")[0]
 }
 
-function renderDescriptionWithLinks(text: string) {
-  const parts = text.split(/(https?:\/\/[^\s]+)/g)
-  return parts.map((part, idx) => {
-    if (/^https?:\/\//.test(part)) {
-      return (
-        <a
-          key={`${part}-${idx}`}
-          href={part}
-          target="_blank"
-          rel="noreferrer"
-          className="underline underline-offset-2"
-        >
-          {part}
-        </a>
-      )
-    }
-    return <React.Fragment key={`txt-${idx}`}>{part}</React.Fragment>
-  })
-}
-
 // ─── Task detail panel (inline, stateful) ────────────────────────────────────
 
 function TaskDetail({
@@ -331,6 +333,13 @@ function TaskDetail({
   }))
   const [saving, setSaving] = React.useState(false)
   const [deleting, setDeleting] = React.useState(false)
+  const [activityItems, setActivityItems] = React.useState<TaskActivityEntry[]>(
+    []
+  )
+  const [activityBody, setActivityBody] = React.useState("")
+  const [sendingActivity, setSendingActivity] = React.useState(false)
+  const [detailsOpen, setDetailsOpen] = React.useState(true)
+  const [subtasksOpen, setSubtasksOpen] = React.useState(true)
 
   React.useEffect(() => {
     setDraft({
@@ -347,6 +356,19 @@ function TaskDetail({
       blocked: task.blocked,
     })
   }, [task.id])
+
+  React.useEffect(() => {
+    supabase
+      .from("notifications")
+      .select("id,type,created_at,payload")
+      .eq("workspace_id", task.workspace_id)
+      .in("type", ["comment.created", "comment.assigned", "message.mention"])
+      .filter("payload->entity->>id", "eq", task.id)
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        setActivityItems((data ?? []) as TaskActivityEntry[])
+      })
+  }, [task.id, task.workspace_id])
 
   async function handleSave() {
     setSaving(true)
@@ -434,6 +456,60 @@ function TaskDetail({
     }
   }
 
+  async function handleSendActivity() {
+    if (!activityBody.trim()) return
+
+    setSendingActivity(true)
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      setSendingActivity(false)
+      toast.error("You must be signed in to post activity")
+      return
+    }
+
+    const actor = {
+      id: session.user.id,
+      name: session.user.user_metadata?.full_name ?? null,
+      email: session.user.email ?? null,
+      avatar_url: session.user.user_metadata?.avatar_url ?? null,
+    }
+
+    const message = activityBody.trim()
+    const { data, error } = await supabase
+      .from("notifications")
+      .insert({
+        workspace_id: task.workspace_id,
+        user_id: session.user.id,
+        type: "comment.created",
+        payload: {
+          actor,
+          entity: {
+            type: "task",
+            id: task.id,
+            name: message,
+          },
+        },
+      })
+      .select("id,type,created_at,payload")
+      .single()
+
+    setSendingActivity(false)
+
+    if (error) {
+      toast.error("Failed to post activity", { description: error.message })
+      return
+    }
+
+    if (data) {
+      setActivityItems((prev) => [...prev, data as TaskActivityEntry])
+    }
+    setActivityBody("")
+    toast.success("Activity posted")
+  }
+
   const isDone = draft.status === "Complete" || draft.status === "Cancelled"
   const resolvedAssigneeId =
     draft.assignee_user_id && draft.assignee_user_id !== "__none__"
@@ -444,22 +520,23 @@ function TaskDetail({
         .find((wu) => wu.user_id === resolvedAssigneeId)
         ?.email?.split("@")[0] ?? "—")
     : "—"
+  const showRightMeta = !listVisible
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
+    <div className="flex flex-1 flex-col overflow-hidden bg-card">
       {/* ── Header ── */}
-      <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+      <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-card px-4">
         <Button
           variant="ghost"
           size="icon"
           className="-ml-1 size-7"
           onClick={onToggleList}
-          aria-label={listVisible ? "Collapse task list" : "Expand task list"}
+          aria-label={listVisible ? "Expand task panel" : "Split panel view"}
         >
           {listVisible ? (
-            <IconLayoutSidebarLeftCollapse className="size-4" />
+            <IconLayoutSidebarRightExpand className="size-4" />
           ) : (
-            <IconLayoutSidebarLeftExpand className="size-4" />
+            <IconLayoutSidebarRightCollapse className="size-4" />
           )}
         </Button>
         <Breadcrumb>
@@ -511,7 +588,7 @@ function TaskDetail({
       {/* ── Two-column body ── */}
       <div className="flex flex-1 overflow-hidden">
         {/* Main editable content */}
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 bg-card">
           <div className="space-y-6 p-6">
             {/* Editable title */}
             <div className="rounded-lg border px-4 py-3">
@@ -609,27 +686,144 @@ function TaskDetail({
 
               {/* Task Details — read-only description */}
               <TabsContent value="details" className="mt-4">
-                <div className="rounded-lg border p-4">
-                  {draft.description ? (
-                    <div className="min-h-60 text-sm leading-7 wrap-break-word whitespace-pre-wrap text-foreground">
-                      {renderDescriptionWithLinks(draft.description)}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      No description yet.
-                    </p>
-                  )}
+                <div className="rounded-lg border">
+                  <Collapsible
+                    open={detailsOpen}
+                    onOpenChange={setDetailsOpen}
+                    className="border-b"
+                  >
+                    <CollapsibleTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-between px-4 py-3 text-left"
+                      >
+                        <span className="text-sm font-semibold">
+                          Task Details
+                        </span>
+                        <ChevronDown
+                          className={`size-4 transition-transform ${detailsOpen ? "rotate-180" : ""}`}
+                        />
+                      </button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="min-h-55 p-4 pt-0">
+                        <Textarea
+                          id="task-description"
+                          value={draft.description}
+                          onChange={(e) =>
+                            setDraft((d) => ({
+                              ...d,
+                              description: e.target.value,
+                            }))
+                          }
+                          placeholder="Add task details..."
+                          rows={8}
+                          className="min-h-55"
+                        />
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+
+                  <Collapsible
+                    open={subtasksOpen}
+                    onOpenChange={setSubtasksOpen}
+                  >
+                    <CollapsibleTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-between px-4 py-3 text-left"
+                      >
+                        <span className="text-sm font-semibold">Sub Tasks</span>
+                        <ChevronDown
+                          className={`size-4 transition-transform ${subtasksOpen ? "rotate-180" : ""}`}
+                        />
+                      </button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="p-4 pt-0">
+                        {subtasks.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">
+                            No subtasks yet.
+                          </p>
+                        ) : (
+                          <div className="overflow-hidden rounded-md border">
+                            {subtasks.map((s) => (
+                              <div
+                                key={s.id}
+                                className="flex items-center gap-2 border-b px-3 py-2 text-sm last:border-b-0"
+                              >
+                                <span className="shrink-0">
+                                  {statusIcon[s.status]}
+                                </span>
+                                <span className="min-w-0 flex-1 truncate text-foreground">
+                                  {s.title}
+                                </span>
+                                <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                                  {formatDate(s.due_date)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
                 </div>
               </TabsContent>
 
               {/* Activity */}
               <TabsContent value="activity" className="mt-4">
                 <div className="rounded-lg border p-4">
-                  <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
-                    <IconMessage className="size-8 text-muted-foreground opacity-40" />
-                    <p className="text-sm text-muted-foreground">
-                      No activity yet
-                    </p>
+                  <div className="mb-4 space-y-2">
+                    <Label htmlFor="task-activity-message">Post Activity</Label>
+                    <Textarea
+                      id="task-activity-message"
+                      value={activityBody}
+                      onChange={(e) => setActivityBody(e.target.value)}
+                      placeholder="Write an activity note..."
+                      rows={4}
+                    />
+                    <div className="flex justify-end">
+                      <Button
+                        size="sm"
+                        onClick={handleSendActivity}
+                        disabled={!activityBody.trim() || sendingActivity}
+                      >
+                        {sendingActivity ? "Posting…" : "Post"}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="overflow-hidden rounded-md border">
+                    {activityItems.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+                        <IconMessage className="size-6 text-muted-foreground opacity-40" />
+                        <p className="text-sm text-muted-foreground">
+                          No activity yet
+                        </p>
+                      </div>
+                    ) : (
+                      activityItems.map((entry) => (
+                        <div
+                          key={entry.id}
+                          className="border-b px-3 py-2 text-sm last:border-b-0"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium text-foreground">
+                              {entry.payload?.actor?.name ??
+                                entry.payload?.actor?.email ??
+                                "System"}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {formatDate(entry.created_at)}
+                            </span>
+                          </div>
+                          <p className="mt-1 whitespace-pre-wrap text-foreground">
+                            {entry.payload?.entity?.name ?? "Activity"}
+                          </p>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </TabsContent>
@@ -654,95 +848,78 @@ function TaskDetail({
         </ScrollArea>
 
         {/* Right sidebar — live metadata */}
-        <ScrollArea className="w-70 shrink-0 border-l">
-          <div className="flex flex-col divide-y text-sm">
-            {/* Subtasks */}
-            <section className="p-4">
-              <p className="mb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                Sub Tasks
-              </p>
-              {subtasks.length === 0 ? (
-                <p className="text-muted-foreground">No subtasks yet.</p>
-              ) : (
-                <ul className="flex flex-col gap-2">
-                  {subtasks.map((s) => (
-                    <li key={s.id} className="flex items-center gap-2">
-                      {statusIcon[s.status]}
-                      <span className="flex-1 text-foreground">{s.title}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
+        {showRightMeta && (
+          <ScrollArea className="w-70 shrink-0 border-l bg-sidebar">
+            <div className="flex flex-col divide-y text-sm">
+              {/* Files */}
+              <section className="p-4">
+                <p className="mb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                  Files
+                </p>
+                <p className="mb-3 flex items-center gap-1.5 text-muted-foreground">
+                  <IconPaperclip className="size-3.5" />
+                  No files attached
+                </p>
+                <Button size="sm" variant="outline" className="w-full gap-1.5">
+                  <IconUpload className="size-3.5" />
+                  Upload File
+                </Button>
+              </section>
 
-            {/* Files */}
-            <section className="p-4">
-              <p className="mb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                Files
-              </p>
-              <p className="mb-3 flex items-center gap-1.5 text-muted-foreground">
-                <IconPaperclip className="size-3.5" />
-                No files attached
-              </p>
-              <Button size="sm" variant="outline" className="w-full gap-1.5">
-                <IconUpload className="size-3.5" />
-                Upload File
-              </Button>
-            </section>
-
-            {/* Status */}
-            <section className="flex items-center justify-between px-4 py-3">
-              <span className="text-muted-foreground">Status</span>
-              <Badge
-                variant="outline"
-                className="gap-1.5 px-2 text-muted-foreground"
-              >
-                {statusIcon[draft.status as TaskStatus]}
-                {draft.status}
-              </Badge>
-            </section>
-
-            {/* Priority */}
-            <section className="flex items-center justify-between px-4 py-3">
-              <span className="text-muted-foreground">Priority</span>
-              {draft.priority ? (
-                <Badge variant={priorityVariant[draft.priority] ?? "outline"}>
-                  {draft.priority}
+              {/* Status */}
+              <section className="flex items-center justify-between px-4 py-3">
+                <span className="text-muted-foreground">Status</span>
+                <Badge
+                  variant="outline"
+                  className="gap-1.5 px-2 text-muted-foreground"
+                >
+                  {statusIcon[draft.status as TaskStatus]}
+                  {draft.status}
                 </Badge>
-              ) : (
-                <span className="text-muted-foreground">—</span>
-              )}
-            </section>
+              </section>
 
-            {/* Owner */}
-            <section className="flex items-center justify-between px-4 py-3">
-              <span className="text-muted-foreground">Owner</span>
-              <span className="text-foreground">
-                {ownerEmail ? ownerEmail.split("@")[0] : "—"}
-              </span>
-            </section>
+              {/* Priority */}
+              <section className="flex items-center justify-between px-4 py-3">
+                <span className="text-muted-foreground">Priority</span>
+                {draft.priority ? (
+                  <Badge variant={priorityVariant[draft.priority] ?? "outline"}>
+                    {draft.priority}
+                  </Badge>
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                )}
+              </section>
 
-            {/* Assigned To */}
-            <section className="flex items-center justify-between px-4 py-3">
-              <span className="text-muted-foreground">Assigned To</span>
-              <span className="text-foreground">{displayAssignee}</span>
-            </section>
+              {/* Owner */}
+              <section className="flex items-center justify-between px-4 py-3">
+                <span className="text-muted-foreground">Owner</span>
+                <span className="text-foreground">
+                  {ownerEmail ? ownerEmail.split("@")[0] : "—"}
+                </span>
+              </section>
 
-            {/* Due Date */}
-            <section className="flex items-center justify-between px-4 py-3">
-              <span className="text-muted-foreground">Due Date</span>
-              <span className="text-foreground tabular-nums">
-                {formatDate(draft.due_date || null)}
-              </span>
-            </section>
+              {/* Assigned To */}
+              <section className="flex items-center justify-between px-4 py-3">
+                <span className="text-muted-foreground">Assigned To</span>
+                <span className="text-foreground">{displayAssignee}</span>
+              </section>
 
-            {/* Logged Time */}
-            <section className="flex items-center justify-between px-4 py-3">
-              <span className="text-muted-foreground">Logged Time</span>
-              <span className="text-foreground tabular-nums">00:00:00</span>
-            </section>
-          </div>
-        </ScrollArea>
+              {/* Due Date */}
+              <section className="flex items-center justify-between px-4 py-3">
+                <span className="text-muted-foreground">Due Date</span>
+                <span className="text-foreground tabular-nums">
+                  {formatDate(draft.due_date || null)}
+                </span>
+              </section>
+
+              {/* Logged Time */}
+              <section className="flex items-center justify-between px-4 py-3">
+                <span className="text-muted-foreground">Logged Time</span>
+                <span className="text-foreground tabular-nums">00:00:00</span>
+              </section>
+            </div>
+          </ScrollArea>
+        )}
       </div>
     </div>
   )
@@ -801,7 +978,7 @@ export default function TasksPage() {
           {/* ── Left: task list ── */}
           {listVisible && (
             <div
-              className={`flex shrink-0 flex-col overflow-hidden border-r ${selected ? "w-140" : "flex-1"}`}
+              className={`flex shrink-0 flex-col overflow-hidden border-r ${selected ? "w-1/2" : "flex-1"}`}
             >
               <div className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
                 <SidebarTrigger className="-ml-1" />

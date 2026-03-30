@@ -1,3 +1,4 @@
+import * as React from "react"
 import { Link, useSearchParams } from "react-router"
 import { ChevronRight, type LucideIcon } from "lucide-react"
 
@@ -34,6 +35,9 @@ export function NavMain({
 }) {
   const [searchParams] = useSearchParams()
   const ws = searchParams.get("ws")
+  const [openStates, setOpenStates] = React.useState<Record<string, boolean>>(
+    {}
+  )
 
   function withWs(url: string) {
     if (!ws) return url
@@ -44,27 +48,52 @@ export function NavMain({
     <SidebarGroup>
       <SidebarMenu>
         {items.map((item) => (
-          <Collapsible key={item.title} asChild defaultOpen={item.isActive}>
+          <Collapsible
+            key={item.title}
+            asChild
+            open={openStates[item.title] ?? false}
+            onOpenChange={(open) => {
+              setOpenStates((prev) => ({
+                ...prev,
+                [item.title]: open,
+              }))
+            }}
+          >
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={item.title}>
-                <Link to={withWs(item.url)}>
-                  <item.icon />
-                  <span>{item.title}</span>
-                  {item.badge != null && item.badge > 0 && (
-                    <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-semibold text-primary-foreground group-data-[collapsible=icon]:hidden">
-                      {item.badge > 99 ? "99+" : item.badge}
-                    </span>
-                  )}
-                </Link>
-              </SidebarMenuButton>
+              {item.items?.length ? (
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton tooltip={item.title}>
+                    <item.icon />
+                    <span>{item.title}</span>
+                    {item.badge != null && item.badge > 0 && (
+                      <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-semibold text-primary-foreground group-data-[collapsible=icon]:hidden">
+                        {item.badge > 99 ? "99+" : item.badge}
+                      </span>
+                    )}
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+              ) : (
+                <SidebarMenuButton asChild tooltip={item.title}>
+                  <Link to={withWs(item.url)}>
+                    <item.icon />
+                    <span>{item.title}</span>
+                    {item.badge != null && item.badge > 0 && (
+                      <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-semibold text-primary-foreground group-data-[collapsible=icon]:hidden">
+                        {item.badge > 99 ? "99+" : item.badge}
+                      </span>
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+              )}
               {item.items?.length ? (
                 <>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuAction className="data-[state=open]:rotate-90">
-                      <ChevronRight />
-                      <span className="sr-only">Toggle</span>
-                    </SidebarMenuAction>
-                  </CollapsibleTrigger>
+                  <SidebarMenuAction
+                    aria-hidden="true"
+                    className={`transition-transform ${openStates[item.title] ? "rotate-90" : ""}`}
+                  >
+                    <ChevronRight />
+                    <span className="sr-only">Toggle</span>
+                  </SidebarMenuAction>
                   <CollapsibleContent>
                     <SidebarMenuSub>
                       {item.items.map((subItem) => (

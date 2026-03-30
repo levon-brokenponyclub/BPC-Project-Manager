@@ -26,12 +26,12 @@ import type { TaskRow, TaskStatus } from "../types"
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const statusIcon: Record<TaskStatus, React.ReactNode> = {
-  Todo: <IconCircleDashed className="size-3.5 text-muted-foreground" />,
-  Upcoming: <IconCircleDashed className="size-3.5 text-muted-foreground" />,
+  Todo: <IconCircleDashed className="size-3.5 text-foreground" />,
+  Upcoming: <IconCircleDashed className="size-3.5 text-foreground" />,
   "In Progress": <IconLoader className="size-3.5 text-blue-500" />,
   "In Review": <IconLoader className="size-3.5 text-yellow-500" />,
   "Awaiting Client": <IconClock className="size-3.5 text-orange-500" />,
-  "On Hold": <IconClock className="size-3.5 text-muted-foreground" />,
+  "On Hold": <IconClock className="size-3.5 text-foreground" />,
   Complete: (
     <IconCircleCheckFilled className="size-3.5 fill-green-500 dark:fill-green-400" />
   ),
@@ -106,7 +106,7 @@ export const columns: ColumnDef<TaskRow>[] = [
         {row.getCanExpand() ? (
           <button
             onClick={row.getToggleExpandedHandler()}
-            className="flex size-5 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted"
+            className="flex size-5 shrink-0 items-center justify-center rounded text-foreground hover:bg-muted"
           >
             {row.getIsExpanded() ? (
               <ChevronDown className="size-3.5" />
@@ -117,11 +117,7 @@ export const columns: ColumnDef<TaskRow>[] = [
         ) : (
           <span className="size-5 shrink-0" />
         )}
-        <span
-          className={`font-medium ${
-            row.depth > 0 ? "text-muted-foreground" : "text-foreground"
-          }`}
-        >
+        <span className="font-medium text-foreground">
           {row.original.title}
         </span>
       </div>
@@ -134,10 +130,7 @@ export const columns: ColumnDef<TaskRow>[] = [
     cell: ({ row }) => {
       const status = row.original.status
       return (
-        <Badge
-          variant="outline"
-          className="gap-1.5 px-1.5 text-muted-foreground"
-        >
+        <Badge variant="outline" className="gap-1.5 px-1.5 text-foreground">
           {statusIcon[status]}
           {status}
         </Badge>
@@ -156,7 +149,7 @@ export const columns: ColumnDef<TaskRow>[] = [
       </Button>
     ),
     cell: ({ row }) => (
-      <span className="text-muted-foreground tabular-nums">
+      <span className="text-foreground tabular-nums">
         {isStatusGroupRow(row.original)
           ? "—"
           : formatDate(row.original.created_at)}
@@ -175,7 +168,7 @@ export const columns: ColumnDef<TaskRow>[] = [
       </Button>
     ),
     cell: ({ row }) => (
-      <span className="text-muted-foreground tabular-nums">
+      <span className="text-foreground tabular-nums">
         {formatDate(row.original.due_date)}
       </span>
     ),
@@ -193,7 +186,7 @@ export const columns: ColumnDef<TaskRow>[] = [
     ),
     cell: ({ row }) => {
       const priority = row.original.priority
-      if (!priority) return <span className="text-muted-foreground">—</span>
+      if (!priority) return <span className="text-foreground">—</span>
       return (
         <Badge variant={priorityVariant[priority] ?? "outline"}>
           {priority}
@@ -212,7 +205,7 @@ export const columns: ColumnDef<TaskRow>[] = [
             <Button
               variant="ghost"
               size="icon"
-              className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
+              className="flex size-8 text-foreground data-[state=open]:bg-muted"
             >
               <IconDotsVertical className="size-4" />
               <span className="sr-only">Open menu</span>

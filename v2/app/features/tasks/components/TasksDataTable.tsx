@@ -152,7 +152,7 @@ export function TasksDataTable({
   })
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 px-6">
       {/* Toolbar */}
       <div className="flex items-center py-4">
         <Input

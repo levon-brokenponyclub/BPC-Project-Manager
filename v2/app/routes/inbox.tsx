@@ -24,6 +24,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar"
 import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
 import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog"
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -31,8 +38,16 @@ import {
 } from "~/components/ui/dropdown-menu"
 import { Label } from "~/components/ui/label"
 import { ScrollArea } from "~/components/ui/scroll-area"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select"
 import { SidebarInput } from "~/components/ui/sidebar"
 import { Switch } from "~/components/ui/switch"
+import { Textarea } from "~/components/ui/textarea"
 import { AppSidebar } from "~/components/app-sidebar"
 import { ModeToggle } from "~/components/mode-toggle"
 import {
@@ -368,6 +383,10 @@ export default function InboxPage() {
   )
   const [replyBody, setReplyBody] = React.useState("")
   const [sendingReply, setSendingReply] = React.useState(false)
+  const [composeOpen, setComposeOpen] = React.useState(false)
+  const [composeRecipientId, setComposeRecipientId] = React.useState("")
+  const [composeBody, setComposeBody] = React.useState("")
+  const [sendingCompose, setSendingCompose] = React.useState(false)
   const threadEndRef = React.useRef<HTMLDivElement>(null)
 
   const isSentView = inboxView === "sent"
@@ -571,11 +590,16 @@ export default function InboxPage() {
       return
     }
 
+    const actorEmail = selected.payload?.actor?.email ?? null
     const recipientId = isSentByUser(selected, currentUserId)
       ? selected.user_id
-      : selected.payload?.actor?.id
+      : (selected.payload?.actor?.id ??
+        (actorEmail
+          ? workspaceMembers.find((m) => m.email === actorEmail)?.user_id
+          : null))
     if (!recipientId) {
       setSendingReply(false)
+      toast.error("Could not determine recipient for this message")
       return
     }
 
@@ -618,6 +642,62 @@ export default function InboxPage() {
     }
   }
 
+  async function handleComposeSend() {
+    if (!composeRecipientId || !composeBody.trim() || !activeWorkspaceId) return
+
+    setSendingCompose(true)
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      setSendingCompose(false)
+      toast.error("You must be signed in to send a message")
+      return
+    }
+
+    const actor = {
+      id: session.user.id,
+      name: user.name || null,
+      email: user.email || null,
+      avatar_url: user.avatar || null,
+    }
+
+    const message = composeBody.trim()
+    const { data, error } = await supabase
+      .from("notifications")
+      .insert({
+        workspace_id: activeWorkspaceId,
+        user_id: composeRecipientId,
+        type: "message.direct",
+        payload: {
+          actor,
+          entity: { type: "message", name: message },
+        },
+      })
+      .select("*")
+      .single()
+
+    setSendingCompose(false)
+
+    if (error) {
+      toast.error("Failed to send message", { description: error.message })
+      return
+    }
+
+    if (data) {
+      const newItem = data as NotificationRow
+      setItems((prev) => [newItem, ...prev])
+      setSelected(newItem)
+      setThread([])
+    }
+
+    setComposeBody("")
+    setComposeRecipientId("")
+    setComposeOpen(false)
+    toast.success("Message sent")
+  }
+
   return (
     <SidebarProvider>
       <AppSidebar
@@ -642,15 +722,24 @@ export default function InboxPage() {
                         ? "Archived"
                         : "Inbox"}
                 </span>
-                <Label className="flex items-center gap-2 text-sm">
-                  <span>Unreads</span>
-                  <Switch
-                    className="shadow-none"
-                    checked={unreadOnly}
-                    disabled={isSentView}
-                    onCheckedChange={setUnreadOnly}
-                  />
-                </Label>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setComposeOpen(true)}
+                  >
+                    New Message
+                  </Button>
+                  <Label className="flex items-center gap-2 text-sm">
+                    <span>Unreads</span>
+                    <Switch
+                      className="shadow-none"
+                      checked={unreadOnly}
+                      disabled={isSentView}
+                      onCheckedChange={setUnreadOnly}
+                    />
+                  </Label>
+                </div>
               </div>
               <SidebarInput
                 placeholder="Type to search..."
@@ -896,6 +985,58 @@ export default function InboxPage() {
           </div>
         </div>
       </SidebarInset>
+
+      <Dialog open={composeOpen} onOpenChange={setComposeOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>New Message</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label>Recipient</Label>
+              <Select
+                value={composeRecipientId}
+                onValueChange={setComposeRecipientId}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select recipient" />
+                </SelectTrigger>
+                <SelectContent>
+                  {workspaceMembers
+                    .filter((m) => m.user_id !== currentUserId)
+                    .map((m) => (
+                      <SelectItem key={m.user_id} value={m.user_id}>
+                        {m.full_name ? `${m.full_name} (${m.email})` : m.email}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Message</Label>
+              <Textarea
+                value={composeBody}
+                onChange={(e) => setComposeBody(e.target.value)}
+                placeholder="Write your message..."
+                rows={5}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setComposeOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleComposeSend}
+              disabled={
+                !composeRecipientId || !composeBody.trim() || sendingCompose
+              }
+            >
+              {sendingCompose ? "Sending..." : "Send"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SidebarProvider>
   )
 }

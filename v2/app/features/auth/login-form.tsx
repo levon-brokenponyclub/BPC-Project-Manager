@@ -57,18 +57,9 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <div className="flex items-start gap-3">
-            <img
-              src="/BPC-Logo.jpg"
-              alt="Broken Pony Club"
-              className="h-10 w-10 rounded object-cover"
-            />
-            <div className="space-y-1">
-              <CardTitle>Broken Pony Club</CardTitle>
-              <CardDescription>
-                Enter your email below to login to your account
-              </CardDescription>
-            </div>
+          <div className="space-y-1">
+            <CardTitle>Broken Pony Club</CardTitle>
+            <CardDescription>Project Management System</CardDescription>
           </div>
         </CardHeader>
         <CardContent>
@@ -83,6 +74,7 @@ export function LoginForm({
                   placeholder="m@example.com"
                   required
                   autoComplete="email"
+                  className="h-10 rounded"
                 />
               </Field>
               <Field>
@@ -95,11 +87,16 @@ export function LoginForm({
                   type="password"
                   required
                   autoComplete="current-password"
+                  className="h-10 rounded"
                 />
               </Field>
               {error && <FieldError>{error}</FieldError>}
               <Field>
-                <Button type="submit" disabled={pending}>
+                <Button
+                  type="submit"
+                  disabled={pending}
+                  className="h-10 rounded"
+                >
                   {pending ? "Signing in…" : "Login"}
                 </Button>
                 <FieldDescription className="text-center">

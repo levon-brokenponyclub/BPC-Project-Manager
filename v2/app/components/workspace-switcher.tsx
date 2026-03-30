@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Check, ChevronsUpDown, GalleryVerticalEndIcon } from "lucide-react"
+import { Check, ChevronsUpDown } from "lucide-react"
 import { useLocation, useNavigate } from "react-router"
 
 import {
@@ -45,8 +45,12 @@ export function WorkspaceSwitcher({
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <GalleryVerticalEndIcon className="size-4" />
+              <div className="flex aspect-square size-10 items-center justify-center rounded">
+                <img
+                  src="/BPC-Logo.jpg"
+                  alt="Workspace"
+                  className="size-8 rounded object-cover"
+                />
               </div>
               <div className="flex flex-col gap-0.5 leading-none">
                 <span className="font-medium">
