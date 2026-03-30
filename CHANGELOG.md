@@ -4,6 +4,83 @@ All notable changes to the Broken Pony Club Client Portal are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+---
+
+## [2.0.0] - 2026-03-30
+
+### ✅ Added — V2 Platform Launch
+
+Full rebuild of the BPC Project Management portal using React Router 7, shadcn/ui, TailwindCSS v4, and Supabase client loaders. V2 runs in parallel with V1 at `/v2/` and replaces V1 for production use.
+
+#### Auth & Workspace
+
+- Multi-workspace support via `?ws=<id>` query param on all routes
+- Workspace switcher in sidebar header
+- Role-based access model: `admin`, `member`, `client`, `viewer`
+- Viewer role redirect — all non-dashboard routes redirect to sprint dashboard
+- Admin-only Settings visibility in sidebar
+- Magic-link invite flow via Supabase Edge Function with robust delivery detection
+
+#### Tasks
+
+- Full task list with TanStack React Table
+- Grouped by status (Todo / Upcoming / In Progress / In Review / Awaiting Client / On Hold / Complete / Cancelled)
+- Groups expanded by default
+- Default sort: Date Added descending
+- Show/Hide Completed toggle — hidden by default — with header control and count badge
+- Filter by workstream parent via `?parent=<task_id>`
+- Breadcrumb updates to show active workstream name when filtered
+- Task detail side panel: editable title, status, priority, due date, description, estimated hours, assignee, billable, client visible, blocked flags
+- Description renders URLs as clickable hyperlinks
+- Subtask list in detail panel right sidebar
+- Delete task with cascade on subtasks
+- Date Added column added to table
+- Assignee column removed from table
+- Pagination removed — all tasks render in single table view
+
+#### Inbox
+
+- Received messages list with unread tracking and read-on-open behaviour
+- Sent mailbox view (`/inbox?box=sent`)
+- Pinned mailbox view (`/inbox?box=pinned`)
+- Archived mailbox view (`/inbox?box=archived`)
+- Sidebar Inbox item with collapsible Sent / Pinned / Archived submenus
+- Per-message action menu: Pin / Unpin, Archive / Move to Inbox, Delete
+- Pin and Archive state persisted in notification `payload.inbox_meta` — no schema migration required
+- Thread view with full reply chain
+- Reply composer with Cmd+Enter shortcut
+- Realtime updates via Supabase channel subscription
+- Unread count badge on Inbox nav item
+- Preview card layout: sender + timestamp row, bold type label, two-line clamped body
+
+#### Sprint Dashboard
+
+- APAC Web Fonts Compliance Remediation sprint dashboard at `/sprint-dashboard`
+- KPI cards: Total Tasks, Complete, In Progress, Blocked
+- Completion progress bar
+- Tasks by Status bar chart
+- Tasks by Priority bar chart
+- Seed data: 6 workstreams, 52 site tasks (36 production, 16 development)
+
+#### Settings
+
+- Left-tab layout: Team tab and Invite tab
+- Role editing per member with draft state and explicit Save / Cancel flow
+- Invite card with magic-link generation and copy-to-clipboard
+
+#### Sidebar
+
+- APAC project sub-items: Production Remediation Rollout, Development Remediation Rollout
+- Projects, Tasks, and Settings default open
+- Workspace-scoped nav — `?ws=` appended to all links automatically
+- Viewer-only nav mode
+
+#### DB Migrations
+
+- `20260330123000_workspace_users_role_check.sql` — normalises and enforces allowed roles (`admin`, `member`, `client`, `viewer`)
+
+---
+
 ## [1.11.0] - 2026-03-10
 
 ### ✅ Changed

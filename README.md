@@ -184,6 +184,19 @@ Roles are stored in `workspace_users.role`.
 
 See [CHANGELOG.md](CHANGELOG.md) for version history.
 
+## UI Refactor Guides
+
+Shadcn migration planning docs are available in:
+
+- [docs/shadcn-refactor/01-phased-project-plan.md](docs/shadcn-refactor/01-phased-project-plan.md)
+- [docs/shadcn-refactor/02-action-items-checklist.md](docs/shadcn-refactor/02-action-items-checklist.md)
+- [docs/shadcn-refactor/03-component-mapping-and-guides.md](docs/shadcn-refactor/03-component-mapping-and-guides.md)
+- [docs/shadcn-refactor/04-sprint-plan.md](docs/shadcn-refactor/04-sprint-plan.md)
+- [docs/shadcn-refactor/05-phase1-component-migration-matrix.md](docs/shadcn-refactor/05-phase1-component-migration-matrix.md)
+- [docs/shadcn-refactor/06-v2-parallel-build-plan.md](docs/shadcn-refactor/06-v2-parallel-build-plan.md)
+- [docs/shadcn-refactor/07-cli-prompt-answer-sheet.md](docs/shadcn-refactor/07-cli-prompt-answer-sheet.md)
+- [docs/shadcn-refactor/08-v2-route-map-and-folder-structure.md](docs/shadcn-refactor/08-v2-route-map-and-folder-structure.md)
+
 ---
 
 ## License
