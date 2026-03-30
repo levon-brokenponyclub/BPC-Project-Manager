@@ -55,14 +55,14 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
-        <CardHeader>
-          <div className="space-y-1">
+      <Card className="gap-6 rounded p-8">
+        <CardHeader className="px-0">
+          <div className="space-y-1 text-center">
             <CardTitle>Broken Pony Club</CardTitle>
             <CardDescription>Project Management System</CardDescription>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0">
           <form onSubmit={handleSubmit}>
             <FieldGroup>
               <Field>
@@ -71,7 +71,7 @@ export function LoginForm({
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="email@example.com"
                   required
                   autoComplete="email"
                   className="h-10 rounded"

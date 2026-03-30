@@ -2,6 +2,19 @@ import * as React from "react"
 import { useNavigate, type ClientLoaderFunctionArgs } from "react-router"
 
 import { Button } from "~/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card"
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "~/components/ui/field"
 import { Input } from "~/components/ui/input"
 import { supabase } from "~/lib/supabase"
 
@@ -124,41 +137,69 @@ export default function AuthInvitePage() {
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-card px-4 py-8">
-      <div className="w-full max-w-md rounded border bg-card p-6">
-        <h1 className="text-xl font-semibold">Accept Invite</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Set your password to access your workspace.
-        </p>
+    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
+      <div className="w-full max-w-sm">
+        <Card className="gap-6 rounded p-8">
+          <CardHeader className="px-0">
+            <div className="space-y-1 text-center">
+              <CardTitle>Accept Invite</CardTitle>
+              <CardDescription>
+                Set your password to access your workspace.
+              </CardDescription>
+            </div>
+          </CardHeader>
 
-        {error ? (
-          <p className="mt-4 text-sm text-destructive">{error}</p>
-        ) : null}
-        {success ? (
-          <p className="mt-4 text-sm text-green-600">{success}</p>
-        ) : null}
+          <CardContent className="px-0">
+            {error ? <FieldError>{error}</FieldError> : null}
+            {success ? (
+              <p className="mt-4 text-sm text-green-600">{success}</p>
+            ) : null}
 
-        {sessionChecked && !error ? (
-          <form className="mt-6 space-y-4" onSubmit={handleSetPassword}>
-            <Input
-              type="password"
-              required
-              placeholder="New password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <Input
-              type="password"
-              required
-              placeholder="Confirm password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-            />
-            <Button className="w-full" type="submit" disabled={loading}>
-              {loading ? "Setting..." : "Set Password"}
-            </Button>
-          </form>
-        ) : null}
+            {sessionChecked && !error ? (
+              <form className="mt-4" onSubmit={handleSetPassword}>
+                <FieldGroup>
+                  <Field>
+                    <FieldLabel htmlFor="new-password">New password</FieldLabel>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      required
+                      placeholder="New password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="h-10 rounded"
+                    />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="confirm-password">
+                      Confirm password
+                    </FieldLabel>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      required
+                      placeholder="Confirm password"
+                      value={confirm}
+                      onChange={(e) => setConfirm(e.target.value)}
+                      className="h-10 rounded"
+                    />
+                  </Field>
+
+                  <Field>
+                    <Button
+                      className="h-10 rounded"
+                      type="submit"
+                      disabled={loading}
+                    >
+                      {loading ? "Setting..." : "Set Password"}
+                    </Button>
+                  </Field>
+                </FieldGroup>
+              </form>
+            ) : null}
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
