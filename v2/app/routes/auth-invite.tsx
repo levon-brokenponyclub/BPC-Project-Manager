@@ -135,89 +135,89 @@ export default function AuthInvitePage() {
 
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-        <div className="w-full max-w-sm">
-          <Card className="gap-6 rounded p-8">
-            <CardHeader className="px-0">
-              <div className="space-y-1 text-center">
-                <img
-                  src="/BPC-Logo.jpg"
-                  alt="Broken Pony Club"
-                  className="mx-auto mb-3 h-12 w-12 rounded object-cover"
-                />
-                <CardTitle>Broken Pony Club</CardTitle>
-                <CardDescription>
-                  Set your password to access your workspace.
-                </CardDescription>
-              </div>
-            </CardHeader>
+      <div className="w-full max-w-sm">
+        <Card className="gap-6 rounded p-8">
+          <CardHeader className="px-0">
+            <div className="space-y-1 text-center">
+              <img
+                src="/BPC-Logo.jpg"
+                alt="Broken Pony Club"
+                className="mx-auto mb-3 h-12 w-12 rounded object-cover"
+              />
+              <CardTitle>Broken Pony Club</CardTitle>
+              <CardDescription>
+                Set your password to access your workspace.
+              </CardDescription>
+            </div>
+          </CardHeader>
 
-            <CardContent className="px-0">
-              {error ? <FieldError>{error}</FieldError> : null}
-              {success ? (
-                <p className="mt-4 text-sm text-green-600">{success}</p>
-              ) : null}
+          <CardContent className="px-0">
+            {error ? <FieldError>{error}</FieldError> : null}
+            {success ? (
+              <p className="mt-4 text-sm text-green-600">{success}</p>
+            ) : null}
 
-              {sessionChecked && !error ? (
-                <form className="mt-4" onSubmit={handleSetPassword}>
-                  <FieldGroup>
-                    <Field>
-                      <Input
-                        id="new-password"
-                        type="password"
-                        required
-                        placeholder="New password"
-                        aria-label="New password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="h-10 rounded"
-                      />
-                    </Field>
+            {sessionChecked && !error ? (
+              <form className="mt-4" onSubmit={handleSetPassword}>
+                <FieldGroup>
+                  <Field>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      required
+                      placeholder="New password"
+                      aria-label="New password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="h-10 rounded"
+                    />
+                  </Field>
 
-                    <Field>
-                      <Input
-                        id="confirm-password"
-                        type="password"
-                        required
-                        placeholder="Confirm password"
-                        aria-label="Confirm password"
-                        value={confirm}
-                        onChange={(e) => setConfirm(e.target.value)}
-                        className="h-10 rounded"
-                      />
-                    </Field>
+                  <Field>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      required
+                      placeholder="Confirm password"
+                      aria-label="Confirm password"
+                      value={confirm}
+                      onChange={(e) => setConfirm(e.target.value)}
+                      className="h-10 rounded"
+                    />
+                  </Field>
 
-                    <Field>
-                      <Button
-                        className="h-10 rounded"
-                        type="submit"
-                        disabled={loading}
-                      >
-                        {loading ? "Setting..." : "Set Password"}
-                      </Button>
-                      <div className="space-y-2 pt-3">
-                        <p className="text-center text-sm font-medium">
-                          Select theme
-                        </p>
-                        <div className="flex items-center justify-center gap-3 text-muted-foreground">
-                          <Sun className="size-4" />
-                          <Switch
-                            id="invite-theme-switch"
-                            checked={resolvedTheme === "dark"}
-                            onCheckedChange={(checked) =>
-                              setTheme(checked ? "dark" : "light")
-                            }
-                            aria-label="Toggle light and dark mode"
-                          />
-                          <Moon className="size-4" />
-                        </div>
+                  <Field>
+                    <Button
+                      className="h-10 rounded"
+                      type="submit"
+                      disabled={loading}
+                    >
+                      {loading ? "Setting..." : "Set Password"}
+                    </Button>
+                    <div className="space-y-2 pt-3">
+                      <p className="text-center text-sm font-medium">
+                        Select theme
+                      </p>
+                      <div className="flex items-center justify-center gap-3 text-muted-foreground">
+                        <Sun className="size-4" />
+                        <Switch
+                          id="invite-theme-switch"
+                          checked={resolvedTheme === "dark"}
+                          onCheckedChange={(checked) =>
+                            setTheme(checked ? "dark" : "light")
+                          }
+                          aria-label="Toggle light and dark mode"
+                        />
+                        <Moon className="size-4" />
                       </div>
-                    </Field>
-                  </FieldGroup>
-                </form>
-              ) : null}
-            </CardContent>
-          </Card>
-        </div>
+                    </div>
+                  </Field>
+                </FieldGroup>
+              </form>
+            ) : null}
+          </CardContent>
+        </Card>
       </div>
+    </div>
   )
 }
