@@ -30,6 +30,7 @@ export function NavMain({
     items?: {
       title: string
       url: string
+      badge?: number
     }[]
   }[]
 }) {
@@ -99,8 +100,16 @@ export function NavMain({
                       {item.items.map((subItem) => (
                         <SidebarMenuSubItem key={subItem.title}>
                           <SidebarMenuSubButton asChild>
-                            <Link to={withWs(subItem.url)}>
+                            <Link
+                              to={withWs(subItem.url)}
+                              className="flex w-full items-center justify-between"
+                            >
                               <span>{subItem.title}</span>
+                              {subItem.badge != null && subItem.badge > 0 && (
+                                <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-semibold text-primary-foreground">
+                                  {subItem.badge > 99 ? "99+" : subItem.badge}
+                                </span>
+                              )}
                             </Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>

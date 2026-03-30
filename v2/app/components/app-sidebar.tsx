@@ -114,6 +114,63 @@ export function AppSidebar({
     { id: string; title: string }[]
   >([])
 
+  // Per-category unread counts for Activity sub-items
+  const [activityCategoryCounts, setActivityCategoryCounts] = React.useState<
+    Record<string, number>
+  >({})
+
+  React.useEffect(() => {
+    if (!activeWorkspaceId) return
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return
+      supabase
+        .from("notifications")
+        .select("type")
+        .eq("workspace_id", activeWorkspaceId)
+        .eq("user_id", session.user.id)
+        .is("read_at", null)
+        .not("type", "like", "message.%")
+        .then(({ data }) => {
+          const counts: Record<string, number> = {}
+          for (const row of data ?? []) {
+            counts[row.type] = (counts[row.type] ?? 0) + 1
+          }
+          // Map raw types to category keys
+          const categoryMap: Record<string, string[]> = {
+            tasks: [
+              "task.created",
+              "task.deleted",
+              "task.status_changed",
+              "task.priority_changed",
+              "task.due_date_changed",
+              "task.assignee_added",
+              "task.assignee_removed",
+              "task.name_changed",
+              "task.description_changed",
+            ],
+            comments: ["comment.created", "comment.assigned"],
+            attachments: ["attachment.added", "attachment.removed"],
+            assets: [
+              "asset.created",
+              "asset.updated",
+              "asset.deleted",
+              "asset.file_uploaded",
+            ],
+            members: [
+              "workspace.invite_sent",
+              "workspace.member_joined",
+              "workspace.member_removed",
+            ],
+          }
+          const catCounts: Record<string, number> = {}
+          for (const [cat, types] of Object.entries(categoryMap)) {
+            catCounts[cat] = types.reduce((sum, t) => sum + (counts[t] ?? 0), 0)
+          }
+          setActivityCategoryCounts(catCounts)
+        })
+    })
+  }, [activeWorkspaceId])
+
   React.useEffect(() => {
     if (!activeWorkspaceId) return
     supabase
@@ -163,8 +220,23 @@ export function AppSidebar({
     : navMain
         .filter((item) => item.title !== "Settings" || isAdmin)
         .map((item) => {
-          if (item.title === "Activity")
-            return { ...item, badge: activityUnreadCount }
+          if (item.title === "Activity") {
+            const catKeyMap: Record<string, string> = {
+              Tasks: "tasks",
+              Comments: "comments",
+              Attachments: "attachments",
+              Assets: "assets",
+              Members: "members",
+            }
+            return {
+              ...item,
+              badge: activityUnreadCount,
+              items: item.items?.map((sub) => ({
+                ...sub,
+                badge: activityCategoryCounts[catKeyMap[sub.title] ?? ""] ?? 0,
+              })),
+            }
+          }
 
           if (item.title === "Projects") {
             // Use bare paths — nav-main.withWs() appends ?ws= from current URL

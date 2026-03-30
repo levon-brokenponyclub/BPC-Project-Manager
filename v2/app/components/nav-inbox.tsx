@@ -288,7 +288,17 @@ export function NavInbox({
             <SidebarMenuSub>
               <SidebarMenuSubItem>
                 <SidebarMenuSubButton asChild>
-                  <Link to={inboxHref}>Inbox</Link>
+                  <Link
+                    to={inboxHref}
+                    className="flex w-full items-center justify-between"
+                  >
+                    <span>Inbox</span>
+                    {unreadCount > 0 && (
+                      <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-semibold text-primary-foreground">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
+                  </Link>
                 </SidebarMenuSubButton>
               </SidebarMenuSubItem>
               <SidebarMenuSubItem>

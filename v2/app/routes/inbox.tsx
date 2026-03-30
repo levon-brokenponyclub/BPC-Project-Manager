@@ -664,34 +664,60 @@ export default function InboxPage() {
     }
 
     const message = composeBody.trim()
-    const { data, error } = await supabase
+    const payload = {
+      actor,
+      entity: { type: "message", name: message },
+    }
+
+    // Insert notification for recipient
+    const { error: recipientError } = await supabase
       .from("notifications")
       .insert({
         workspace_id: activeWorkspaceId,
         user_id: composeRecipientId,
         type: "message.direct",
-        payload: {
-          actor,
-          entity: { type: "message", name: message },
-        },
+        payload,
       })
-      .select("*")
-      .single()
 
-    setSendingCompose(false)
-
-    if (error) {
-      toast.error("Failed to send message", { description: error.message })
+    if (recipientError) {
+      setSendingCompose(false)
+      toast.error("Failed to send message", {
+        description: recipientError.message,
+      })
       return
     }
 
-    if (data) {
-      const newItem = data as NotificationRow
-      setItems((prev) => [newItem, ...prev])
-      setSelected(newItem)
-      setThread([])
+    // Insert a sent copy for the sender so it appears in their Sent view
+    const sentCopyId = crypto.randomUUID()
+    const now = new Date().toISOString()
+    const { error: senderError } = await supabase.from("notifications").insert({
+      workspace_id: activeWorkspaceId,
+      user_id: session.user.id,
+      type: "message.direct",
+      payload,
+      read_at: now,
+    })
+
+    setSendingCompose(false)
+
+    if (senderError) {
+      // Sent copy failed — message still delivered, just warn
+      console.warn("[inbox] sent copy insert failed:", senderError.message)
     }
 
+    // Optimistically add the sent copy to the local list
+    const optimisticSent: NotificationRow = {
+      id: sentCopyId,
+      workspace_id: activeWorkspaceId,
+      user_id: session.user.id,
+      type: "message.direct",
+      payload,
+      read_at: now,
+      created_at: now,
+    }
+    setItems((prev) => [optimisticSent, ...prev])
+    setSelected(optimisticSent)
+    setThread([])
     setComposeBody("")
     setComposeRecipientId("")
     setComposeOpen(false)
@@ -713,33 +739,37 @@ export default function InboxPage() {
             {/* Panel header */}
             <div className="flex flex-col gap-3.5 border-b p-4">
               <div className="flex w-full items-center justify-between">
-                <span className="text-base font-medium text-foreground">
-                  {isSentView
-                    ? "Sent"
-                    : isPinnedView
-                      ? "Pinned"
-                      : isArchivedView
-                        ? "Archived"
-                        : "Inbox"}
-                </span>
                 <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setComposeOpen(true)}
-                  >
-                    New Message
-                  </Button>
-                  <Label className="flex items-center gap-2 text-sm">
-                    <span>Unreads</span>
-                    <Switch
-                      className="shadow-none"
-                      checked={unreadOnly}
-                      disabled={isSentView}
-                      onCheckedChange={setUnreadOnly}
-                    />
-                  </Label>
+                  <span className="text-base font-medium text-foreground">
+                    {isSentView
+                      ? "Sent"
+                      : isPinnedView
+                        ? "Pinned"
+                        : isArchivedView
+                          ? "Archived"
+                          : "Inbox"}
+                  </span>
+                  {!isSentView && unreadCount > 0 && (
+                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] leading-none font-semibold text-primary-foreground">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
+                  {filtered.length > 0 &&
+                    (isSentView || isPinnedView || isArchivedView) && (
+                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 text-[10px] leading-none font-semibold text-muted-foreground">
+                        {filtered.length}
+                      </span>
+                    )}
                 </div>
+                <Label className="flex items-center gap-2 text-sm">
+                  <span>Unreads</span>
+                  <Switch
+                    className="shadow-none"
+                    checked={unreadOnly}
+                    disabled={isSentView}
+                    onCheckedChange={setUnreadOnly}
+                  />
+                </Label>
               </div>
               <SidebarInput
                 placeholder="Type to search..."
@@ -880,6 +910,13 @@ export default function InboxPage() {
                 })
               )}
             </ScrollArea>
+
+            {/* Fixed footer — New Message button */}
+            <div className="shrink-0 border-t p-3">
+              <Button className="w-full" onClick={() => setComposeOpen(true)}>
+                New Message
+              </Button>
+            </div>
           </div>
 
           {/* ── Right panel — detail ── */}

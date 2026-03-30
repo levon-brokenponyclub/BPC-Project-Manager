@@ -70,18 +70,124 @@ interface WorkspaceUser {
 
 interface TaskActivityEntry {
   id: string
+  task_id: string
   type: string
   created_at: string
-  payload?: {
-    actor?: {
-      name?: string | null
-      email?: string | null
-    }
-    entity?: {
-      id?: string | null
-      name?: string | null
-    }
+  payload?: Record<string, unknown>
+}
+
+// ─── Activity helpers (ported from V1 TaskDrawer) ──────────────────────────
+
+function readStr(
+  record: Record<string, unknown>,
+  keys: readonly string[]
+): string | null {
+  for (const key of keys) {
+    const v = record[key]
+    if (typeof v === "string" && v.trim().length > 0) return v.trim()
   }
+  return null
+}
+
+function toRec(value: unknown): Record<string, unknown> {
+  return typeof value === "object" && value !== null
+    ? (value as Record<string, unknown>)
+    : {}
+}
+
+function formatEventAction(
+  type: string,
+  payload: Record<string, unknown>
+): string {
+  const field = readStr(payload, ["field", "changed_field"])
+  const toValue = readStr(payload, ["to", "new", "next"])
+  const fromValue = readStr(payload, ["from", "old", "previous"])
+  const assigneeName = readStr(payload, ["assignee_name", "assigneeName"])
+
+  if (type === "task_created") return "created the task."
+  if (type === "task_deleted") return "deleted the task."
+
+  if (type === "status_changed" || field === "status") {
+    if (fromValue && toValue)
+      return `changed the status from ${fromValue} to ${toValue}.`
+    return toValue ? `changed the status to ${toValue}.` : "changed the status."
+  }
+
+  if (field === "assignee" || field === "assignee_user_id") {
+    const next = assigneeName ?? toValue
+    return next ? `changed the assignee to ${next}.` : "changed the assignee."
+  }
+
+  if (field === "due_date" || field === "dueDate") {
+    return toValue
+      ? `updated the due date to ${new Date(toValue).toLocaleDateString()}.`
+      : "updated the due date."
+  }
+
+  if (field === "title") {
+    return toValue ? `renamed the task to "${toValue}".` : "updated the title."
+  }
+
+  if (field === "priority") {
+    return toValue
+      ? `changed the priority to ${toValue}.`
+      : "changed the priority."
+  }
+
+  if (type === "task_updated") {
+    if (fromValue && toValue && fromValue !== toValue)
+      return `updated the task from ${fromValue} to ${toValue}.`
+    return "updated the task."
+  }
+
+  if (type === "comment_added" || type === "comment.created") {
+    const body =
+      readStr(toRec(payload.entity), ["name"]) ??
+      readStr(payload, ["body", "comment"])
+    return body ?? "posted a comment."
+  }
+
+  return type
+    .replace(/[._]/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .concat(".")
+}
+
+function resolveActivityActor(
+  payload: Record<string, unknown>,
+  workspaceUsers: WorkspaceUser[]
+): string {
+  const actorRec = toRec(payload.actor)
+  // Check embedded actor object first
+  const fromActor =
+    readStr(actorRec, ["name", "full_name"]) ?? readStr(actorRec, ["email"])
+  if (fromActor) return fromActor
+  // Check top-level payload keys
+  const fromPayload =
+    readStr(payload, ["actor_name", "user_name", "by", "name"]) ??
+    readStr(payload, ["actor_email", "email"])
+  if (fromPayload) return fromPayload
+  // Resolve by user_id from workspace list
+  const userId =
+    readStr(actorRec, ["id"]) ??
+    readStr(payload, ["actor_user_id", "user_id", "created_by", "changed_by"])
+  if (userId) {
+    const member = workspaceUsers.find((wu) => wu.user_id === userId)
+    if (member) return member.email
+  }
+  return "System"
+}
+
+function relativeActivityTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diff / 60_000)
+  if (mins < 1) return "Just now"
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  if (days < 7) return `${days}d ago`
+  return new Date(iso).toLocaleDateString()
 }
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
@@ -359,16 +465,14 @@ function TaskDetail({
 
   React.useEffect(() => {
     supabase
-      .from("notifications")
-      .select("id,type,created_at,payload")
-      .eq("workspace_id", task.workspace_id)
-      .in("type", ["comment.created", "comment.assigned", "message.mention"])
-      .filter("payload->entity->>id", "eq", task.id)
+      .from("task_activity")
+      .select("id,task_id,type,created_at,payload")
+      .eq("task_id", task.id)
       .order("created_at", { ascending: true })
       .then(({ data }) => {
         setActivityItems((data ?? []) as TaskActivityEntry[])
       })
-  }, [task.id, task.workspace_id])
+  }, [task.id])
 
   async function handleSave() {
     setSaving(true)
@@ -405,6 +509,84 @@ function TaskDetail({
         ? (workspaceUsers.find((wu) => wu.user_id === resolvedAssigneeId)
             ?.email ?? null)
         : null
+
+      // Log activity entries for changed fields
+      const {
+        data: { session: saveSession },
+      } = await supabase.auth.getSession()
+      if (saveSession) {
+        const actor = {
+          id: saveSession.user.id,
+          name: saveSession.user.user_metadata?.full_name ?? null,
+          email: saveSession.user.email ?? null,
+        }
+        const activityLogs: Array<Record<string, unknown>> = []
+        if (draft.status !== task.status) {
+          activityLogs.push({
+            task_id: task.id,
+            type: "status_changed",
+            payload: {
+              actor,
+              field: "status",
+              from: task.status,
+              to: draft.status,
+            },
+          })
+        }
+        if (draft.priority !== (task.priority ?? "Medium")) {
+          activityLogs.push({
+            task_id: task.id,
+            type: "task_updated",
+            payload: {
+              actor,
+              field: "priority",
+              from: task.priority,
+              to: draft.priority,
+            },
+          })
+        }
+        if (draft.title !== task.title) {
+          activityLogs.push({
+            task_id: task.id,
+            type: "task_updated",
+            payload: {
+              actor,
+              field: "title",
+              from: task.title,
+              to: draft.title,
+            },
+          })
+        }
+        if (draft.assignee_user_id !== (task.assignee_user_id ?? "")) {
+          activityLogs.push({
+            task_id: task.id,
+            type: "task_updated",
+            payload: {
+              actor,
+              field: "assignee",
+              to:
+                updatedAssigneeEmail ??
+                (resolvedAssigneeId ? "someone" : "unassigned"),
+            },
+          })
+        }
+        if (activityLogs.length === 0) {
+          activityLogs.push({
+            task_id: task.id,
+            type: "task_updated",
+            payload: { actor },
+          })
+        }
+        await supabase.from("task_activity").insert(activityLogs)
+        const { data: freshActivity } = await supabase
+          .from("task_activity")
+          .select("id,task_id,type,created_at,payload")
+          .eq("task_id", task.id)
+          .order("created_at", { ascending: true })
+        if (freshActivity)
+          setActivityItems(freshActivity as TaskActivityEntry[])
+      }
+
       onSaved({
         ...task,
         title: draft.title,
@@ -433,6 +615,32 @@ function TaskDetail({
     if (error) {
       toast.error("Failed to update status")
     } else {
+      const {
+        data: { session: cs },
+      } = await supabase.auth.getSession()
+      if (cs) {
+        await supabase.from("task_activity").insert({
+          task_id: task.id,
+          type: "status_changed",
+          payload: {
+            actor: {
+              id: cs.user.id,
+              name: cs.user.user_metadata?.full_name ?? null,
+              email: cs.user.email ?? null,
+            },
+            field: "status",
+            from: task.status,
+            to: "Complete",
+          },
+        })
+        const { data: freshActivity } = await supabase
+          .from("task_activity")
+          .select("id,task_id,type,created_at,payload")
+          .eq("task_id", task.id)
+          .order("created_at", { ascending: true })
+        if (freshActivity)
+          setActivityItems(freshActivity as TaskActivityEntry[])
+      }
       setDraft((d) => ({ ...d, status: "Complete" }))
       onSaved({ ...task, status: "Complete" })
       revalidate()
@@ -479,10 +687,9 @@ function TaskDetail({
 
     const message = activityBody.trim()
     const { data, error } = await supabase
-      .from("notifications")
+      .from("task_activity")
       .insert({
-        workspace_id: task.workspace_id,
-        user_id: session.user.id,
+        task_id: task.id,
         type: "comment.created",
         payload: {
           actor,
@@ -493,7 +700,7 @@ function TaskDetail({
           },
         },
       })
-      .select("id,type,created_at,payload")
+      .select("id,task_id,type,created_at,payload")
       .single()
 
     setSendingActivity(false)
@@ -794,35 +1001,85 @@ function TaskDetail({
                     </div>
                   </div>
 
-                  <div className="overflow-hidden rounded-md border">
+                  <div className="space-y-0">
                     {activityItems.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+                      <div className="flex flex-col items-center justify-center gap-2 rounded-md border py-8 text-center">
                         <IconMessage className="size-6 text-muted-foreground opacity-40" />
                         <p className="text-sm text-muted-foreground">
                           No activity yet
                         </p>
                       </div>
                     ) : (
-                      activityItems.map((entry) => (
-                        <div
-                          key={entry.id}
-                          className="border-b px-3 py-2 text-sm last:border-b-0"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="font-medium text-foreground">
-                              {entry.payload?.actor?.name ??
-                                entry.payload?.actor?.email ??
-                                "System"}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {formatDate(entry.created_at)}
-                            </span>
-                          </div>
-                          <p className="mt-1 whitespace-pre-wrap text-foreground">
-                            {entry.payload?.entity?.name ?? "Activity"}
-                          </p>
-                        </div>
-                      ))
+                      <ul className="space-y-3">
+                        {activityItems.map((entry, idx) => {
+                          const payload = toRec(entry.payload)
+                          const actorName = resolveActivityActor(
+                            payload,
+                            workspaceUsers
+                          )
+                          const isComment =
+                            entry.type === "comment_added" ||
+                            entry.type === "comment.created"
+                          const commentBody = isComment
+                            ? (readStr(toRec(payload.entity), ["name"]) ??
+                              readStr(payload, ["body", "comment"]))
+                            : null
+                          const actionText = isComment
+                            ? null
+                            : formatEventAction(entry.type, payload)
+                          const isLast = idx === activityItems.length - 1
+
+                          return (
+                            <li
+                              key={entry.id}
+                              className="relative grid grid-cols-[28px_minmax(0,1fr)_auto] items-start gap-2"
+                            >
+                              {/* connector line */}
+                              <div className="relative flex justify-center">
+                                {!isLast && (
+                                  <span className="absolute top-3 bottom-[-12px] w-px bg-border" />
+                                )}
+                                {isComment ? (
+                                  <span className="relative z-10 mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-muted-foreground">
+                                    {actorName.charAt(0).toUpperCase()}
+                                  </span>
+                                ) : (
+                                  <span className="relative z-10 mt-2 h-2 w-2 rounded-full border border-border bg-muted-foreground/40" />
+                                )}
+                              </div>
+
+                              {isComment ? (
+                                <div className="rounded-lg border bg-muted/30 px-3 py-2">
+                                  <p className="text-sm">
+                                    <span className="font-semibold text-foreground">
+                                      {actorName}
+                                    </span>{" "}
+                                    <span className="text-muted-foreground">
+                                      posted a note
+                                    </span>
+                                  </p>
+                                  <p className="mt-1 text-sm whitespace-pre-wrap text-foreground">
+                                    {commentBody}
+                                  </p>
+                                </div>
+                              ) : (
+                                <p className="pt-0.5 text-sm leading-6 text-foreground">
+                                  <span className="font-semibold">
+                                    {actorName}
+                                  </span>{" "}
+                                  <span className="text-muted-foreground">
+                                    {actionText}
+                                  </span>
+                                </p>
+                              )}
+
+                              <time className="pt-0.5 text-xs text-muted-foreground">
+                                {relativeActivityTime(entry.created_at)}
+                              </time>
+                            </li>
+                          )
+                        })}
+                      </ul>
                     )}
                   </div>
                 </div>

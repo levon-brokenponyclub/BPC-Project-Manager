@@ -23,13 +23,24 @@ import {
 } from "~/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar"
 import { Badge } from "~/components/ui/badge"
+import { Button } from "~/components/ui/button"
 import { Label } from "~/components/ui/label"
 import { ScrollArea } from "~/components/ui/scroll-area"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select"
 import { Switch } from "~/components/ui/switch"
+import { Textarea } from "~/components/ui/textarea"
 import { AppSidebar } from "~/components/app-sidebar"
 import { ModeToggle } from "~/components/mode-toggle"
 import { supabase } from "~/lib/supabase"
 import { cn } from "~/lib/utils"
+import { toast } from "sonner"
+import type { TaskRow, TaskStatus, TaskPriority } from "~/features/tasks/types"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -51,6 +62,39 @@ interface NotificationRow {
   read_at: string | null
   created_at: string
 }
+
+interface WorkspaceUserRow {
+  user_id: string
+  email: string
+  full_name?: string | null
+}
+
+const TASK_TYPES = new Set([
+  "task.created",
+  "task.deleted",
+  "task.status_changed",
+  "task.priority_changed",
+  "task.due_date_changed",
+  "task.assignee_added",
+  "task.assignee_removed",
+  "task.name_changed",
+  "task.description_changed",
+  "comment.created",
+  "comment.assigned",
+])
+
+const TASK_STATUSES: TaskStatus[] = [
+  "Todo",
+  "Upcoming",
+  "In Progress",
+  "In Review",
+  "Awaiting Client",
+  "On Hold",
+  "Complete",
+  "Cancelled",
+]
+
+const TASK_PRIORITIES: TaskPriority[] = ["Normal", "Medium", "High", "Urgent"]
 
 // ─── Category config ──────────────────────────────────────────────────────────
 
@@ -332,6 +376,105 @@ export default function ActivityPage() {
     }
   }
 
+  // ── Task editing state ───────────────────────────────────────────────────
+  const [linkedTask, setLinkedTask] = React.useState<TaskRow | null>(null)
+  const [taskLoading, setTaskLoading] = React.useState(false)
+  const [workspaceMembers, setWorkspaceMembers] = React.useState<
+    WorkspaceUserRow[]
+  >([])
+  const [taskDraft, setTaskDraft] = React.useState<{
+    title: string
+    status: string
+    priority: string
+    due_date: string
+    description: string
+    assignee_user_id: string
+  } | null>(null)
+  const [savingTask, setSavingTask] = React.useState(false)
+
+  // Fetch task + workspace members whenever a task-linked notification is selected
+  React.useEffect(() => {
+    const taskId = selected?.payload?.entity?.id
+    const isTaskNotif = selected && TASK_TYPES.has(selected.type) && taskId
+
+    if (!isTaskNotif) {
+      setLinkedTask(null)
+      setTaskDraft(null)
+      return
+    }
+
+    setTaskLoading(true)
+    Promise.all([
+      supabase.from("tasks").select("*").eq("id", taskId).single(),
+      activeWorkspaceId
+        ? supabase.rpc("get_workspace_users_with_emails", {
+            workspace_id_param: activeWorkspaceId,
+          })
+        : Promise.resolve({ data: [] }),
+    ]).then(([taskResult, membersResult]) => {
+      setTaskLoading(false)
+      if (taskResult.data) {
+        const t = taskResult.data as TaskRow
+        setLinkedTask(t)
+        setTaskDraft({
+          title: t.title,
+          status: t.status,
+          priority: t.priority ?? "Medium",
+          due_date: t.due_date?.split("T")[0] ?? "",
+          description: t.description ?? "",
+          assignee_user_id: t.assignee_user_id ?? "__none__",
+        })
+      } else {
+        setLinkedTask(null)
+        setTaskDraft(null)
+      }
+      setWorkspaceMembers((membersResult.data ?? []) as WorkspaceUserRow[])
+    })
+  }, [selected?.id, activeWorkspaceId])
+
+  async function handleSaveTask() {
+    if (!linkedTask || !taskDraft) return
+    setSavingTask(true)
+
+    const resolvedAssignee =
+      taskDraft.assignee_user_id && taskDraft.assignee_user_id !== "__none__"
+        ? taskDraft.assignee_user_id
+        : null
+
+    const { error } = await supabase
+      .from("tasks")
+      .update({
+        title: taskDraft.title,
+        status: taskDraft.status,
+        priority: taskDraft.priority,
+        due_date: taskDraft.due_date || null,
+        description: taskDraft.description || null,
+        assignee_user_id: resolvedAssignee,
+      })
+      .eq("id", linkedTask.id)
+
+    setSavingTask(false)
+
+    if (error) {
+      toast.error("Failed to save task", { description: error.message })
+    } else {
+      setLinkedTask((prev) =>
+        prev
+          ? {
+              ...prev,
+              title: taskDraft.title,
+              status: taskDraft.status as TaskStatus,
+              priority: taskDraft.priority as TaskPriority,
+              due_date: taskDraft.due_date || null,
+              description: taskDraft.description || null,
+              assignee_user_id: resolvedAssignee,
+            }
+          : prev
+      )
+      toast.success("Task saved")
+    }
+  }
+
   return (
     <SidebarProvider>
       <AppSidebar
@@ -450,79 +593,253 @@ export default function ActivityPage() {
 
             {/* Detail content */}
             {selected ? (
-              <ScrollArea className="flex-1 p-6">
-                {/* Actor header */}
-                <div className="mb-6 flex items-start gap-4">
-                  <Avatar className="h-10 w-10 shrink-0">
-                    <AvatarImage
-                      src={selected.payload?.actor?.avatar_url ?? ""}
-                    />
-                    <AvatarFallback>
-                      {initials(
-                        selected.payload?.actor?.name ??
-                          selected.payload?.actor?.email
-                      )}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold">
-                        {selected.payload?.actor?.name ??
-                          selected.payload?.actor?.email ??
-                          "System"}
-                      </span>
-                      <Badge variant="outline" className="text-xs">
-                        {formatType(selected.type)}
-                      </Badge>
+              <ScrollArea className="flex-1">
+                <div className="space-y-6 p-6">
+                  {/* ── Notification summary ── */}
+                  <div>
+                    <div className="mb-4 flex items-start gap-4">
+                      <Avatar className="h-10 w-10 shrink-0">
+                        <AvatarImage
+                          src={selected.payload?.actor?.avatar_url ?? ""}
+                        />
+                        <AvatarFallback>
+                          {initials(
+                            selected.payload?.actor?.name ??
+                              selected.payload?.actor?.email
+                          )}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold">
+                            {selected.payload?.actor?.name ??
+                              selected.payload?.actor?.email ??
+                              "System"}
+                          </span>
+                          <Badge variant="outline" className="text-xs">
+                            {formatType(selected.type)}
+                          </Badge>
+                        </div>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {new Date(selected.created_at).toLocaleString()}
+                        </p>
+                      </div>
                     </div>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {new Date(selected.created_at).toLocaleString()}
-                    </p>
+
+                    <div className="rounded-lg border bg-muted/40 p-4 text-sm leading-relaxed">
+                      {formatBody(selected)}
+                    </div>
+
+                    <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                      {selected.payload?.entity?.type && (
+                        <>
+                          <dt className="text-muted-foreground">Type</dt>
+                          <dd className="capitalize">
+                            {selected.payload.entity.type}
+                          </dd>
+                        </>
+                      )}
+                      {selected.payload?.entity?.name && (
+                        <>
+                          <dt className="text-muted-foreground">Entity</dt>
+                          <dd>{selected.payload.entity.name}</dd>
+                        </>
+                      )}
+                      {selected.payload?.change?.field && (
+                        <>
+                          <dt className="text-muted-foreground">Field</dt>
+                          <dd className="capitalize">
+                            {selected.payload.change.field}
+                          </dd>
+                        </>
+                      )}
+                      {selected.payload?.change?.from && (
+                        <>
+                          <dt className="text-muted-foreground">From</dt>
+                          <dd>{selected.payload.change.from}</dd>
+                        </>
+                      )}
+                      {selected.payload?.change?.to && (
+                        <>
+                          <dt className="text-muted-foreground">To</dt>
+                          <dd>{selected.payload.change.to}</dd>
+                        </>
+                      )}
+                    </dl>
                   </div>
-                </div>
 
-                {/* Body */}
-                <div className="rounded-lg border bg-muted/40 p-4 text-sm leading-relaxed">
-                  {formatBody(selected)}
-                </div>
+                  {/* ── Inline task editor ── */}
+                  {TASK_TYPES.has(selected.type) && (
+                    <>
+                      <Separator />
+                      <div>
+                        <h3 className="mb-4 text-sm font-semibold text-foreground">
+                          Task Details
+                        </h3>
 
-                {/* Metadata */}
-                <dl className="mt-6 grid grid-cols-2 gap-4 text-sm">
-                  {selected.payload?.entity?.type && (
-                    <>
-                      <dt className="text-muted-foreground">Type</dt>
-                      <dd className="capitalize">
-                        {selected.payload.entity.type}
-                      </dd>
+                        {taskLoading ? (
+                          <p className="text-sm text-muted-foreground">
+                            Loading task…
+                          </p>
+                        ) : !linkedTask || !taskDraft ? (
+                          <p className="text-sm text-muted-foreground">
+                            Task not found or access restricted.
+                          </p>
+                        ) : (
+                          <div className="space-y-4">
+                            {/* Title */}
+                            <div className="space-y-1.5">
+                              <Label className="text-xs text-muted-foreground">
+                                Title
+                              </Label>
+                              <input
+                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                                value={taskDraft.title}
+                                onChange={(e) =>
+                                  setTaskDraft((d) =>
+                                    d ? { ...d, title: e.target.value } : d
+                                  )
+                                }
+                              />
+                            </div>
+
+                            {/* Status + Priority row */}
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="space-y-1.5">
+                                <Label className="text-xs text-muted-foreground">
+                                  Status
+                                </Label>
+                                <Select
+                                  value={taskDraft.status}
+                                  onValueChange={(v) =>
+                                    setTaskDraft((d) =>
+                                      d ? { ...d, status: v } : d
+                                    )
+                                  }
+                                >
+                                  <SelectTrigger className="h-9 text-sm">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {TASK_STATUSES.map((s) => (
+                                      <SelectItem key={s} value={s}>
+                                        {s}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <Label className="text-xs text-muted-foreground">
+                                  Priority
+                                </Label>
+                                <Select
+                                  value={taskDraft.priority}
+                                  onValueChange={(v) =>
+                                    setTaskDraft((d) =>
+                                      d ? { ...d, priority: v } : d
+                                    )
+                                  }
+                                >
+                                  <SelectTrigger className="h-9 text-sm">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {TASK_PRIORITIES.map((p) => (
+                                      <SelectItem key={p} value={p}>
+                                        {p}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+
+                            {/* Due date + Assignee row */}
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="space-y-1.5">
+                                <Label className="text-xs text-muted-foreground">
+                                  Due Date
+                                </Label>
+                                <input
+                                  type="date"
+                                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                                  value={taskDraft.due_date}
+                                  onChange={(e) =>
+                                    setTaskDraft((d) =>
+                                      d ? { ...d, due_date: e.target.value } : d
+                                    )
+                                  }
+                                />
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <Label className="text-xs text-muted-foreground">
+                                  Assignee
+                                </Label>
+                                <Select
+                                  value={taskDraft.assignee_user_id}
+                                  onValueChange={(v) =>
+                                    setTaskDraft((d) =>
+                                      d ? { ...d, assignee_user_id: v } : d
+                                    )
+                                  }
+                                >
+                                  <SelectTrigger className="h-9 text-sm">
+                                    <SelectValue placeholder="Unassigned" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="__none__">
+                                      Unassigned
+                                    </SelectItem>
+                                    {workspaceMembers.map((m) => (
+                                      <SelectItem
+                                        key={m.user_id}
+                                        value={m.user_id}
+                                      >
+                                        {m.full_name?.trim() || m.email}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+
+                            {/* Description */}
+                            <div className="space-y-1.5">
+                              <Label className="text-xs text-muted-foreground">
+                                Description
+                              </Label>
+                              <Textarea
+                                rows={4}
+                                value={taskDraft.description}
+                                onChange={(e) =>
+                                  setTaskDraft((d) =>
+                                    d
+                                      ? { ...d, description: e.target.value }
+                                      : d
+                                  )
+                                }
+                                placeholder="Add a description…"
+                              />
+                            </div>
+
+                            <div className="flex justify-end">
+                              <Button
+                                size="sm"
+                                onClick={handleSaveTask}
+                                disabled={savingTask}
+                              >
+                                {savingTask ? "Saving…" : "Save Task"}
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </>
                   )}
-                  {selected.payload?.entity?.name && (
-                    <>
-                      <dt className="text-muted-foreground">Entity</dt>
-                      <dd>{selected.payload.entity.name}</dd>
-                    </>
-                  )}
-                  {selected.payload?.change?.field && (
-                    <>
-                      <dt className="text-muted-foreground">Field</dt>
-                      <dd className="capitalize">
-                        {selected.payload.change.field}
-                      </dd>
-                    </>
-                  )}
-                  {selected.payload?.change?.from && (
-                    <>
-                      <dt className="text-muted-foreground">From</dt>
-                      <dd>{selected.payload.change.from}</dd>
-                    </>
-                  )}
-                  {selected.payload?.change?.to && (
-                    <>
-                      <dt className="text-muted-foreground">To</dt>
-                      <dd>{selected.payload.change.to}</dd>
-                    </>
-                  )}
-                </dl>
+                </div>
               </ScrollArea>
             ) : (
               <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
