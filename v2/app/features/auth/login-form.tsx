@@ -57,10 +57,19 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle>Login to your account</CardTitle>
-          <CardDescription>
-            Enter your email below to login to your account
-          </CardDescription>
+          <div className="flex items-start gap-3">
+            <img
+              src="/BPC-Logo.jpg"
+              alt="Broken Pony Club"
+              className="h-10 w-10 rounded object-cover"
+            />
+            <div className="space-y-1">
+              <CardTitle>Broken Pony Club</CardTitle>
+              <CardDescription>
+                Enter your email below to login to your account
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
