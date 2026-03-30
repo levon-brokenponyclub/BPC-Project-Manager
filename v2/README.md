@@ -1,5 +1,7 @@
 # BPC Project Management — V2
 
+**Version:** 2.1.0 — 30 March 2026
+
 V2 is a full rebuild of the BPC Client Portal using React Router 7, shadcn/ui, TailwindCSS v4, and Supabase. It replaces the legacy V1 React SPA with a modern, role-aware, multi-workspace platform.
 
 ---
@@ -88,8 +90,22 @@ All routes accept a `?ws=<workspace_id>` query param for workspace scoping.
 
 - Left-tab layout: Team / Invite
 - Role management with draft + Save/Cancel per member
+- Member rows show avatar, full name, and email
+- **Edit Profile** per member — admin can update name and avatar for any user via `admin-users` edge function
 - Magic-link invite via Supabase Edge Function
 - Roles supported: `admin`, `member`, `client`, `viewer`
+
+### User Profile (Self-Edit)
+
+- Sidebar nav avatar opens profile edit dialog
+- Upload and replace own avatar (stored in `avatars` bucket at `{uid}/{timestamp}.ext`)
+- Update first name, surname, and password
+- Avatar hover overlay — full image is click target with camera icon + "Edit" label
+
+### Task Detail
+
+- Owner and Assigned To display full `First Surname` — resolved from workspace user records
+- Activity feed shows actor avatar images with initials fallback
 
 ---
 

@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.1.0] - 2026-03-30
+
+### ✅ Added
+
+#### User Profile Management
+
+- **Self-edit profile dialog** — sidebar nav avatar triggers an edit dialog: upload avatar, update first name, surname, and password
+- **Avatar hover overlay** — entire avatar image is the click target; dark overlay with camera icon + "Edit" label appears on hover
+- **Admin edit profile** — Settings → Teams: each member row now shows their avatar; dropdown has new "Edit Profile" action
+- **Admin profile edit dialog** — avatar upload, first name, surname fields; saves via `admin-users` edge function `update_profile` action
+- **Full name resolution in task detail** — Owner and Assigned To in task right sidebar now display `First Surname` instead of email/username
+- **Avatar images in task activity** — activity tab now renders `<Avatar>` with the actor's real avatar image; falls back to initials
+
+#### Settings — Teams Tab
+
+- Member rows now display avatar thumbnails alongside name and email
+- `WorkspaceMember` type extended with `first_name`, `surname`, `avatar_url`
+- "Edit Profile" dropdown item added above "Edit Role" per member
+
+#### DB Migrations
+
+- `20260330150000_drop_auto_assign_client_trigger.sql` — removes V1 trigger that overrode invited user roles with `client`
+- `20260330160000_avatars_admin_upload_policy.sql` — RLS policies allowing workspace admins to upload/update/delete avatars for any user (bypasses own-folder restriction for admin role)
+
+---
+
 ## [2.0.0] - 2026-03-30
 
 ### ✅ Added — V2 Platform Launch

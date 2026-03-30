@@ -2,7 +2,9 @@
 
 A multi-workspace project management and client portal built for support agencies. Premium dark UI inspired by Linear, backed by Supabase.
 
-**Tech stack:** React · Vite · TypeScript · Supabase · TanStack Query · Tailwind CSS
+**Version:** 2.1.0 — 30 March 2026
+
+**Tech stack:** React Router 7 · Vite · TypeScript · Supabase · TanStack Query · Tailwind CSS v4 · shadcn/ui
 
 **Live demo:** [bpc-project-manager.netlify.app](https://bpc-project-manager.netlify.app)
 
@@ -12,12 +14,13 @@ A multi-workspace project management and client portal built for support agencie
 
 - **Multi-workspace** — each client maps to a workspace with its own tasks, team and support bucket
 - **Project Overview** — premium real-time dashboard: hero status strip with radial glow, KPI metric cards with trend badges, 7-bar sparkline, progress cards with inline % labels, phase board with active-phase glow dot, activity feed, and an editorial dark-ink visual system (no orange)
-- **Task Management** — subtasks, inline status / due date / priority editing (ClickUp-style popovers), file attachments, due date colouring, drawer with full activity history
+- **Task Management** — subtasks, inline status / due date / priority editing (ClickUp-style popovers), file attachments, due date colouring, drawer with full activity history; Owner and Assigned To display full names with avatar images in activity feed
 - **Time Tracking** — start/stop timers per task, view time reports
 - **Support Buckets** — allocated vs used hours with progress bar
 - **Inbox** — Linear-style 3-pane notification inbox with date-grouped notifications (Today / Yesterday / Earlier), actor avatars, actor-first message formatting, per-row hover quick actions (mark read/unread, delete), and an inline comment thread + composer for comment notifications (reply directly from the inbox). Inbox fills full viewport height below the sticky header using a flex-child layout (no absolute positioning).
 - **User Presence** — Online status indicators and last-seen timestamps on the Users page; green dot + "Online" for users active in the last 5 minutes, gray dot + relative timestamp ("2 min ago", "1 hour ago") for offline users; workspace-scoped, inferred from last sign-in
-- **Admin tools** — invite users (email / magic link), manage clients, create / delete workspaces, role-based access
+- **Admin tools** — invite users (email / magic link), manage clients, create / delete workspaces, role-based access; admin can edit any team member's profile (name + avatar) from Settings
+- **User Profile** — sidebar nav avatar opens self-edit dialog: upload avatar, update name, change password; avatar hover shows camera overlay
 - **Asset Library** — per-workspace repository of files, links, logins and plugins; grouped 2×2 section card layout; file upload with signed-URL download, copy-to-clipboard for links/credentials, inline notes; notifications on add/delete
 - **Dark mode by default** — persisted theme preference with high-contrast light mode support
 
