@@ -49,7 +49,23 @@ import {
   IconTrash,
   IconLink,
   IconX,
+  IconDotsVertical,
 } from "@tabler/icons-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog"
 import { AppSidebar } from "~/components/app-sidebar"
 import { supabase } from "~/lib/supabase"
 import { resolveWorkspaceId } from "~/lib/activeWorkspace"
@@ -241,19 +257,13 @@ export default function SettingsPage() {
   const [updatingRoleFor, setUpdatingRoleFor] = React.useState<string | null>(
     null
   )
-  const [roleDrafts, setRoleDrafts] = React.useState<Record<string, string>>({})
+  const [editingMember, setEditingMember] =
+    React.useState<WorkspaceMember | null>(null)
+  const [editRoleDraft, setEditRoleDraft] = React.useState<string>("member")
   const [memberLinks, setMemberLinks] = React.useState<Record<string, string>>(
     {}
   )
   const [activeTab, setActiveTab] = React.useState<"team" | "invite">("team")
-
-  React.useEffect(() => {
-    const nextDrafts: Record<string, string> = {}
-    members.forEach((m) => {
-      nextDrafts[m.user_id] = m.role ?? "viewer"
-    })
-    setRoleDrafts(nextDrafts)
-  }, [members])
 
   const activeTabLabel = activeTab === "team" ? "Team" : "Invite"
 
@@ -274,7 +284,6 @@ export default function SettingsPage() {
     }
 
     toast.success("User role updated")
-    setRoleDrafts((prev) => ({ ...prev, [userId]: nextRole }))
     revalidate()
   }
 
@@ -371,175 +380,100 @@ export default function SettingsPage() {
   }
 
   return (
-    <SidebarProvider>
-      <AppSidebar
-        workspaces={workspaces}
-        activeWorkspaceId={activeWorkspaceId}
-        user={user}
-        currentUserRole={currentUserRole}
-        inboxUnreadCount={inboxUnreadCount}
-        activityUnreadCount={activityUnreadCount}
-      />
-      <SidebarInset className="overflow-hidden">
-        <div className="flex h-full flex-col overflow-hidden">
-          {/* Header */}
-          <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator
-              orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4"
-            />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="/settings">Settings</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>{activeTabLabel}</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-            <div className="ml-auto">
-              <ModeToggle />
-            </div>
-          </header>
+    <>
+      <SidebarProvider>
+        <AppSidebar
+          workspaces={workspaces}
+          activeWorkspaceId={activeWorkspaceId}
+          user={user}
+          currentUserRole={currentUserRole}
+          inboxUnreadCount={inboxUnreadCount}
+          activityUnreadCount={activityUnreadCount}
+        />
+        <SidebarInset className="overflow-hidden">
+          <div className="flex h-full flex-col overflow-hidden">
+            {/* Header */}
+            <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+              <SidebarTrigger className="-ml-1" />
+              <Separator
+                orientation="vertical"
+                className="mr-2 data-[orientation=vertical]:h-4"
+              />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem className="hidden md:block">
+                    <BreadcrumbLink href="/settings">Settings</BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator className="hidden md:block" />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>{activeTabLabel}</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+              <div className="ml-auto">
+                <ModeToggle />
+              </div>
+            </header>
 
-          <Tabs
-            value={activeTab}
-            onValueChange={(v) => setActiveTab(v as "team" | "invite")}
-            className="flex flex-1 overflow-hidden"
-          >
-            <div className="hidden w-56 shrink-0 border-r p-3 md:block">
-              <TabsList className="h-auto w-full flex-col items-stretch gap-1 bg-transparent p-0">
-                <TabsTrigger value="team" className="w-full justify-start">
-                  Team
-                </TabsTrigger>
-                <TabsTrigger value="invite" className="w-full justify-start">
-                  Invite
-                </TabsTrigger>
-              </TabsList>
-            </div>
+            <Tabs
+              value={activeTab}
+              onValueChange={(v) => setActiveTab(v as "team" | "invite")}
+              className="flex flex-1 overflow-hidden"
+            >
+              <div className="hidden w-56 shrink-0 border-r p-3 md:block">
+                <TabsList className="h-auto w-full flex-col items-stretch gap-1 bg-transparent p-0">
+                  <TabsTrigger value="team" className="w-full justify-start">
+                    Team
+                  </TabsTrigger>
+                  <TabsTrigger value="invite" className="w-full justify-start">
+                    Invite
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
-            <div className="flex flex-1 overflow-hidden">
-              <ScrollArea className="flex-1">
-                <div className="mx-auto max-w-3xl p-6">
-                  <TabsList className="mb-4 grid w-full grid-cols-2 md:hidden">
-                    <TabsTrigger value="team">Team</TabsTrigger>
-                    <TabsTrigger value="invite">Invite</TabsTrigger>
-                  </TabsList>
+              <div className="flex flex-1 overflow-hidden">
+                <ScrollArea className="flex-1">
+                  <div className="mx-auto max-w-3xl p-6">
+                    <TabsList className="mb-4 grid w-full grid-cols-2 md:hidden">
+                      <TabsTrigger value="team">Team</TabsTrigger>
+                      <TabsTrigger value="invite">Invite</TabsTrigger>
+                    </TabsList>
 
-                  <TabsContent
-                    value="team"
-                    forceMount
-                    className="mt-0 space-y-3"
-                  >
-                    <section className="space-y-3">
-                      <h2 className="text-sm font-semibold">
-                        Workspace Members{" "}
-                        <span className="text-muted-foreground">
-                          ({members.length})
-                        </span>
-                      </h2>
-                      <div className="divide-y rounded-lg border">
-                        {members.length === 0 ? (
-                          <p className="p-4 text-sm text-muted-foreground">
-                            No members yet.
-                          </p>
-                        ) : (
-                          members.map((m) => {
-                            const isSelf = m.email === user.email
-                            const memberLink = memberLinks[m.user_id]
-                            const currentRole = m.role ?? "viewer"
-                            const selectedRole =
-                              roleDrafts[m.user_id] ?? currentRole
-                            const roleDirty = selectedRole !== currentRole
-                            return (
-                              <div key={m.user_id} className="flex flex-col">
-                                <div className="flex items-center justify-between gap-4 px-4 py-3">
-                                  <div className="min-w-0 flex-1">
-                                    {m.full_name && (
-                                      <p className="truncate text-sm font-medium">
-                                        {m.full_name}
+                    <TabsContent
+                      value="team"
+                      forceMount
+                      className="mt-0 space-y-3"
+                    >
+                      <section className="space-y-3">
+                        <h2 className="text-sm font-semibold">
+                          Workspace Members{" "}
+                          <span className="text-muted-foreground">
+                            ({members.length})
+                          </span>
+                        </h2>
+                        <div className="divide-y rounded-lg border">
+                          {members.length === 0 ? (
+                            <p className="p-4 text-sm text-muted-foreground">
+                              No members yet.
+                            </p>
+                          ) : (
+                            members.map((m) => {
+                              const isSelf = m.email === user.email
+                              const memberLink = memberLinks[m.user_id]
+                              return (
+                                <div key={m.user_id} className="flex flex-col">
+                                  <div className="flex items-center justify-between gap-4 px-4 py-3">
+                                    <div className="min-w-0 flex-1">
+                                      {m.full_name && (
+                                        <p className="truncate text-sm font-medium">
+                                          {m.full_name}
+                                        </p>
+                                      )}
+                                      <p className="truncate text-xs text-muted-foreground">
+                                        {m.email}
                                       </p>
-                                    )}
-                                    <p className="truncate text-xs text-muted-foreground">
-                                      {m.email}
-                                    </p>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    {isAdmin ? (
-                                      <>
-                                        <Select
-                                          value={selectedRole}
-                                          onValueChange={(value) =>
-                                            setRoleDrafts((prev) => ({
-                                              ...prev,
-                                              [m.user_id]: value,
-                                            }))
-                                          }
-                                          disabled={
-                                            updatingRoleFor === m.user_id
-                                          }
-                                        >
-                                          <SelectTrigger className="h-8 w-32.5 capitalize">
-                                            <SelectValue />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            <SelectItem value="admin">
-                                              Admin
-                                            </SelectItem>
-                                            <SelectItem value="member">
-                                              Member
-                                            </SelectItem>
-                                            <SelectItem value="client">
-                                              Client
-                                            </SelectItem>
-                                            <SelectItem value="viewer">
-                                              Viewer
-                                            </SelectItem>
-                                          </SelectContent>
-                                        </Select>
-
-                                        {roleDirty && (
-                                          <>
-                                            <Button
-                                              size="sm"
-                                              variant="outline"
-                                              className="h-8"
-                                              disabled={
-                                                updatingRoleFor === m.user_id
-                                              }
-                                              onClick={() =>
-                                                setRoleDrafts((prev) => ({
-                                                  ...prev,
-                                                  [m.user_id]: currentRole,
-                                                }))
-                                              }
-                                            >
-                                              Cancel
-                                            </Button>
-                                            <Button
-                                              size="sm"
-                                              className="h-8"
-                                              disabled={
-                                                updatingRoleFor === m.user_id
-                                              }
-                                              onClick={() =>
-                                                void handleRoleUpdate(
-                                                  m.user_id,
-                                                  selectedRole
-                                                )
-                                              }
-                                            >
-                                              {updatingRoleFor === m.user_id
-                                                ? "Saving..."
-                                                : "Save"}
-                                            </Button>
-                                          </>
-                                        )}
-                                      </>
-                                    ) : (
+                                    </div>
+                                    <div className="flex items-center gap-2">
                                       <Badge
                                         variant={
                                           roleBadgeVariant[
@@ -550,256 +484,325 @@ export default function SettingsPage() {
                                       >
                                         {m.role ?? "viewer"}
                                       </Badge>
-                                    )}
-                                    {isAdmin && !isSelf && (
-                                      <>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="size-7 text-muted-foreground hover:text-primary"
-                                          disabled={
-                                            regeneratingLinkFor === m.user_id
-                                          }
-                                          onClick={() =>
-                                            handleRegenerateLink(m)
-                                          }
-                                          aria-label={`Generate link for ${m.email}`}
-                                        >
-                                          <IconLink className="size-3.5" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="size-7 text-muted-foreground hover:text-destructive"
-                                          disabled={
-                                            removingUserId === m.user_id
-                                          }
-                                          onClick={() =>
-                                            handleRemove(m.user_id)
-                                          }
-                                          aria-label={`Remove ${m.email}`}
-                                        >
-                                          <IconTrash className="size-3.5" />
-                                        </Button>
-                                      </>
-                                    )}
-                                  </div>
-                                </div>
-                                {memberLink && (
-                                  <div className="mx-4 mb-3 flex items-start gap-2 rounded-md border border-green-500/30 bg-green-500/5 px-3 py-2">
-                                    <code className="flex-1 text-xs leading-relaxed break-all">
-                                      {memberLink}
-                                    </code>
-                                    <div className="flex shrink-0 items-center gap-1">
-                                      <CopyButton text={memberLink} />
-                                      <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        className="size-7"
-                                        onClick={() =>
-                                          setMemberLinks((prev) => {
-                                            const next = { ...prev }
-                                            delete next[m.user_id]
-                                            return next
-                                          })
-                                        }
-                                        aria-label="Dismiss"
-                                      >
-                                        <IconX className="size-3.5" />
-                                      </Button>
+                                      {isAdmin && !isSelf && (
+                                        <DropdownMenu>
+                                          <DropdownMenuTrigger asChild>
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className="size-7 text-muted-foreground"
+                                              aria-label={`Actions for ${m.email}`}
+                                            >
+                                              <IconDotsVertical className="size-3.5" />
+                                            </Button>
+                                          </DropdownMenuTrigger>
+                                          <DropdownMenuContent align="end">
+                                            <DropdownMenuItem
+                                              onSelect={() => {
+                                                setEditingMember(m)
+                                                setEditRoleDraft(
+                                                  m.role ?? "viewer"
+                                                )
+                                              }}
+                                            >
+                                              Edit Role
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                              disabled={
+                                                regeneratingLinkFor ===
+                                                m.user_id
+                                              }
+                                              onSelect={() =>
+                                                handleRegenerateLink(m)
+                                              }
+                                            >
+                                              <IconLink className="size-3.5" />
+                                              Generate Link
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem
+                                              disabled={
+                                                removingUserId === m.user_id
+                                              }
+                                              className="text-destructive focus:text-destructive"
+                                              onSelect={() =>
+                                                handleRemove(m.user_id)
+                                              }
+                                            >
+                                              <IconTrash className="size-3.5" />
+                                              Remove
+                                            </DropdownMenuItem>
+                                          </DropdownMenuContent>
+                                        </DropdownMenu>
+                                      )}
                                     </div>
                                   </div>
-                                )}
-                              </div>
-                            )
-                          })
-                        )}
-                      </div>
-                    </section>
-                  </TabsContent>
+                                  {memberLink && (
+                                    <div className="mx-4 mb-3 flex items-start gap-2 rounded-md border border-green-500/30 bg-green-500/5 px-3 py-2">
+                                      <code className="flex-1 text-xs leading-relaxed break-all">
+                                        {memberLink}
+                                      </code>
+                                      <div className="flex shrink-0 items-center gap-1">
+                                        <CopyButton text={memberLink} />
+                                        <Button
+                                          size="icon"
+                                          variant="ghost"
+                                          className="size-7"
+                                          onClick={() =>
+                                            setMemberLinks((prev) => {
+                                              const next = { ...prev }
+                                              delete next[m.user_id]
+                                              return next
+                                            })
+                                          }
+                                          aria-label="Dismiss"
+                                        >
+                                          <IconX className="size-3.5" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })
+                          )}
+                        </div>
+                      </section>
+                    </TabsContent>
 
-                  <TabsContent
-                    value="invite"
-                    forceMount
-                    className="mt-0 space-y-4"
-                  >
-                    {isAdmin ? (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2 text-base">
-                            <IconUserPlus className="size-4 text-muted-foreground" />
-                            Invite Team
-                          </CardTitle>
-                          <CardDescription>
-                            Add members to your workspace
-                          </CardDescription>
-                        </CardHeader>
+                    <TabsContent
+                      value="invite"
+                      forceMount
+                      className="mt-0 space-y-4"
+                    >
+                      {isAdmin ? (
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-base">
+                              <IconUserPlus className="size-4 text-muted-foreground" />
+                              Invite Team
+                            </CardTitle>
+                            <CardDescription>
+                              Add members to your workspace
+                            </CardDescription>
+                          </CardHeader>
 
-                        <CardContent className="space-y-4">
-                          <form
-                            id="invite-user-form"
-                            onSubmit={handleInvite}
-                            className="space-y-4"
-                          >
-                            <div className="flex items-center gap-2">
-                              <Input
-                                id="inv-email"
-                                type="email"
-                                placeholder="jane@example.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                                className="flex-1"
-                              />
-                              <Select value={role} onValueChange={setRole}>
-                                <SelectTrigger className="w-28">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="admin">Admin</SelectItem>
-                                  <SelectItem value="member">Member</SelectItem>
-                                  <SelectItem value="client">Client</SelectItem>
-                                  <SelectItem value="viewer">
-                                    Viewer (read-only)
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                              <div className="grid gap-1.5">
-                                <Label htmlFor="inv-first">First name</Label>
+                          <CardContent className="space-y-4">
+                            <form
+                              id="invite-user-form"
+                              onSubmit={handleInvite}
+                              className="space-y-4"
+                            >
+                              <div className="flex items-center gap-2">
                                 <Input
-                                  id="inv-first"
-                                  placeholder="Jane"
-                                  value={firstName}
-                                  onChange={(e) => setFirstName(e.target.value)}
+                                  id="inv-email"
+                                  type="email"
+                                  placeholder="jane@example.com"
+                                  value={email}
+                                  onChange={(e) => setEmail(e.target.value)}
+                                  required
+                                  className="flex-1"
                                 />
-                              </div>
-                              <div className="grid gap-1.5">
-                                <Label htmlFor="inv-surname">Surname</Label>
-                                <Input
-                                  id="inv-surname"
-                                  placeholder="Smith"
-                                  value={surname}
-                                  onChange={(e) => setSurname(e.target.value)}
-                                />
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                              <div className="grid gap-1.5">
-                                <Label>Access scope</Label>
-                                <Select
-                                  value={scope}
-                                  onValueChange={(v) =>
-                                    setScope(v as "workspace" | "project")
-                                  }
-                                >
-                                  <SelectTrigger>
+                                <Select value={role} onValueChange={setRole}>
+                                  <SelectTrigger className="w-28">
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="workspace">
-                                      Workspace
+                                    <SelectItem value="admin">Admin</SelectItem>
+                                    <SelectItem value="member">
+                                      Member
                                     </SelectItem>
-                                    <SelectItem value="project">
-                                      Project only
+                                    <SelectItem value="client">
+                                      Client
+                                    </SelectItem>
+                                    <SelectItem value="viewer">
+                                      Viewer (read-only)
                                     </SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
 
-                              {scope === "project" ? (
+                              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div className="grid gap-1.5">
-                                  <Label>Project</Label>
+                                  <Label htmlFor="inv-first">First name</Label>
+                                  <Input
+                                    id="inv-first"
+                                    placeholder="Jane"
+                                    value={firstName}
+                                    onChange={(e) =>
+                                      setFirstName(e.target.value)
+                                    }
+                                  />
+                                </div>
+                                <div className="grid gap-1.5">
+                                  <Label htmlFor="inv-surname">Surname</Label>
+                                  <Input
+                                    id="inv-surname"
+                                    placeholder="Smith"
+                                    value={surname}
+                                    onChange={(e) => setSurname(e.target.value)}
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <div className="grid gap-1.5">
+                                  <Label>Access scope</Label>
                                   <Select
-                                    value={projectId}
-                                    onValueChange={setProjectId}
+                                    value={scope}
+                                    onValueChange={(v) =>
+                                      setScope(v as "workspace" | "project")
+                                    }
                                   >
                                     <SelectTrigger>
-                                      <SelectValue placeholder="Select a project…" />
+                                      <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {projects.length === 0 ? (
-                                        <SelectItem value="__none__" disabled>
-                                          No projects yet
-                                        </SelectItem>
-                                      ) : (
-                                        projects.map((p) => (
-                                          <SelectItem key={p.id} value={p.id}>
-                                            {p.name}
-                                          </SelectItem>
-                                        ))
-                                      )}
+                                      <SelectItem value="workspace">
+                                        Workspace
+                                      </SelectItem>
+                                      <SelectItem value="project">
+                                        Project only
+                                      </SelectItem>
                                     </SelectContent>
                                   </Select>
                                 </div>
-                              ) : (
-                                <div className="grid gap-1.5">
-                                  <Label className="invisible">Project</Label>
-                                  <Input
-                                    disabled
-                                    value="All projects in workspace"
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          </form>
 
-                          {magicLink && (
-                            <>
-                              <Separator />
-                              <div className="space-y-2">
-                                <Label htmlFor="invite-link">
-                                  Or share invite link
-                                </Label>
-                                <div className="flex items-center gap-2">
-                                  <Input
-                                    id="invite-link"
-                                    value={magicLink}
-                                    readOnly
-                                  />
-                                  <CopyButton text={magicLink} />
-                                </div>
-                                <p className="text-xs text-muted-foreground">
-                                  Expires in 24 hours. The user signs in
-                                  instantly — no password required.
-                                </p>
+                                {scope === "project" ? (
+                                  <div className="grid gap-1.5">
+                                    <Label>Project</Label>
+                                    <Select
+                                      value={projectId}
+                                      onValueChange={setProjectId}
+                                    >
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Select a project…" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {projects.length === 0 ? (
+                                          <SelectItem value="__none__" disabled>
+                                            No projects yet
+                                          </SelectItem>
+                                        ) : (
+                                          projects.map((p) => (
+                                            <SelectItem key={p.id} value={p.id}>
+                                              {p.name}
+                                            </SelectItem>
+                                          ))
+                                        )}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                ) : (
+                                  <div className="grid gap-1.5">
+                                    <Label className="invisible">Project</Label>
+                                    <Input
+                                      disabled
+                                      value="All projects in workspace"
+                                    />
+                                  </div>
+                                )}
                               </div>
-                            </>
-                          )}
-                        </CardContent>
+                            </form>
 
-                        <CardFooter>
-                          <Button
-                            type="submit"
-                            form="invite-user-form"
-                            disabled={
-                              submitting ||
-                              !email.trim() ||
-                              (scope === "project" && projectId === "__none__")
-                            }
-                            className="w-full"
-                          >
-                            {submitting
-                              ? "Adding…"
-                              : "Add User & Generate Link"}
-                          </Button>
-                        </CardFooter>
-                      </Card>
-                    ) : (
-                      <div className="rounded-lg border p-6 text-sm text-muted-foreground">
-                        Only workspace admins can invite users.
-                      </div>
-                    )}
-                  </TabsContent>
-                </div>
-              </ScrollArea>
-            </div>
-          </Tabs>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+                            {magicLink && (
+                              <>
+                                <Separator />
+                                <div className="space-y-2">
+                                  <Label htmlFor="invite-link">
+                                    Or share invite link
+                                  </Label>
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      id="invite-link"
+                                      value={magicLink}
+                                      readOnly
+                                    />
+                                    <CopyButton text={magicLink} />
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">
+                                    Expires in 24 hours. The user signs in
+                                    instantly — no password required.
+                                  </p>
+                                </div>
+                              </>
+                            )}
+                          </CardContent>
+
+                          <CardFooter>
+                            <Button
+                              type="submit"
+                              form="invite-user-form"
+                              disabled={
+                                submitting ||
+                                !email.trim() ||
+                                (scope === "project" &&
+                                  projectId === "__none__")
+                              }
+                              className="w-full"
+                            >
+                              {submitting
+                                ? "Adding…"
+                                : "Add User & Generate Link"}
+                            </Button>
+                          </CardFooter>
+                        </Card>
+                      ) : (
+                        <div className="rounded-lg border p-6 text-sm text-muted-foreground">
+                          Only workspace admins can invite users.
+                        </div>
+                      )}
+                    </TabsContent>
+                  </div>
+                </ScrollArea>
+              </div>
+            </Tabs>
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+
+      {/* ── Edit Role Dialog ───────────────────────────────────────────── */}
+      <Dialog
+        open={!!editingMember}
+        onOpenChange={(open) => {
+          if (!open) setEditingMember(null)
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Edit Role</DialogTitle>
+            <DialogDescription>{editingMember?.email}</DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <Select value={editRoleDraft} onValueChange={setEditRoleDraft}>
+              <SelectTrigger className="w-full capitalize">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="member">Member</SelectItem>
+                <SelectItem value="client">Client</SelectItem>
+                <SelectItem value="viewer">Viewer</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingMember(null)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={updatingRoleFor === editingMember?.user_id}
+              onClick={() => {
+                if (!editingMember) return
+                void handleRoleUpdate(editingMember.user_id, editRoleDraft)
+                setEditingMember(null)
+              }}
+            >
+              {updatingRoleFor === editingMember?.user_id ? "Saving…" : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
