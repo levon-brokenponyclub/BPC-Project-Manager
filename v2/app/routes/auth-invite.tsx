@@ -1,4 +1,6 @@
 import * as React from "react"
+import { Moon, Sun } from "lucide-react"
+import { useTheme } from "next-themes"
 import { useNavigate, type ClientLoaderFunctionArgs } from "react-router"
 
 import { Button } from "~/components/ui/button"
@@ -11,6 +13,7 @@ import {
 } from "~/components/ui/card"
 import { Field, FieldError, FieldGroup } from "~/components/ui/field"
 import { Input } from "~/components/ui/input"
+import { Switch } from "~/components/ui/switch"
 import { supabase } from "~/lib/supabase"
 
 export async function clientLoader(_: ClientLoaderFunctionArgs) {
@@ -18,6 +21,7 @@ export async function clientLoader(_: ClientLoaderFunctionArgs) {
 }
 
 export default function AuthInvitePage() {
+  const { resolvedTheme, setTheme } = useTheme()
   const navigate = useNavigate()
   const [password, setPassword] = React.useState("")
   const [confirm, setConfirm] = React.useState("")
@@ -187,6 +191,23 @@ export default function AuthInvitePage() {
                     >
                       {loading ? "Setting..." : "Set Password"}
                     </Button>
+                    <div className="space-y-2 pt-3">
+                      <p className="text-center text-sm font-medium">
+                        Select theme
+                      </p>
+                      <div className="flex items-center justify-center gap-3 text-muted-foreground">
+                        <Sun className="size-4" />
+                        <Switch
+                          id="invite-theme-switch"
+                          checked={resolvedTheme === "dark"}
+                          onCheckedChange={(checked) =>
+                            setTheme(checked ? "dark" : "light")
+                          }
+                          aria-label="Toggle light and dark mode"
+                        />
+                        <Moon className="size-4" />
+                      </div>
+                    </div>
                   </Field>
                 </FieldGroup>
               </form>

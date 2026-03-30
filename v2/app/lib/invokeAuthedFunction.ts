@@ -30,6 +30,10 @@ export async function invokeAuthedFunction<TData = unknown>(
 
   const { data, error } = await supabase.functions.invoke<TData>(functionName, {
     body,
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      "x-user-jwt": session.access_token,
+    },
   })
 
   if (error) {

@@ -35,11 +35,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Extract the user JWT — sent as the Bearer token in Authorization.
-    const authorizationHeader = req.headers.get("Authorization") || "";
-    const userJwt = authorizationHeader.startsWith("Bearer ")
-      ? authorizationHeader.slice(7)
-      : null;
+    // Accept either Authorization Bearer or x-user-jwt for compatibility
+    // with different client invocation paths.
+    const forwardedUserJwt = req.headers.get("x-user-jwt");
+    const authorizationHeader = forwardedUserJwt
+      ? `Bearer ${forwardedUserJwt}`
+      : req.headers.get("Authorization") || "";
 
     // Create Supabase client with auth context from request
     const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -50,12 +51,11 @@ Deno.serve(async (req) => {
       },
     });
 
-    // Get the authenticated user — pass the JWT explicitly for reliable
-    // verification in Deno edge function environments.
+    // Get the authenticated user from the normalized auth context.
     const {
       data: { user },
       error: userError,
-    } = await supabaseClient.auth.getUser(userJwt ?? undefined);
+    } = await supabaseClient.auth.getUser();
 
     if (userError || !user) {
       console.error(`[admin-users] Auth verification failed:`, userError);

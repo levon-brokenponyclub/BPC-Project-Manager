@@ -1,6 +1,8 @@
 "use client"
 
 import * as React from "react"
+import { Moon, Sun } from "lucide-react"
+import { useTheme } from "next-themes"
 import { useNavigate } from "react-router"
 
 import { cn } from "~/lib/utils"
@@ -14,17 +16,18 @@ import {
 } from "~/components/ui/card"
 import {
   Field,
-  FieldDescription,
   FieldError,
   FieldGroup,
 } from "~/components/ui/field"
 import { Input } from "~/components/ui/input"
+import { Switch } from "~/components/ui/switch"
 import { supabase } from "~/lib/supabase"
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const { resolvedTheme, setTheme } = useTheme()
   const navigate = useNavigate()
   const [error, setError] = React.useState<string | null>(null)
   const [pending, setPending] = React.useState(false)
@@ -57,6 +60,11 @@ export function LoginForm({
       <Card className="gap-6 rounded p-8">
         <CardHeader className="px-0">
           <div className="space-y-1 text-center">
+            <img
+              src="/BPC-Logo.jpg"
+              alt="Broken Pony Club"
+              className="mx-auto mb-3 h-12 w-12 rounded object-cover"
+            />
             <CardTitle>Broken Pony Club</CardTitle>
             <CardDescription>Project Management System</CardDescription>
           </div>
@@ -97,9 +105,23 @@ export function LoginForm({
                 >
                   {pending ? "Signing in…" : "Login"}
                 </Button>
-                <FieldDescription className="text-center">
-                  Contact your workspace admin for access.
-                </FieldDescription>
+                <div className="space-y-2 pt-3">
+                  <p className="text-center text-sm font-medium">
+                    Select theme
+                  </p>
+                  <div className="flex items-center justify-center gap-3 text-muted-foreground">
+                    <Sun className="size-4" />
+                    <Switch
+                      id="login-theme-switch"
+                      checked={resolvedTheme === "dark"}
+                      onCheckedChange={(checked) =>
+                        setTheme(checked ? "dark" : "light")
+                      }
+                      aria-label="Toggle light and dark mode"
+                    />
+                    <Moon className="size-4" />
+                  </div>
+                </div>
               </Field>
             </FieldGroup>
           </form>

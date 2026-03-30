@@ -69,6 +69,10 @@ export async function invokeAuthedFunction<TData = unknown>(
   // both legacy JWT anon keys and the new sb_publishable_* key format.
   const { data, error } = await supabase.functions.invoke<TData>(functionName, {
     body,
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      "x-user-jwt": session.access_token,
+    },
   });
 
   if (error) {
