@@ -160,7 +160,12 @@ export default function AuthInvitePage() {
           <Card className="gap-6 rounded p-8">
             <CardHeader className="px-0">
               <div className="space-y-1 text-center">
-                <CardTitle>Accept Invite</CardTitle>
+                <img
+                  src="/BPC-Logo.jpg"
+                  alt="Broken Pony Club"
+                  className="mx-auto mb-3 h-12 w-12 rounded object-cover"
+                />
+                <CardTitle>Broken Pony Club</CardTitle>
                 <CardDescription>
                   Set your password to access your workspace.
                 </CardDescription>
