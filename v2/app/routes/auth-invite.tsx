@@ -3,6 +3,16 @@ import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useNavigate, type ClientLoaderFunctionArgs } from "react-router"
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog"
 import { Button } from "~/components/ui/button"
 import {
   Card,
@@ -29,6 +39,7 @@ export default function AuthInvitePage() {
   const [success, setSuccess] = React.useState<string | null>(null)
   const [loading, setLoading] = React.useState(false)
   const [sessionChecked, setSessionChecked] = React.useState(false)
+  const [showNotifDialog, setShowNotifDialog] = React.useState(false)
 
   React.useEffect(() => {
     let active = true
@@ -130,91 +141,125 @@ export default function AuthInvitePage() {
 
     setSuccess("Password set. Redirecting...")
     setLoading(false)
-    setTimeout(() => {
-      navigate("/", { replace: true })
-    }, 1200)
+
+    // Show notification permission prompt before redirecting
+    if (
+      typeof Notification !== "undefined" &&
+      Notification.permission === "default"
+    ) {
+      setShowNotifDialog(true)
+    } else {
+      setTimeout(() => navigate("/", { replace: true }), 1200)
+    }
   }
 
   return (
-    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-sm">
-        <Card className="gap-6 rounded p-8">
-          <CardHeader className="px-0">
-            <div className="space-y-1 text-center">
-              <CardTitle>Accept Invite</CardTitle>
-              <CardDescription>
-                Set your password to access your workspace.
-              </CardDescription>
-            </div>
-          </CardHeader>
+    <>
+      <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
+        <div className="w-full max-w-sm">
+          <Card className="gap-6 rounded p-8">
+            <CardHeader className="px-0">
+              <div className="space-y-1 text-center">
+                <CardTitle>Accept Invite</CardTitle>
+                <CardDescription>
+                  Set your password to access your workspace.
+                </CardDescription>
+              </div>
+            </CardHeader>
 
-          <CardContent className="px-0">
-            {error ? <FieldError>{error}</FieldError> : null}
-            {success ? (
-              <p className="mt-4 text-sm text-green-600">{success}</p>
-            ) : null}
+            <CardContent className="px-0">
+              {error ? <FieldError>{error}</FieldError> : null}
+              {success ? (
+                <p className="mt-4 text-sm text-green-600">{success}</p>
+              ) : null}
 
-            {sessionChecked && !error ? (
-              <form className="mt-4" onSubmit={handleSetPassword}>
-                <FieldGroup>
-                  <Field>
-                    <Input
-                      id="new-password"
-                      type="password"
-                      required
-                      placeholder="New password"
-                      aria-label="New password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="h-10 rounded"
-                    />
-                  </Field>
+              {sessionChecked && !error ? (
+                <form className="mt-4" onSubmit={handleSetPassword}>
+                  <FieldGroup>
+                    <Field>
+                      <Input
+                        id="new-password"
+                        type="password"
+                        required
+                        placeholder="New password"
+                        aria-label="New password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="h-10 rounded"
+                      />
+                    </Field>
 
-                  <Field>
-                    <Input
-                      id="confirm-password"
-                      type="password"
-                      required
-                      placeholder="Confirm password"
-                      aria-label="Confirm password"
-                      value={confirm}
-                      onChange={(e) => setConfirm(e.target.value)}
-                      className="h-10 rounded"
-                    />
-                  </Field>
+                    <Field>
+                      <Input
+                        id="confirm-password"
+                        type="password"
+                        required
+                        placeholder="Confirm password"
+                        aria-label="Confirm password"
+                        value={confirm}
+                        onChange={(e) => setConfirm(e.target.value)}
+                        className="h-10 rounded"
+                      />
+                    </Field>
 
-                  <Field>
-                    <Button
-                      className="h-10 rounded"
-                      type="submit"
-                      disabled={loading}
-                    >
-                      {loading ? "Setting..." : "Set Password"}
-                    </Button>
-                    <div className="space-y-2 pt-3">
-                      <p className="text-center text-sm font-medium">
-                        Select theme
-                      </p>
-                      <div className="flex items-center justify-center gap-3 text-muted-foreground">
-                        <Sun className="size-4" />
-                        <Switch
-                          id="invite-theme-switch"
-                          checked={resolvedTheme === "dark"}
-                          onCheckedChange={(checked) =>
-                            setTheme(checked ? "dark" : "light")
-                          }
-                          aria-label="Toggle light and dark mode"
-                        />
-                        <Moon className="size-4" />
+                    <Field>
+                      <Button
+                        className="h-10 rounded"
+                        type="submit"
+                        disabled={loading}
+                      >
+                        {loading ? "Setting..." : "Set Password"}
+                      </Button>
+                      <div className="space-y-2 pt-3">
+                        <p className="text-center text-sm font-medium">
+                          Select theme
+                        </p>
+                        <div className="flex items-center justify-center gap-3 text-muted-foreground">
+                          <Sun className="size-4" />
+                          <Switch
+                            id="invite-theme-switch"
+                            checked={resolvedTheme === "dark"}
+                            onCheckedChange={(checked) =>
+                              setTheme(checked ? "dark" : "light")
+                            }
+                            aria-label="Toggle light and dark mode"
+                          />
+                          <Moon className="size-4" />
+                        </div>
                       </div>
-                    </div>
-                  </Field>
-                </FieldGroup>
-              </form>
-            ) : null}
-          </CardContent>
-        </Card>
+                    </Field>
+                  </FieldGroup>
+                </form>
+              ) : null}
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+
+      <AlertDialog open={showNotifDialog} onOpenChange={setShowNotifDialog}>
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Enable notifications?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Allow BPC Project Manager to send you browser notifications for
+              task updates, messages, and activity.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => navigate("/", { replace: true })}>
+              Not now
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                await Notification.requestPermission()
+                navigate("/", { replace: true })
+              }}
+            >
+              Allow
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }

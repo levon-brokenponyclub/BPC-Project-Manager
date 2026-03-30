@@ -1,3 +1,4 @@
+import * as React from "react"
 import {
   redirect,
   useLoaderData,
@@ -19,6 +20,16 @@ import {
   SidebarTrigger,
 } from "~/components/ui/sidebar"
 import { AppSidebar } from "~/components/app-sidebar"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog"
 import { supabase } from "~/lib/supabase"
 import { TasksDataTable } from "~/features/tasks/components/TasksDataTable"
 import { TaskStatCards } from "~/features/tasks/components/TaskStatCards"
@@ -192,51 +203,89 @@ export default function Home() {
   } = useLoaderData<typeof clientLoader>()
   const activeWorkspace = workspaces.find((w) => w.id === activeWorkspaceId)
 
+  const [showNotifDialog, setShowNotifDialog] = React.useState(false)
+
+  React.useEffect(() => {
+    if (
+      typeof Notification !== "undefined" &&
+      Notification.permission === "default"
+    ) {
+      setShowNotifDialog(true)
+    }
+  }, [])
+
   return (
-    <SidebarProvider>
-      <AppSidebar
-        workspaces={workspaces}
-        activeWorkspaceId={activeWorkspaceId}
-        user={user}
-        currentUserRole={currentUserRole}
-        inboxUnreadCount={inboxUnreadCount}
-        activityUnreadCount={activityUnreadCount}
-      />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator
-              orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4"
+    <>
+      <SidebarProvider>
+        <AppSidebar
+          workspaces={workspaces}
+          activeWorkspaceId={activeWorkspaceId}
+          user={user}
+          currentUserRole={currentUserRole}
+          inboxUnreadCount={inboxUnreadCount}
+          activityUnreadCount={activityUnreadCount}
+        />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2">
+            <div className="flex items-center gap-2 px-4">
+              <SidebarTrigger className="-ml-1" />
+              <Separator
+                orientation="vertical"
+                className="mr-2 data-[orientation=vertical]:h-4"
+              />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem className="hidden md:block">
+                    <BreadcrumbLink href="#">Dashboard</BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator className="hidden md:block" />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>
+                      {activeWorkspace?.name ?? "Tasks"}
+                    </BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+            <ModeToggle className="mr-2 ml-auto" />
+          </header>
+          <div className="flex flex-1 flex-col gap-4 px-6 py-4 pt-0">
+            <TaskStatCards
+              tasks={tasks}
+              inboxUnreadCount={inboxUnreadCount}
+              activityUnreadCount={activityUnreadCount}
             />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">Dashboard</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>
-                    {activeWorkspace?.name ?? "Tasks"}
-                  </BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
+            <div className="rounded-xl border bg-background">
+              <TasksDataTable tasks={tasks} />
+            </div>
           </div>
-          <ModeToggle className="mr-2 ml-auto" />
-        </header>
-        <div className="flex flex-1 flex-col gap-4 px-6 py-4 pt-0">
-          <TaskStatCards
-            tasks={tasks}
-            inboxUnreadCount={inboxUnreadCount}
-            activityUnreadCount={activityUnreadCount}
-          />
-          <div className="rounded-xl border bg-background">
-            <TasksDataTable tasks={tasks} />
-          </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+        </SidebarInset>
+      </SidebarProvider>
+
+      <AlertDialog open={showNotifDialog} onOpenChange={setShowNotifDialog}>
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Enable notifications?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Allow BPC Project Manager to send you browser notifications for
+              task updates, messages, and activity.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowNotifDialog(false)}>
+              Not now
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                await Notification.requestPermission()
+                setShowNotifDialog(false)
+              }}
+            >
+              Allow
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }
