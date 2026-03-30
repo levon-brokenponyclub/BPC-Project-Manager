@@ -45,11 +45,11 @@ import {
 import {
   IconCopy,
   IconCheck,
-  IconUserPlus,
   IconTrash,
   IconLink,
   IconX,
   IconDotsVertical,
+  IconAlertTriangle,
 } from "@tabler/icons-react"
 import {
   DropdownMenu,
@@ -66,6 +66,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarGroup,
+  AvatarImage,
+} from "~/components/ui/avatar"
 import { AppSidebar } from "~/components/app-sidebar"
 import { supabase } from "~/lib/supabase"
 import { resolveWorkspaceId } from "~/lib/activeWorkspace"
@@ -90,6 +96,18 @@ interface InviteClientResponse {
   warning?: string
   magicLink?: string
   magic_link?: string
+}
+
+interface MagicLinkEntry {
+  url: string
+  generatedAt: number
+}
+
+// 55 min — 5 min buffer before Supabase's 1 h default expiry
+const LINK_EXPIRY_MS = 55 * 60 * 1_000
+
+function isLinkExpired(entry: MagicLinkEntry): boolean {
+  return Date.now() - entry.generatedAt > LINK_EXPIRY_MS
 }
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
@@ -244,10 +262,12 @@ export default function SettingsPage() {
   const [firstName, setFirstName] = React.useState("")
   const [surname, setSurname] = React.useState("")
   const [role, setRole] = React.useState("member")
-  const [scope, setScope] = React.useState<"workspace" | "project">("workspace")
+  const [selectedWsId, setSelectedWsId] = React.useState<string>(
+    activeWorkspaceId ?? "__none__"
+  )
   const [projectId, setProjectId] = React.useState("__none__")
   const [submitting, setSubmitting] = React.useState(false)
-  const [magicLink, setMagicLink] = React.useState<string | null>(null)
+  const [magicLink, setMagicLink] = React.useState<MagicLinkEntry | null>(null)
   const [removingUserId, setRemovingUserId] = React.useState<string | null>(
     null
   )
@@ -260,12 +280,37 @@ export default function SettingsPage() {
   const [editingMember, setEditingMember] =
     React.useState<WorkspaceMember | null>(null)
   const [editRoleDraft, setEditRoleDraft] = React.useState<string>("member")
-  const [memberLinks, setMemberLinks] = React.useState<Record<string, string>>(
-    {}
+  const [memberLinks, setMemberLinks] = React.useState<
+    Record<string, MagicLinkEntry>
+  >({})
+  const [showLinkFor, setShowLinkFor] = React.useState<Set<string>>(new Set())
+  const [teamCardTab, setTeamCardTab] = React.useState<"members" | "invite">(
+    "members"
   )
-  const [activeTab, setActiveTab] = React.useState<"team" | "invite">("team")
+  const [activeTab, setActiveTab] = React.useState<
+    "teams" | "billing" | "notifications" | "account" | "admin-tools"
+  >("teams")
 
-  const activeTabLabel = activeTab === "team" ? "Team" : "Invite"
+  const activeTabLabelMap: Record<typeof activeTab, string> = {
+    teams: "Teams",
+    billing: "Billing",
+    notifications: "Notifications",
+    account: "Account",
+    "admin-tools": "Admiin Tools",
+  }
+  const activeTabLabel = activeTabLabelMap[activeTab]
+  const visibleMembers = members.filter(
+    (member) => member.email.toLowerCase() !== "levongravett@gmail.com"
+  )
+  const hasVisibleMembers = visibleMembers.length > 0
+  const [showInvitePanel, setShowInvitePanel] = React.useState(false)
+
+  // Force re-render every 30 s so expiry badges update without user interaction
+  const [, setTick] = React.useState(0)
+  React.useEffect(() => {
+    const id = setInterval(() => setTick((n) => n + 1), 30_000)
+    return () => clearInterval(id)
+  }, [])
 
   async function handleRoleUpdate(userId: string, nextRole: string) {
     if (!activeWorkspaceId || !isAdmin) return
@@ -305,8 +350,9 @@ export default function SettingsPage() {
       if (returnedLink) {
         setMemberLinks((prev) => ({
           ...prev,
-          [member.user_id]: returnedLink,
+          [member.user_id]: { url: returnedLink, generatedAt: Date.now() },
         }))
+        setShowLinkFor((prev) => new Set([...prev, member.user_id]))
       } else {
         toast.error("No magic link returned")
       }
@@ -342,16 +388,20 @@ export default function SettingsPage() {
     setSubmitting(true)
     setMagicLink(null)
 
+    const wsId =
+      selectedWsId !== "__none__" ? selectedWsId : (activeWorkspaceId ?? "")
+    const wsName =
+      workspaces.find((w) => w.id === wsId)?.name ?? activeWorkspace?.name ?? ""
     const body: Record<string, unknown> = {
-      workspaceId: activeWorkspaceId,
+      workspaceId: wsId,
       email: email.trim(),
       role,
       firstName: firstName.trim(),
       surname: surname.trim(),
       delivery: "magic_link",
-      workspaceName: activeWorkspace?.name ?? "",
+      workspaceName: wsName,
     }
-    if (scope === "project" && projectId !== "__none__") {
+    if (projectId !== "__none__") {
       body.projectId = projectId
     }
 
@@ -365,7 +415,8 @@ export default function SettingsPage() {
         throw new Error("No magic link returned")
       }
       toast.success("Magic link generated")
-      setMagicLink(returnedLink)
+      setTeamCardTab("invite")
+      setMagicLink({ url: returnedLink, generatedAt: Date.now() })
       setEmail("")
       setFirstName("")
       setSurname("")
@@ -417,16 +468,40 @@ export default function SettingsPage() {
 
             <Tabs
               value={activeTab}
-              onValueChange={(v) => setActiveTab(v as "team" | "invite")}
+              onValueChange={(v) =>
+                setActiveTab(
+                  v as
+                    | "teams"
+                    | "billing"
+                    | "notifications"
+                    | "account"
+                    | "admin-tools"
+                )
+              }
               className="flex flex-1 overflow-hidden"
             >
               <div className="hidden w-56 shrink-0 border-r p-3 md:block">
                 <TabsList className="h-auto w-full flex-col items-stretch gap-1 bg-transparent p-0">
-                  <TabsTrigger value="team" className="w-full justify-start">
-                    Team
+                  <TabsTrigger value="teams" className="w-full justify-start">
+                    Teams
                   </TabsTrigger>
-                  <TabsTrigger value="invite" className="w-full justify-start">
-                    Invite
+                  <TabsTrigger value="billing" className="w-full justify-start">
+                    Billing
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="notifications"
+                    className="w-full justify-start"
+                  >
+                    Notifications
+                  </TabsTrigger>
+                  <TabsTrigger value="account" className="w-full justify-start">
+                    Account
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="admin-tools"
+                    className="w-full justify-start"
+                  >
+                    Admiin Tools
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -434,324 +509,740 @@ export default function SettingsPage() {
               <div className="flex flex-1 overflow-hidden">
                 <ScrollArea className="flex-1">
                   <div className="mx-auto max-w-3xl p-6">
-                    <TabsList className="mb-4 grid w-full grid-cols-2 md:hidden">
-                      <TabsTrigger value="team">Team</TabsTrigger>
-                      <TabsTrigger value="invite">Invite</TabsTrigger>
+                    <TabsList className="mb-4 flex h-auto w-full flex-wrap items-center gap-2 bg-transparent p-0 md:hidden">
+                      <TabsTrigger value="teams">Teams</TabsTrigger>
+                      <TabsTrigger value="billing">Billing</TabsTrigger>
+                      <TabsTrigger value="notifications">
+                        Notifications
+                      </TabsTrigger>
+                      <TabsTrigger value="account">Account</TabsTrigger>
+                      <TabsTrigger value="admin-tools">
+                        Admiin Tools
+                      </TabsTrigger>
                     </TabsList>
 
                     <TabsContent
-                      value="team"
-                      forceMount
-                      className="mt-0 space-y-3"
-                    >
-                      <section className="space-y-3">
-                        <h2 className="text-sm font-semibold">
-                          Workspace Members{" "}
-                          <span className="text-muted-foreground">
-                            ({members.length})
-                          </span>
-                        </h2>
-                        <div className="divide-y rounded-lg border">
-                          {members.length === 0 ? (
-                            <p className="p-4 text-sm text-muted-foreground">
-                              No members yet.
-                            </p>
-                          ) : (
-                            members.map((m) => {
-                              const isSelf = m.email === user.email
-                              const memberLink = memberLinks[m.user_id]
-                              return (
-                                <div key={m.user_id} className="flex flex-col">
-                                  <div className="flex items-center justify-between gap-4 px-4 py-3">
-                                    <div className="min-w-0 flex-1">
-                                      {m.full_name && (
-                                        <p className="truncate text-sm font-medium">
-                                          {m.full_name}
-                                        </p>
-                                      )}
-                                      <p className="truncate text-xs text-muted-foreground">
-                                        {m.email}
-                                      </p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <Badge
-                                        variant={
-                                          roleBadgeVariant[
-                                            m.role ?? "viewer"
-                                          ] ?? "outline"
-                                        }
-                                        className="shrink-0 capitalize"
-                                      >
-                                        {m.role ?? "viewer"}
-                                      </Badge>
-                                      {isAdmin && !isSelf && (
-                                        <DropdownMenu>
-                                          <DropdownMenuTrigger asChild>
-                                            <Button
-                                              variant="ghost"
-                                              size="icon"
-                                              className="size-7 text-muted-foreground"
-                                              aria-label={`Actions for ${m.email}`}
-                                            >
-                                              <IconDotsVertical className="size-3.5" />
-                                            </Button>
-                                          </DropdownMenuTrigger>
-                                          <DropdownMenuContent align="end">
-                                            <DropdownMenuItem
-                                              onSelect={() => {
-                                                setEditingMember(m)
-                                                setEditRoleDraft(
-                                                  m.role ?? "viewer"
-                                                )
-                                              }}
-                                            >
-                                              Edit Role
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem
-                                              disabled={
-                                                regeneratingLinkFor ===
-                                                m.user_id
-                                              }
-                                              onSelect={() =>
-                                                handleRegenerateLink(m)
-                                              }
-                                            >
-                                              <IconLink className="size-3.5" />
-                                              Generate Link
-                                            </DropdownMenuItem>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem
-                                              disabled={
-                                                removingUserId === m.user_id
-                                              }
-                                              className="text-destructive focus:text-destructive"
-                                              onSelect={() =>
-                                                handleRemove(m.user_id)
-                                              }
-                                            >
-                                              <IconTrash className="size-3.5" />
-                                              Remove
-                                            </DropdownMenuItem>
-                                          </DropdownMenuContent>
-                                        </DropdownMenu>
-                                      )}
-                                    </div>
-                                  </div>
-                                  {memberLink && (
-                                    <div className="mx-4 mb-3 flex items-start gap-2 rounded-md border border-green-500/30 bg-green-500/5 px-3 py-2">
-                                      <code className="flex-1 text-xs leading-relaxed break-all">
-                                        {memberLink}
-                                      </code>
-                                      <div className="flex shrink-0 items-center gap-1">
-                                        <CopyButton text={memberLink} />
-                                        <Button
-                                          size="icon"
-                                          variant="ghost"
-                                          className="size-7"
-                                          onClick={() =>
-                                            setMemberLinks((prev) => {
-                                              const next = { ...prev }
-                                              delete next[m.user_id]
-                                              return next
-                                            })
-                                          }
-                                          aria-label="Dismiss"
-                                        >
-                                          <IconX className="size-3.5" />
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              )
-                            })
-                          )}
-                        </div>
-                      </section>
-                    </TabsContent>
-
-                    <TabsContent
-                      value="invite"
+                      value="teams"
                       forceMount
                       className="mt-0 space-y-4"
                     >
-                      {isAdmin ? (
+                      {hasVisibleMembers ? (
                         <Card>
-                          <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-base">
-                              <IconUserPlus className="size-4 text-muted-foreground" />
-                              Invite Team
-                            </CardTitle>
-                            <CardDescription>
-                              Add members to your workspace
-                            </CardDescription>
-                          </CardHeader>
-
-                          <CardContent className="space-y-4">
-                            <form
-                              id="invite-user-form"
-                              onSubmit={handleInvite}
-                              className="space-y-4"
+                          <CardContent className="p-0">
+                            <Tabs
+                              value={teamCardTab}
+                              onValueChange={(value) =>
+                                setTeamCardTab(value as "members" | "invite")
+                              }
                             >
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  id="inv-email"
-                                  type="email"
-                                  placeholder="jane@example.com"
-                                  value={email}
-                                  onChange={(e) => setEmail(e.target.value)}
-                                  required
-                                  className="flex-1"
-                                />
-                                <Select value={role} onValueChange={setRole}>
-                                  <SelectTrigger className="w-28">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="admin">Admin</SelectItem>
-                                    <SelectItem value="member">
-                                      Member
-                                    </SelectItem>
-                                    <SelectItem value="client">
-                                      Client
-                                    </SelectItem>
-                                    <SelectItem value="viewer">
-                                      Viewer (read-only)
-                                    </SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
+                              <TabsList className="h-auto w-full rounded-none border-b bg-transparent p-0">
+                                <TabsTrigger
+                                  value="members"
+                                  className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                                >
+                                  Team Members
+                                </TabsTrigger>
+                                {isAdmin && (
+                                  <TabsTrigger
+                                    value="invite"
+                                    className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                                  >
+                                    Invite Team
+                                  </TabsTrigger>
+                                )}
+                              </TabsList>
 
-                              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                <div className="grid gap-1.5">
-                                  <Label htmlFor="inv-first">First name</Label>
-                                  <Input
-                                    id="inv-first"
-                                    placeholder="Jane"
-                                    value={firstName}
-                                    onChange={(e) =>
-                                      setFirstName(e.target.value)
-                                    }
-                                  />
+                              <TabsContent value="members" className="mt-0">
+                                <div className="divide-y">
+                                  {visibleMembers.map((m) => {
+                                    const isSelf = m.email === user.email
+                                    const memberLink = memberLinks[m.user_id]
+                                    return (
+                                      <div
+                                        key={m.user_id}
+                                        className="flex flex-col"
+                                      >
+                                        <div className="flex items-center justify-between gap-4 px-4 py-3">
+                                          <div className="min-w-0 flex-1">
+                                            {m.full_name && (
+                                              <p className="truncate text-sm font-medium">
+                                                {m.full_name}
+                                              </p>
+                                            )}
+                                            <p className="truncate text-xs text-muted-foreground">
+                                              {m.email}
+                                            </p>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            {memberLink && (
+                                              <button
+                                                type="button"
+                                                onClick={() =>
+                                                  setShowLinkFor((prev) => {
+                                                    const next = new Set(prev)
+                                                    if (next.has(m.user_id)) {
+                                                      next.delete(m.user_id)
+                                                    } else {
+                                                      next.add(m.user_id)
+                                                    }
+                                                    return next
+                                                  })
+                                                }
+                                                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium transition-opacity hover:opacity-80 ${
+                                                  isLinkExpired(memberLink)
+                                                    ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                                                    : "bg-green-500/15 text-green-600 dark:text-green-400"
+                                                }`}
+                                              >
+                                                {isLinkExpired(memberLink)
+                                                  ? "Link expired"
+                                                  : "Link active"}
+                                              </button>
+                                            )}
+                                            <Badge
+                                              variant={
+                                                roleBadgeVariant[
+                                                  m.role ?? "viewer"
+                                                ] ?? "outline"
+                                              }
+                                              className="shrink-0 capitalize"
+                                            >
+                                              {m.role ?? "viewer"}
+                                            </Badge>
+                                            {isAdmin && !isSelf && (
+                                              <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                  <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="size-7 text-muted-foreground"
+                                                    aria-label={`Actions for ${m.email}`}
+                                                  >
+                                                    <IconDotsVertical className="size-3.5" />
+                                                  </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                  <DropdownMenuItem
+                                                    onSelect={() => {
+                                                      setEditingMember(m)
+                                                      setEditRoleDraft(
+                                                        m.role ?? "viewer"
+                                                      )
+                                                    }}
+                                                  >
+                                                    Edit Role
+                                                  </DropdownMenuItem>
+                                                  <DropdownMenuItem
+                                                    disabled={
+                                                      regeneratingLinkFor ===
+                                                      m.user_id
+                                                    }
+                                                    onSelect={() =>
+                                                      handleRegenerateLink(m)
+                                                    }
+                                                  >
+                                                    <IconLink className="size-3.5" />
+                                                    Generate Link
+                                                  </DropdownMenuItem>
+                                                  <DropdownMenuSeparator />
+                                                  <DropdownMenuItem
+                                                    disabled={
+                                                      removingUserId ===
+                                                      m.user_id
+                                                    }
+                                                    className="text-destructive focus:text-destructive"
+                                                    onSelect={() =>
+                                                      handleRemove(m.user_id)
+                                                    }
+                                                  >
+                                                    <IconTrash className="size-3.5" />
+                                                    Remove
+                                                  </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                              </DropdownMenu>
+                                            )}
+                                          </div>
+                                        </div>
+                                        {memberLink &&
+                                          showLinkFor.has(m.user_id) && (
+                                            <div
+                                              className={`mx-4 mb-3 flex items-start gap-2 rounded-md border px-3 py-2 ${
+                                                isLinkExpired(memberLink)
+                                                  ? "border-amber-500/30 bg-amber-500/5"
+                                                  : "border-green-500/30 bg-green-500/5"
+                                              }`}
+                                            >
+                                              {isLinkExpired(memberLink) ? (
+                                                <span className="flex flex-1 items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+                                                  <IconAlertTriangle className="size-3.5 shrink-0" />
+                                                  Link expired — regenerate via
+                                                  the menu
+                                                </span>
+                                              ) : (
+                                                <code className="flex-1 text-xs leading-relaxed break-all">
+                                                  {memberLink.url}
+                                                </code>
+                                              )}
+                                              <div className="flex shrink-0 items-center gap-1">
+                                                {!isLinkExpired(memberLink) && (
+                                                  <CopyButton
+                                                    text={memberLink.url}
+                                                  />
+                                                )}
+                                                <Button
+                                                  size="icon"
+                                                  variant="ghost"
+                                                  className="size-7"
+                                                  onClick={() => {
+                                                    toast(
+                                                      "Remove magic link?",
+                                                      {
+                                                        description:
+                                                          "This will clear the stored link for this user.",
+                                                        action: {
+                                                          label: "Remove",
+                                                          onClick: () => {
+                                                            setMemberLinks(
+                                                              (prev) => {
+                                                                const next = {
+                                                                  ...prev,
+                                                                }
+                                                                delete next[
+                                                                  m.user_id
+                                                                ]
+                                                                return next
+                                                              }
+                                                            )
+                                                            setShowLinkFor(
+                                                              (prev) => {
+                                                                const next =
+                                                                  new Set(prev)
+                                                                next.delete(
+                                                                  m.user_id
+                                                                )
+                                                                return next
+                                                              }
+                                                            )
+                                                          },
+                                                        },
+                                                        cancel: {
+                                                          label: "Cancel",
+                                                          onClick: () => {},
+                                                        },
+                                                      }
+                                                    )
+                                                  }}
+                                                  aria-label="Dismiss"
+                                                >
+                                                  <IconX className="size-3.5" />
+                                                </Button>
+                                              </div>
+                                            </div>
+                                          )}
+                                      </div>
+                                    )
+                                  })}
                                 </div>
-                                <div className="grid gap-1.5">
-                                  <Label htmlFor="inv-surname">Surname</Label>
-                                  <Input
-                                    id="inv-surname"
-                                    placeholder="Smith"
-                                    value={surname}
-                                    onChange={(e) => setSurname(e.target.value)}
-                                  />
-                                </div>
-                              </div>
+                              </TabsContent>
 
-                              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                <div className="grid gap-1.5">
-                                  <Label>Access scope</Label>
-                                  <Select
-                                    value={scope}
-                                    onValueChange={(v) =>
-                                      setScope(v as "workspace" | "project")
+                              {isAdmin && (
+                                <TabsContent value="invite" className="mt-0">
+                                  <form
+                                    id="invite-user-form"
+                                    onSubmit={handleInvite}
+                                    className="flex flex-col gap-3 p-4"
+                                  >
+                                    {/* First / Last name / Role */}
+                                    <div className="grid grid-cols-3 gap-2">
+                                      <Input
+                                        placeholder="First Name"
+                                        value={firstName}
+                                        onChange={(e) =>
+                                          setFirstName(e.target.value)
+                                        }
+                                        aria-label="First name"
+                                      />
+                                      <Input
+                                        placeholder="Last Name"
+                                        value={surname}
+                                        onChange={(e) =>
+                                          setSurname(e.target.value)
+                                        }
+                                        aria-label="Last name"
+                                      />
+                                      <Select
+                                        value={role}
+                                        onValueChange={setRole}
+                                      >
+                                        <SelectTrigger
+                                          className="h-9 rounded-md"
+                                          aria-label="Role"
+                                        >
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="admin">
+                                            Admin
+                                          </SelectItem>
+                                          <SelectItem value="member">
+                                            Member
+                                          </SelectItem>
+                                          <SelectItem value="client">
+                                            Client
+                                          </SelectItem>
+                                          <SelectItem value="viewer">
+                                            Viewer
+                                          </SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+
+                                    {/* Email */}
+                                    <Input
+                                      id="inv-email"
+                                      type="email"
+                                      placeholder="Email Address"
+                                      value={email}
+                                      onChange={(e) => setEmail(e.target.value)}
+                                      required
+                                      aria-label="Email address"
+                                    />
+
+                                    {/* Workspace / Project — 50/50 */}
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <Select
+                                        value={selectedWsId}
+                                        onValueChange={setSelectedWsId}
+                                      >
+                                        <SelectTrigger
+                                          className="h-9 w-full rounded-md"
+                                          aria-label="Workspace"
+                                        >
+                                          <SelectValue placeholder="Select workspace" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {workspaces.map((ws) => (
+                                            <SelectItem
+                                              key={ws.id}
+                                              value={ws.id}
+                                            >
+                                              {ws.name}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+
+                                      <Select
+                                        value={projectId}
+                                        onValueChange={setProjectId}
+                                      >
+                                        <SelectTrigger
+                                          className="h-9 w-full rounded-md"
+                                          aria-label="Project"
+                                        >
+                                          <SelectValue placeholder="Select project (optional)" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="__none__">
+                                            No specific project
+                                          </SelectItem>
+                                          {projects.map((p) => (
+                                            <SelectItem key={p.id} value={p.id}>
+                                              {p.name}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+
+                                    {magicLink && (
+                                      <>
+                                        <Separator />
+                                        <div className="flex flex-col gap-1.5">
+                                          <div className="flex items-center justify-between">
+                                            <Label htmlFor="invite-link">
+                                              Magic Link
+                                            </Label>
+                                            {isLinkExpired(magicLink) && (
+                                              <span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+                                                <IconAlertTriangle className="size-3.5" />
+                                                Expired — generate a new link
+                                              </span>
+                                            )}
+                                          </div>
+                                          <div
+                                            className={`flex items-center rounded-md border ${
+                                              isLinkExpired(magicLink)
+                                                ? "opacity-50"
+                                                : ""
+                                            }`}
+                                          >
+                                            <Input
+                                              id="invite-link"
+                                              value={magicLink.url}
+                                              readOnly
+                                              className="flex-1 border-0 shadow-none focus-visible:ring-0"
+                                            />
+                                            <Button
+                                              type="button"
+                                              size="icon"
+                                              variant="ghost"
+                                              className="shrink-0"
+                                              disabled={isLinkExpired(
+                                                magicLink
+                                              )}
+                                              onClick={async () => {
+                                                await navigator.clipboard.writeText(
+                                                  magicLink.url
+                                                )
+                                                toast.success("Link copied")
+                                              }}
+                                              aria-label="Copy link"
+                                            >
+                                              <IconCopy className="size-4" />
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      </>
+                                    )}
+
+                                    <Button
+                                      type="submit"
+                                      disabled={
+                                        submitting ||
+                                        !email.trim() ||
+                                        selectedWsId === "__none__"
+                                      }
+                                      className="w-full"
+                                    >
+                                      {submitting
+                                        ? "Generating…"
+                                        : "Generate Magic Link"}
+                                    </Button>
+                                  </form>
+                                </TabsContent>
+                              )}
+                            </Tabs>
+                          </CardContent>
+                        </Card>
+                      ) : (
+                        <section className="space-y-3">
+                          <Card>
+                            <CardContent className="p-0">
+                              <div className="flex h-56 flex-col items-center justify-center border text-center">
+                                <div className="flex max-w-sm flex-col items-center gap-3 px-6">
+                                  <AvatarGroup className="grayscale">
+                                    <Avatar size="lg">
+                                      <AvatarImage
+                                        alt="@shadcn"
+                                        src="https://github.com/shadcn.png"
+                                      />
+                                      <AvatarFallback>SH</AvatarFallback>
+                                    </Avatar>
+                                    <Avatar size="lg">
+                                      <AvatarImage
+                                        alt="@maxleiter"
+                                        src="https://github.com/maxleiter.png"
+                                      />
+                                      <AvatarFallback>ML</AvatarFallback>
+                                    </Avatar>
+                                    <Avatar size="lg">
+                                      <AvatarImage
+                                        alt="@evilrabbit"
+                                        src="https://github.com/evilrabbit.png"
+                                      />
+                                      <AvatarFallback>ER</AvatarFallback>
+                                    </Avatar>
+                                  </AvatarGroup>
+                                  <div className="space-y-1">
+                                    <p className="font-semibold">
+                                      No Team Members
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                      Invite your team to workspace or project.
+                                    </p>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={() =>
+                                      setShowInvitePanel((current) => !current)
                                     }
                                   >
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="workspace">
-                                        Workspace
-                                      </SelectItem>
-                                      <SelectItem value="project">
-                                        Project only
-                                      </SelectItem>
-                                    </SelectContent>
-                                  </Select>
+                                    Invite Team
+                                  </Button>
                                 </div>
+                              </div>
+                            </CardContent>
+                          </Card>
 
-                                {scope === "project" ? (
-                                  <div className="grid gap-1.5">
-                                    <Label>Project</Label>
+                          {isAdmin && showInvitePanel && (
+                            <Card>
+                              <CardHeader>
+                                <CardTitle>Invite Team</CardTitle>
+                                <CardDescription>
+                                  Add members to your workspace
+                                </CardDescription>
+                              </CardHeader>
+                              <CardContent className="flex flex-col gap-4">
+                                <form
+                                  id="invite-user-form"
+                                  onSubmit={handleInvite}
+                                  className="flex flex-col gap-3"
+                                >
+                                  <div className="grid grid-cols-3 gap-2">
+                                    <Input
+                                      placeholder="First Name"
+                                      value={firstName}
+                                      onChange={(e) =>
+                                        setFirstName(e.target.value)
+                                      }
+                                      aria-label="First name"
+                                    />
+                                    <Input
+                                      placeholder="Last Name"
+                                      value={surname}
+                                      onChange={(e) =>
+                                        setSurname(e.target.value)
+                                      }
+                                      aria-label="Last name"
+                                    />
+                                    <Select
+                                      value={role}
+                                      onValueChange={setRole}
+                                    >
+                                      <SelectTrigger
+                                        className="h-9 rounded-md"
+                                        aria-label="Role"
+                                      >
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="admin">
+                                          Admin
+                                        </SelectItem>
+                                        <SelectItem value="member">
+                                          Member
+                                        </SelectItem>
+                                        <SelectItem value="client">
+                                          Client
+                                        </SelectItem>
+                                        <SelectItem value="viewer">
+                                          Viewer
+                                        </SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <Input
+                                    id="inv-email"
+                                    type="email"
+                                    placeholder="Email Address"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                    aria-label="Email address"
+                                  />
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <Select
+                                      value={selectedWsId}
+                                      onValueChange={setSelectedWsId}
+                                    >
+                                      <SelectTrigger
+                                        className="h-9 w-full rounded-md"
+                                        aria-label="Workspace"
+                                      >
+                                        <SelectValue placeholder="Select workspace" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {workspaces.map((ws) => (
+                                          <SelectItem key={ws.id} value={ws.id}>
+                                            {ws.name}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
                                     <Select
                                       value={projectId}
                                       onValueChange={setProjectId}
                                     >
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select a project…" />
+                                      <SelectTrigger
+                                        className="h-9 w-full rounded-md"
+                                        aria-label="Project"
+                                      >
+                                        <SelectValue placeholder="Select project (optional)" />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        {projects.length === 0 ? (
-                                          <SelectItem value="__none__" disabled>
-                                            No projects yet
+                                        <SelectItem value="__none__">
+                                          No specific project
+                                        </SelectItem>
+                                        {projects.map((p) => (
+                                          <SelectItem key={p.id} value={p.id}>
+                                            {p.name}
                                           </SelectItem>
-                                        ) : (
-                                          projects.map((p) => (
-                                            <SelectItem key={p.id} value={p.id}>
-                                              {p.name}
-                                            </SelectItem>
-                                          ))
-                                        )}
+                                        ))}
                                       </SelectContent>
                                     </Select>
                                   </div>
-                                ) : (
-                                  <div className="grid gap-1.5">
-                                    <Label className="invisible">Project</Label>
-                                    <Input
-                                      disabled
-                                      value="All projects in workspace"
-                                    />
-                                  </div>
+                                </form>
+                                {magicLink && (
+                                  <>
+                                    <Separator />
+                                    <div className="flex flex-col gap-1.5">
+                                      <div className="flex items-center justify-between">
+                                        <Label htmlFor="invite-link">
+                                          Magic Link
+                                        </Label>
+                                        {isLinkExpired(magicLink) && (
+                                          <span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+                                            <IconAlertTriangle className="size-3.5" />
+                                            Expired — generate a new link
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div
+                                        className={`flex items-center rounded-md border ${
+                                          isLinkExpired(magicLink)
+                                            ? "opacity-50"
+                                            : ""
+                                        }`}
+                                      >
+                                        <Input
+                                          id="invite-link"
+                                          value={magicLink.url}
+                                          readOnly
+                                          className="flex-1 border-0 shadow-none focus-visible:ring-0"
+                                        />
+                                        <Button
+                                          type="button"
+                                          size="icon"
+                                          variant="ghost"
+                                          className="shrink-0"
+                                          disabled={isLinkExpired(magicLink)}
+                                          onClick={async () => {
+                                            await navigator.clipboard.writeText(
+                                              magicLink.url
+                                            )
+                                            toast.success("Link copied")
+                                          }}
+                                          aria-label="Copy link"
+                                        >
+                                          <IconCopy className="size-4" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </>
                                 )}
-                              </div>
-                            </form>
+                              </CardContent>
+                              <CardFooter>
+                                <Button
+                                  type="submit"
+                                  form="invite-user-form"
+                                  disabled={
+                                    submitting ||
+                                    !email.trim() ||
+                                    selectedWsId === "__none__"
+                                  }
+                                  className="w-full"
+                                >
+                                  {submitting
+                                    ? "Generating…"
+                                    : "Generate Magic Link"}
+                                </Button>
+                              </CardFooter>
+                            </Card>
+                          )}
 
-                            {magicLink && (
-                              <>
-                                <Separator />
-                                <div className="space-y-2">
-                                  <Label htmlFor="invite-link">
-                                    Or share invite link
-                                  </Label>
-                                  <div className="flex items-center gap-2">
-                                    <Input
-                                      id="invite-link"
-                                      value={magicLink}
-                                      readOnly
-                                    />
-                                    <CopyButton text={magicLink} />
-                                  </div>
-                                  <p className="text-xs text-muted-foreground">
-                                    Expires in 24 hours. The user signs in
-                                    instantly — no password required.
-                                  </p>
-                                </div>
-                              </>
-                            )}
-                          </CardContent>
-
-                          <CardFooter>
-                            <Button
-                              type="submit"
-                              form="invite-user-form"
-                              disabled={
-                                submitting ||
-                                !email.trim() ||
-                                (scope === "project" &&
-                                  projectId === "__none__")
-                              }
-                              className="w-full"
-                            >
-                              {submitting
-                                ? "Adding…"
-                                : "Add User & Generate Link"}
-                            </Button>
-                          </CardFooter>
-                        </Card>
-                      ) : (
-                        <div className="rounded-lg border p-6 text-sm text-muted-foreground">
-                          Only workspace admins can invite users.
-                        </div>
+                          {!isAdmin && (
+                            <div className="rounded-lg border p-6 text-sm text-muted-foreground">
+                              Only workspace admins can invite users.
+                            </div>
+                          )}
+                        </section>
                       )}
+                    </TabsContent>
+
+                    <TabsContent value="billing" forceMount className="mt-0">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-base">Billing</CardTitle>
+                          <CardDescription>
+                            Manage plan details, payment methods, and invoices.
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-sm text-muted-foreground">
+                            Billing controls are coming to this panel.
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+
+                    <TabsContent
+                      value="notifications"
+                      forceMount
+                      className="mt-0"
+                    >
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-base">
+                            Notifications
+                          </CardTitle>
+                          <CardDescription>
+                            Configure email, in-app, and push notification
+                            preferences.
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-sm text-muted-foreground">
+                            Notification settings are coming to this panel.
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+
+                    <TabsContent value="account" forceMount className="mt-0">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-base">Account</CardTitle>
+                          <CardDescription>
+                            Update personal profile and account preferences.
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-sm text-muted-foreground">
+                            Account settings are coming to this panel.
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+
+                    <TabsContent
+                      value="admin-tools"
+                      forceMount
+                      className="mt-0"
+                    >
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-base">
+                            Admiin Tools
+                          </CardTitle>
+                          <CardDescription>
+                            Workspace-wide maintenance and administrative
+                            controls.
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          {isAdmin ? (
+                            <p className="text-sm text-muted-foreground">
+                              Administrative tools are coming to this panel.
+                            </p>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">
+                              Only workspace admins can access admin tools.
+                            </p>
+                          )}
+                        </CardContent>
+                      </Card>
                     </TabsContent>
                   </div>
                 </ScrollArea>
