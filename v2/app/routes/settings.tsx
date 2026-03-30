@@ -371,7 +371,7 @@ export default function SettingsPage() {
     billing: "Billing",
     notifications: "Notifications",
     account: "Account",
-    "admin-tools": "Admiin Tools",
+    "admin-tools": "Admin Tools",
   }
   const activeTabLabel = activeTabLabelMap[activeTab]
   const visibleMembers = members.filter(
@@ -576,7 +576,7 @@ export default function SettingsPage() {
                     value="admin-tools"
                     className="w-full justify-start"
                   >
-                    Admiin Tools
+                    Admin Tools
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -591,9 +591,7 @@ export default function SettingsPage() {
                         Notifications
                       </TabsTrigger>
                       <TabsTrigger value="account">Account</TabsTrigger>
-                      <TabsTrigger value="admin-tools">
-                        Admiin Tools
-                      </TabsTrigger>
+                      <TabsTrigger value="admin-tools">Admin Tools</TabsTrigger>
                     </TabsList>
 
                     <TabsContent
@@ -1323,18 +1321,76 @@ export default function SettingsPage() {
                       <Card>
                         <CardHeader>
                           <CardTitle className="text-base">
-                            Admiin Tools
+                            Admin Tools
                           </CardTitle>
                           <CardDescription>
                             Workspace-wide maintenance and administrative
                             controls.
                           </CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="space-y-6">
                           {isAdmin ? (
-                            <p className="text-sm text-muted-foreground">
-                              Administrative tools are coming to this panel.
-                            </p>
+                            <>
+                              <div className="space-y-1.5">
+                                <p className="text-sm font-medium">
+                                  Browser Notifications
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  Fires a test desktop notification to confirm
+                                  the browser permission and in-app settings are
+                                  working.
+                                </p>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="mt-2"
+                                  onClick={() => {
+                                    if (!("Notification" in window)) {
+                                      toast.error(
+                                        "Browser notifications not supported"
+                                      )
+                                      return
+                                    }
+                                    if (Notification.permission === "denied") {
+                                      toast.error("Notifications blocked", {
+                                        description:
+                                          "Reset permission in browser site settings.",
+                                      })
+                                      return
+                                    }
+                                    const fire = () =>
+                                      new Notification("BPC Test", {
+                                        body: "Browser notifications are working correctly.",
+                                        icon: "/BPC-Logo.jpg",
+                                      })
+                                    if (Notification.permission === "granted") {
+                                      fire()
+                                      toast.success(
+                                        "Test notification sent — check your OS notifications."
+                                      )
+                                    } else {
+                                      Notification.requestPermission().then(
+                                        (p) => {
+                                          if (p === "granted") {
+                                            fire()
+                                            toast.success(
+                                              "Permission granted — test notification sent."
+                                            )
+                                          } else {
+                                            toast.error(
+                                              "Permission not granted"
+                                            )
+                                          }
+                                        }
+                                      )
+                                    }
+                                  }}
+                                >
+                                  Send Test Notification
+                                </Button>
+                              </div>
+                            </>
                           ) : (
                             <p className="text-sm text-muted-foreground">
                               Only workspace admins can access admin tools.
