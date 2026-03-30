@@ -3,16 +3,6 @@ import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useNavigate, type ClientLoaderFunctionArgs } from "react-router"
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "~/components/ui/alert-dialog"
 import { Button } from "~/components/ui/button"
 import {
   Card,
@@ -39,7 +29,6 @@ export default function AuthInvitePage() {
   const [success, setSuccess] = React.useState<string | null>(null)
   const [loading, setLoading] = React.useState(false)
   const [sessionChecked, setSessionChecked] = React.useState(false)
-  const [showNotifDialog, setShowNotifDialog] = React.useState(false)
 
   React.useEffect(() => {
     let active = true
@@ -141,21 +130,11 @@ export default function AuthInvitePage() {
 
     setSuccess("Password set. Redirecting...")
     setLoading(false)
-
-    // Show notification permission prompt before redirecting
-    if (
-      typeof Notification !== "undefined" &&
-      Notification.permission === "default"
-    ) {
-      setShowNotifDialog(true)
-    } else {
-      setTimeout(() => navigate("/", { replace: true }), 1200)
-    }
+    setTimeout(() => navigate("/", { replace: true }), 1200)
   }
 
   return (
-    <>
-      <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
+    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
         <div className="w-full max-w-sm">
           <Card className="gap-6 rounded p-8">
             <CardHeader className="px-0">
@@ -240,31 +219,6 @@ export default function AuthInvitePage() {
           </Card>
         </div>
       </div>
-
-      <AlertDialog open={showNotifDialog} onOpenChange={setShowNotifDialog}>
-        <AlertDialogContent size="sm">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Enable notifications?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Allow BPC Project Manager to send you browser notifications for
-              task updates, messages, and activity.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => navigate("/", { replace: true })}>
-              Not now
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={async () => {
-                await Notification.requestPermission()
-                navigate("/", { replace: true })
-              }}
-            >
-              Allow
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+    </div>
   )
 }
