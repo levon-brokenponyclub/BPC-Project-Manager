@@ -219,6 +219,5 @@ export default function AuthInvitePage() {
           </Card>
         </div>
       </div>
-    </div>
   )
 }
