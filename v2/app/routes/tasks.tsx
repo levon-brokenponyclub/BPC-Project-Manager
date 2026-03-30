@@ -7,7 +7,6 @@ import {
 } from "react-router"
 import { toast } from "sonner"
 import { ModeToggle } from "~/components/mode-toggle"
-import { Skeleton } from "~/components/ui/skeleton"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -293,52 +292,6 @@ function renderDescriptionWithLinks(text: string) {
     }
     return <React.Fragment key={`txt-${idx}`}>{part}</React.Fragment>
   })
-}
-
-// ─── Loading skeleton ────────────────────────────────────────────────────────
-
-export function HydrateFallback() {
-  return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset className="overflow-hidden">
-        <div className="flex h-full overflow-hidden">
-          {/* Left: task list skeleton */}
-          <div className="flex flex-1 shrink-0 flex-col overflow-hidden border-r">
-            <div className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
-              <Skeleton className="size-7 rounded" />
-              <Skeleton className="h-4 w-4 rounded" />
-              <Skeleton className="h-4 w-36" />
-              <Skeleton className="ml-auto h-7 w-7 rounded" />
-            </div>
-            <div className="flex flex-col gap-3 p-4">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <Skeleton key={i} className="h-9 w-full rounded" />
-              ))}
-            </div>
-          </div>
-          {/* Right: detail skeleton */}
-          <div className="flex flex-1 flex-col overflow-hidden">
-            <div className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
-              <Skeleton className="h-4 w-40" />
-            </div>
-            <div className="flex flex-1 overflow-hidden">
-              <div className="flex w-70 shrink-0 flex-col gap-4 border-r p-4">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-              </div>
-              <div className="flex flex-1 flex-col gap-4 p-6">
-                <Skeleton className="h-7 w-64" />
-                <Skeleton className="h-4 w-96" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
-  )
 }
 
 // ─── Task detail panel (inline, stateful) ────────────────────────────────────

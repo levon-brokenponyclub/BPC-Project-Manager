@@ -7,7 +7,6 @@ import {
 } from "react-router"
 import { toast } from "sonner"
 import { ModeToggle } from "~/components/mode-toggle"
-import { Skeleton } from "~/components/ui/skeleton"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -164,33 +163,6 @@ function formatDate(iso: string): string {
     month: "short",
     year: "numeric",
   })
-}
-
-// ─── Loading skeleton ────────────────────────────────────────────────────────
-
-export function HydrateFallback() {
-  return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset className="overflow-hidden">
-        <div className="flex h-full overflow-hidden">
-          <div className="flex flex-1 shrink-0 flex-col overflow-hidden border-r">
-            <div className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
-              <Skeleton className="size-7 rounded" />
-              <Skeleton className="h-4 w-4 rounded" />
-              <Skeleton className="h-4 w-36" />
-              <Skeleton className="ml-auto h-7 w-7 rounded" />
-            </div>
-            <div className="flex flex-col gap-3 p-4">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-20 w-full rounded-lg" />
-              ))}
-            </div>
-          </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
-  )
 }
 
 // ─── Project detail panel ────────────────────────────────────────────────────

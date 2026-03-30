@@ -4,7 +4,6 @@ import {
   type ClientLoaderFunctionArgs,
 } from "react-router"
 import { ModeToggle } from "~/components/mode-toggle"
-import { Skeleton } from "~/components/ui/skeleton"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -152,36 +151,6 @@ export async function clientLoader({ request }: ClientLoaderFunctionArgs) {
     activeWorkspaceId,
     currentUserRole,
   }
-}
-
-// ─── Loading skeleton ────────────────────────────────────────────────────────
-
-export function HydrateFallback() {
-  return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator
-              orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4"
-            />
-            <Skeleton className="h-4 w-32" />
-          </div>
-        </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <div className="grid gap-4 md:grid-cols-3">
-            <Skeleton className="h-[120px] rounded-xl" />
-            <Skeleton className="h-[120px] rounded-xl" />
-            <Skeleton className="h-[120px] rounded-xl" />
-          </div>
-          <Skeleton className="h-[420px] rounded-xl" />
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
-  )
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
