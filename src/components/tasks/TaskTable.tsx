@@ -559,7 +559,12 @@ export function TaskTable({
                     {/* ── Parent task row ── */}
                     <tr
                       className="h-11 cursor-pointer border-b border-[#DCDCDC] bg-[#FBFBFB] transition-colors hover:bg-[#F3F3F3] dark:border-[#292B38] dark:bg-[#191A22] dark:hover:bg-[#1E2030]"
-                      onClick={() => onOpen(task)}
+                      onClick={(e) => {
+                        if ((e.target as HTMLElement).closest("[data-expand]"))
+                          return;
+                        if ((e.target as HTMLElement).closest("button")) return;
+                        onOpen(task);
+                      }}
                     >
                       <td className="px-6 py-3.5">
                         <div className="flex items-center gap-3">
@@ -568,6 +573,7 @@ export function TaskTable({
                             {hasSubtasks ? (
                               <button
                                 type="button"
+                                data-expand="true"
                                 aria-label={
                                   isExpanded
                                     ? "Collapse subtasks"

@@ -634,10 +634,14 @@ export function TaskDrawer({
   const drawerReadOnlyFieldClass =
     "flex h-10 items-center rounded-[5px] border border-border bg-card px-3 text-[13px] font-medium leading-4 text-foreground/80";
 
+  console.log("[TaskDrawer] rendered — left:50% style applied", {
+    taskId: task?.id,
+  });
+
   return (
     <section
       className="fixed bottom-0 right-0 top-14 z-40 overflow-hidden bg-white dark:bg-[#15161D]"
-      style={{ left: "var(--sidebar-w, 275px)" }}
+      style={{ left: "50%" }}
     >
       <div className="grid h-full min-h-0 grid-cols-1 md:grid-cols-[300px_minmax(0,1fr)_280px]">
         <div className="flex min-h-0 flex-col bg-[#ECECEC] dark:bg-[#1E1F2A] md:border-r md:border-[#DCDCDC] dark:md:border-[#222330]">

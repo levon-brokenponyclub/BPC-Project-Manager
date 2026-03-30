@@ -26,6 +26,15 @@ import {
   CardTitle,
 } from "~/components/ui/card"
 import { Input } from "~/components/ui/input"
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemMedia,
+  ItemTitle,
+} from "~/components/ui/item"
 import { Label } from "~/components/ui/label"
 import { ScrollArea } from "~/components/ui/scroll-area"
 import {
@@ -626,17 +635,21 @@ export default function SettingsPage() {
                               </TabsList>
 
                               <TabsContent value="members" className="mt-0">
-                                <div className="divide-y">
+                                <ItemGroup className="gap-0">
                                   {visibleMembers.map((m) => {
                                     const isSelf = m.email === user.email
                                     const memberLink = memberLinks[m.user_id]
                                     return (
                                       <div
                                         key={m.user_id}
-                                        className="flex flex-col"
+                                        className="flex flex-col border-b last:border-b-0"
                                       >
-                                        <div className="flex items-center justify-between gap-4 px-4 py-3">
-                                          <div className="flex min-w-0 flex-1 items-center gap-3">
+                                        <Item
+                                          variant="default"
+                                          size="sm"
+                                          className="rounded-none px-4 py-3"
+                                        >
+                                          <ItemMedia variant="default">
                                             <Avatar className="h-8 w-8 shrink-0 rounded-full">
                                               <AvatarImage
                                                 src={m.avatar_url ?? ""}
@@ -651,18 +664,18 @@ export default function SettingsPage() {
                                                   .toUpperCase()}
                                               </AvatarFallback>
                                             </Avatar>
-                                            <div className="min-w-0">
-                                              {m.full_name && (
-                                                <p className="truncate text-sm font-medium">
-                                                  {m.full_name}
-                                                </p>
-                                              )}
-                                              <p className="truncate text-xs text-muted-foreground">
-                                                {m.email}
-                                              </p>
-                                            </div>
-                                          </div>
-                                          <div className="flex items-center gap-2">
+                                          </ItemMedia>
+                                          <ItemContent>
+                                            {m.full_name && (
+                                              <ItemTitle className="truncate text-sm font-medium">
+                                                {m.full_name}
+                                              </ItemTitle>
+                                            )}
+                                            <ItemDescription className="truncate text-xs">
+                                              {m.email}
+                                            </ItemDescription>
+                                          </ItemContent>
+                                          <ItemActions>
                                             {memberLink && (
                                               <button
                                                 type="button"
@@ -758,8 +771,8 @@ export default function SettingsPage() {
                                                 </DropdownMenuContent>
                                               </DropdownMenu>
                                             )}
-                                          </div>
-                                        </div>
+                                          </ItemActions>
+                                        </Item>
                                         {memberLink &&
                                           showLinkFor.has(m.user_id) && (
                                             <div
@@ -839,7 +852,7 @@ export default function SettingsPage() {
                                       </div>
                                     )
                                   })}
-                                </div>
+                                </ItemGroup>
                               </TabsContent>
 
                               {isAdmin && (

@@ -105,7 +105,10 @@ export const columns: ColumnDef<TaskRow>[] = [
       >
         {row.getCanExpand() ? (
           <button
-            onClick={row.getToggleExpandedHandler()}
+            onClick={(event) => {
+              event.stopPropagation()
+              row.toggleExpanded()
+            }}
             className="flex size-5 shrink-0 items-center justify-center rounded text-foreground hover:bg-muted"
           >
             {row.getIsExpanded() ? (

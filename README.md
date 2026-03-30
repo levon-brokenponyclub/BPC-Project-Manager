@@ -1,6 +1,6 @@
 # BPC Project Manager
 
-A multi-workspace project management and client portal built for support agencies. Premium dark UI inspired by Linear, backed by Supabase.
+A multi-workspace project management and client portal built for support agencies. Premium dark UI inspired by Linear, backed by Supabase. 
 
 **Version:** 2.1.0 — 30 March 2026
 

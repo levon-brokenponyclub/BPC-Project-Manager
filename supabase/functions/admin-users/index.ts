@@ -166,7 +166,7 @@ Deno.serve(async (req) => {
       }
 
       const workspaceNamesByUserId = new Map<string, string[]>();
-      const isAdminByUserId = new Map<string, boolean>();
+      const roleInRequestedWorkspaceByUserId = new Map<string, string>();
       for (const membership of memberships ?? []) {
         const workspaceName = workspaceNameById.get(membership.workspace_id);
         if (!workspaceName) {
@@ -175,8 +175,11 @@ Deno.serve(async (req) => {
         const current = workspaceNamesByUserId.get(membership.user_id) ?? [];
         current.push(workspaceName);
         workspaceNamesByUserId.set(membership.user_id, current);
-        if (membership.role === "admin") {
-          isAdminByUserId.set(membership.user_id, true);
+        if (membership.workspace_id === workspaceId) {
+          roleInRequestedWorkspaceByUserId.set(
+            membership.user_id,
+            membership.role,
+          );
         }
       }
 
@@ -185,7 +188,7 @@ Deno.serve(async (req) => {
         return {
           ...u,
           workspace_names: workspaceNames,
-          role: isAdminByUserId.get(u.id) ? "admin" : "client",
+          role: roleInRequestedWorkspaceByUserId.get(u.id) ?? null,
         };
       });
 

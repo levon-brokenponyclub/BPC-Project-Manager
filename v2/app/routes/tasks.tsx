@@ -19,6 +19,15 @@ import {
 import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemMedia,
+  ItemTitle,
+} from "~/components/ui/item"
 import { Label } from "~/components/ui/label"
 import { ScrollArea } from "~/components/ui/scroll-area"
 import {
@@ -1021,7 +1030,7 @@ function TaskDetail({
                         </p>
                       </div>
                     ) : (
-                      <ul className="space-y-3">
+                      <ul className="space-y-2">
                         {activityItems.map((entry, idx) => {
                           const payload = toRec(entry.payload)
                           const actorName = resolveActivityActor(
@@ -1054,58 +1063,63 @@ function TaskDetail({
                           const actionText = isComment
                             ? null
                             : formatEventAction(entry.type, payload)
-                          const isLast = idx === activityItems.length - 1
 
                           return (
-                            <li
-                              key={entry.id}
-                              className="relative grid grid-cols-[28px_minmax(0,1fr)_auto] items-start gap-2"
-                            >
-                              {/* connector line */}
-                              <div className="relative flex justify-center">
-                                {!isLast && (
-                                  <span className="absolute top-3 bottom-[-12px] w-px bg-border" />
-                                )}
-                                {isComment ? (
-                                  <Avatar className="relative z-10 mt-0.5 h-6 w-6">
-                                    <AvatarImage src={actorAvatar} />
-                                    <AvatarFallback className="text-[10px] font-semibold">
-                                      {actorName.charAt(0).toUpperCase()}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                ) : (
-                                  <span className="relative z-10 mt-2 h-2 w-2 rounded-full border border-border bg-muted-foreground/40" />
-                                )}
-                              </div>
+                            <li key={entry.id}>
+                              <Item
+                                variant={isComment ? "outline" : "default"}
+                                size="sm"
+                                className={
+                                  isComment ? "bg-muted/30" : "px-3 py-2"
+                                }
+                              >
+                                <ItemMedia
+                                  variant={isComment ? "default" : "icon"}
+                                >
+                                  {isComment ? (
+                                    <Avatar className="h-6 w-6">
+                                      <AvatarImage src={actorAvatar} />
+                                      <AvatarFallback className="text-[10px] font-semibold">
+                                        {actorName.charAt(0).toUpperCase()}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                  ) : (
+                                    <span className="h-2 w-2 rounded-full border border-border bg-muted-foreground/40" />
+                                  )}
+                                </ItemMedia>
 
-                              {isComment ? (
-                                <div className="rounded-lg border bg-muted/30 px-3 py-2">
-                                  <p className="text-sm">
-                                    <span className="font-semibold text-foreground">
-                                      {actorName}
-                                    </span>{" "}
-                                    <span className="text-muted-foreground">
-                                      posted a note
-                                    </span>
-                                  </p>
-                                  <p className="mt-1 text-sm whitespace-pre-wrap text-foreground">
-                                    {commentBody}
-                                  </p>
-                                </div>
-                              ) : (
-                                <p className="pt-0.5 text-sm leading-6 text-foreground">
-                                  <span className="font-semibold">
-                                    {actorName}
-                                  </span>{" "}
-                                  <span className="text-muted-foreground">
-                                    {actionText}
-                                  </span>
-                                </p>
-                              )}
+                                <ItemContent>
+                                  {isComment ? (
+                                    <>
+                                      <ItemTitle className="text-sm leading-5 font-semibold">
+                                        {actorName}
+                                        <span className="font-normal text-muted-foreground">
+                                          {" "}
+                                          posted a note
+                                        </span>
+                                      </ItemTitle>
+                                      <ItemDescription className="mt-0.5 whitespace-pre-wrap text-foreground">
+                                        {commentBody}
+                                      </ItemDescription>
+                                    </>
+                                  ) : (
+                                    <ItemDescription className="text-sm leading-6 text-foreground">
+                                      <span className="font-semibold text-foreground">
+                                        {actorName}
+                                      </span>{" "}
+                                      <span className="text-muted-foreground">
+                                        {actionText}
+                                      </span>
+                                    </ItemDescription>
+                                  )}
+                                </ItemContent>
 
-                              <time className="pt-0.5 text-xs text-muted-foreground">
-                                {relativeActivityTime(entry.created_at)}
-                              </time>
+                                <ItemActions>
+                                  <time className="text-xs text-muted-foreground">
+                                    {relativeActivityTime(entry.created_at)}
+                                  </time>
+                                </ItemActions>
+                              </Item>
                             </li>
                           )
                         })}
@@ -1137,71 +1151,114 @@ function TaskDetail({
         {/* Right sidebar — live metadata */}
         {showRightMeta && (
           <ScrollArea className="w-70 shrink-0 border-l bg-sidebar">
-            <div className="flex flex-col divide-y text-sm">
-              {/* Files */}
-              <section className="p-4">
-                <p className="mb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                  Files
-                </p>
-                <p className="mb-3 flex items-center gap-1.5 text-muted-foreground">
-                  <IconPaperclip className="size-3.5" />
-                  No files attached
-                </p>
-                <Button size="sm" variant="outline" className="w-full gap-1.5">
-                  <IconUpload className="size-3.5" />
-                  Upload File
-                </Button>
-              </section>
+            <div className="p-4">
+              <ItemGroup className="gap-3">
+                <Item variant="outline" className="flex-col items-stretch">
+                  <ItemTitle className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    Files
+                  </ItemTitle>
+                  <Item
+                    variant="muted"
+                    size="sm"
+                    className="border-transparent px-3 py-2.5"
+                  >
+                    <ItemMedia variant="icon">
+                      <IconPaperclip className="size-3.5 text-muted-foreground" />
+                    </ItemMedia>
+                    <ItemContent>
+                      <ItemDescription className="line-clamp-1">
+                        No files attached
+                      </ItemDescription>
+                    </ItemContent>
+                  </Item>
+                  <ItemActions>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full gap-1.5"
+                    >
+                      <IconUpload className="size-3.5" />
+                      Upload File
+                    </Button>
+                  </ItemActions>
+                </Item>
 
-              {/* Status */}
-              <section className="flex items-center justify-between px-4 py-3">
-                <span className="text-muted-foreground">Status</span>
-                <Badge
-                  variant="outline"
-                  className="gap-1.5 px-2 text-muted-foreground"
-                >
-                  {statusIcon[draft.status as TaskStatus]}
-                  {draft.status}
-                </Badge>
-              </section>
+                <Item variant="outline" size="sm">
+                  <ItemContent>
+                    <ItemDescription>Status</ItemDescription>
+                  </ItemContent>
+                  <ItemActions>
+                    <Badge
+                      variant="outline"
+                      className="gap-1.5 px-2 text-muted-foreground"
+                    >
+                      {statusIcon[draft.status as TaskStatus]}
+                      {draft.status}
+                    </Badge>
+                  </ItemActions>
+                </Item>
 
-              {/* Priority */}
-              <section className="flex items-center justify-between px-4 py-3">
-                <span className="text-muted-foreground">Priority</span>
-                {draft.priority ? (
-                  <Badge variant={priorityVariant[draft.priority] ?? "outline"}>
-                    {draft.priority}
-                  </Badge>
-                ) : (
-                  <span className="text-muted-foreground">—</span>
-                )}
-              </section>
+                <Item variant="outline" size="sm">
+                  <ItemContent>
+                    <ItemDescription>Priority</ItemDescription>
+                  </ItemContent>
+                  <ItemActions>
+                    {draft.priority ? (
+                      <Badge
+                        variant={priorityVariant[draft.priority] ?? "outline"}
+                      >
+                        {draft.priority}
+                      </Badge>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
+                  </ItemActions>
+                </Item>
 
-              {/* Owner */}
-              <section className="flex items-center justify-between px-4 py-3">
-                <span className="text-muted-foreground">Owner</span>
-                <span className="text-foreground">{ownerDisplay ?? "—"}</span>
-              </section>
+                <Item variant="outline" size="sm">
+                  <ItemContent>
+                    <ItemDescription>Owner</ItemDescription>
+                  </ItemContent>
+                  <ItemActions>
+                    <span className="text-sm text-foreground">
+                      {ownerDisplay ?? "—"}
+                    </span>
+                  </ItemActions>
+                </Item>
 
-              {/* Assigned To */}
-              <section className="flex items-center justify-between px-4 py-3">
-                <span className="text-muted-foreground">Assigned To</span>
-                <span className="text-foreground">{displayAssignee}</span>
-              </section>
+                <Item variant="outline" size="sm">
+                  <ItemContent>
+                    <ItemDescription>Assigned To</ItemDescription>
+                  </ItemContent>
+                  <ItemActions>
+                    <span className="text-sm text-foreground">
+                      {displayAssignee}
+                    </span>
+                  </ItemActions>
+                </Item>
 
-              {/* Due Date */}
-              <section className="flex items-center justify-between px-4 py-3">
-                <span className="text-muted-foreground">Due Date</span>
-                <span className="text-foreground tabular-nums">
-                  {formatDate(draft.due_date || null)}
-                </span>
-              </section>
+                <Item variant="outline" size="sm">
+                  <ItemContent>
+                    <ItemDescription>Due Date</ItemDescription>
+                  </ItemContent>
+                  <ItemActions>
+                    <span className="text-sm text-foreground tabular-nums">
+                      {formatDate(draft.due_date || null)}
+                    </span>
+                  </ItemActions>
+                </Item>
 
-              {/* Logged Time */}
-              <section className="flex items-center justify-between px-4 py-3">
-                <span className="text-muted-foreground">Logged Time</span>
-                <span className="text-foreground tabular-nums">00:00:00</span>
-              </section>
+                <Item variant="outline" size="sm">
+                  <ItemContent>
+                    <ItemDescription>Logged Time</ItemDescription>
+                  </ItemContent>
+                  <ItemActions>
+                    <span className="text-sm text-foreground tabular-nums">
+                      00:00:00
+                    </span>
+                  </ItemActions>
+                </Item>
+              </ItemGroup>
             </div>
           </ScrollArea>
         )}
@@ -1245,7 +1302,7 @@ export default function TasksPage() {
 
   function handleSelect(task: TaskRow) {
     setSelected(task)
-    setListVisible(false)
+    setListVisible(true)
   }
 
   return (
