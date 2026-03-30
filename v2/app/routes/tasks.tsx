@@ -5,6 +5,7 @@ import {
   useRevalidator,
   type ClientLoaderFunctionArgs,
 } from "react-router"
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar"
 import { toast } from "sonner"
 import { ModeToggle } from "~/components/mode-toggle"
 import {
@@ -66,6 +67,14 @@ interface WorkspaceUser {
   user_id: string
   email: string
   role?: string | null
+  first_name?: string | null
+  surname?: string | null
+  avatar_url?: string | null
+}
+
+function resolveUserDisplayName(wu: WorkspaceUser): string {
+  const full = [wu.first_name, wu.surname].filter(Boolean).join(" ").trim()
+  return full || wu.email
 }
 
 interface TaskActivityEntry {
@@ -173,7 +182,7 @@ function resolveActivityActor(
     readStr(payload, ["actor_user_id", "user_id", "created_by", "changed_by"])
   if (userId) {
     const member = workspaceUsers.find((wu) => wu.user_id === userId)
-    if (member) return member.email
+    if (member) return resolveUserDisplayName(member)
   }
   return "System"
 }
@@ -421,8 +430,9 @@ function TaskDetail({
 }) {
   const { revalidate } = useRevalidator()
   const subtasks = task.subRows ?? []
-  const ownerEmail =
-    workspaceUsers.find((wu) => wu.user_id === task.created_by)?.email ?? null
+  const ownerMember =
+    workspaceUsers.find((wu) => wu.user_id === task.created_by) ?? null
+  const ownerDisplay = ownerMember ? resolveUserDisplayName(ownerMember) : null
 
   const [draft, setDraft] = React.useState(() => ({
     title: task.title,
@@ -722,10 +732,11 @@ function TaskDetail({
     draft.assignee_user_id && draft.assignee_user_id !== "__none__"
       ? draft.assignee_user_id
       : null
-  const displayAssignee = resolvedAssigneeId
-    ? (workspaceUsers
-        .find((wu) => wu.user_id === resolvedAssigneeId)
-        ?.email?.split("@")[0] ?? "—")
+  const assigneeMember = resolvedAssigneeId
+    ? (workspaceUsers.find((wu) => wu.user_id === resolvedAssigneeId) ?? null)
+    : null
+  const displayAssignee = assigneeMember
+    ? resolveUserDisplayName(assigneeMember)
     : "—"
   const showRightMeta = !listVisible
 
@@ -1017,6 +1028,22 @@ function TaskDetail({
                             payload,
                             workspaceUsers
                           )
+                          const actorId =
+                            readStr(toRec(payload.actor), ["id"]) ??
+                            readStr(payload, [
+                              "actor_user_id",
+                              "user_id",
+                              "created_by",
+                            ])
+                          const actorMember = actorId
+                            ? workspaceUsers.find(
+                                (wu) => wu.user_id === actorId
+                              )
+                            : undefined
+                          const actorAvatar =
+                            readStr(toRec(payload.actor), ["avatar_url"]) ??
+                            actorMember?.avatar_url ??
+                            ""
                           const isComment =
                             entry.type === "comment_added" ||
                             entry.type === "comment.created"
@@ -1040,9 +1067,12 @@ function TaskDetail({
                                   <span className="absolute top-3 bottom-[-12px] w-px bg-border" />
                                 )}
                                 {isComment ? (
-                                  <span className="relative z-10 mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-muted-foreground">
-                                    {actorName.charAt(0).toUpperCase()}
-                                  </span>
+                                  <Avatar className="relative z-10 mt-0.5 h-6 w-6">
+                                    <AvatarImage src={actorAvatar} />
+                                    <AvatarFallback className="text-[10px] font-semibold">
+                                      {actorName.charAt(0).toUpperCase()}
+                                    </AvatarFallback>
+                                  </Avatar>
                                 ) : (
                                   <span className="relative z-10 mt-2 h-2 w-2 rounded-full border border-border bg-muted-foreground/40" />
                                 )}
@@ -1150,9 +1180,7 @@ function TaskDetail({
               {/* Owner */}
               <section className="flex items-center justify-between px-4 py-3">
                 <span className="text-muted-foreground">Owner</span>
-                <span className="text-foreground">
-                  {ownerEmail ? ownerEmail.split("@")[0] : "—"}
-                </span>
+                <span className="text-foreground">{ownerDisplay ?? "—"}</span>
               </section>
 
               {/* Assigned To */}

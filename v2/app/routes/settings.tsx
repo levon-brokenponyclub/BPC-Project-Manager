@@ -50,7 +50,9 @@ import {
   IconX,
   IconDotsVertical,
   IconAlertTriangle,
+  IconUser,
 } from "@tabler/icons-react"
+import { CameraIcon } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -83,6 +85,9 @@ interface WorkspaceMember {
   user_id: string
   email: string
   full_name?: string | null
+  first_name?: string | null
+  surname?: string | null
+  avatar_url?: string | null
   role?: string | null
 }
 
@@ -280,6 +285,76 @@ export default function SettingsPage() {
   const [editingMember, setEditingMember] =
     React.useState<WorkspaceMember | null>(null)
   const [editRoleDraft, setEditRoleDraft] = React.useState<string>("member")
+
+  // ── Edit profile (admin) ──────────────────────────────────────────────────
+  const [profileEditTarget, setProfileEditTarget] =
+    React.useState<WorkspaceMember | null>(null)
+  const [profileFirstName, setProfileFirstName] = React.useState("")
+  const [profileSurname, setProfileSurname] = React.useState("")
+  const [profileAvatarUrl, setProfileAvatarUrl] = React.useState("")
+  const [profileUploading, setProfileUploading] = React.useState(false)
+  const [profileSaving, setProfileSaving] = React.useState(false)
+
+  function openProfileEdit(m: WorkspaceMember) {
+    setProfileEditTarget(m)
+    setProfileFirstName(m.first_name ?? m.full_name?.split(" ")[0] ?? "")
+    setProfileSurname(
+      m.surname ?? m.full_name?.split(" ").slice(1).join(" ") ?? ""
+    )
+    setProfileAvatarUrl(m.avatar_url ?? "")
+  }
+
+  async function handleProfileAvatarUpload(
+    e: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file = e.target.files?.[0]
+    if (!file || !profileEditTarget) return
+    setProfileUploading(true)
+    try {
+      const ext = file.name.split(".").pop() ?? "png"
+      const path = `${profileEditTarget.user_id}/${Date.now()}.${ext}`
+      const { data, error } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { upsert: true, contentType: file.type })
+      if (error) throw error
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("avatars").getPublicUrl(data.path)
+      setProfileAvatarUrl(publicUrl)
+    } catch (err) {
+      toast.error("Upload failed", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      })
+    } finally {
+      setProfileUploading(false)
+    }
+  }
+
+  async function handleProfileSave(e: React.FormEvent) {
+    e.preventDefault()
+    if (!profileEditTarget || !activeWorkspaceId) return
+    setProfileSaving(true)
+    try {
+      await invokeAuthedFunction("admin-users", {
+        action: "update_profile",
+        workspaceId: activeWorkspaceId,
+        userId: profileEditTarget.user_id,
+        email: profileEditTarget.email,
+        firstName: profileFirstName,
+        surname: profileSurname,
+        avatarUrl: profileAvatarUrl,
+      })
+      toast.success("Profile updated")
+      setProfileEditTarget(null)
+      revalidate()
+    } catch (err) {
+      toast.error("Failed to update profile", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      })
+    } finally {
+      setProfileSaving(false)
+    }
+  }
   const [memberLinks, setMemberLinks] = React.useState<
     Record<string, MagicLinkEntry>
   >({})
@@ -563,15 +638,31 @@ export default function SettingsPage() {
                                         className="flex flex-col"
                                       >
                                         <div className="flex items-center justify-between gap-4 px-4 py-3">
-                                          <div className="min-w-0 flex-1">
-                                            {m.full_name && (
-                                              <p className="truncate text-sm font-medium">
-                                                {m.full_name}
+                                          <div className="flex min-w-0 flex-1 items-center gap-3">
+                                            <Avatar className="h-8 w-8 shrink-0 rounded-full">
+                                              <AvatarImage
+                                                src={m.avatar_url ?? ""}
+                                                alt={m.full_name ?? m.email}
+                                              />
+                                              <AvatarFallback className="text-xs">
+                                                {(m.full_name ?? m.email)
+                                                  .split(" ")
+                                                  .map((w) => w[0])
+                                                  .join("")
+                                                  .slice(0, 2)
+                                                  .toUpperCase()}
+                                              </AvatarFallback>
+                                            </Avatar>
+                                            <div className="min-w-0">
+                                              {m.full_name && (
+                                                <p className="truncate text-sm font-medium">
+                                                  {m.full_name}
+                                                </p>
+                                              )}
+                                              <p className="truncate text-xs text-muted-foreground">
+                                                {m.email}
                                               </p>
-                                            )}
-                                            <p className="truncate text-xs text-muted-foreground">
-                                              {m.email}
-                                            </p>
+                                            </div>
                                           </div>
                                           <div className="flex items-center gap-2">
                                             {memberLink && (
@@ -622,6 +713,14 @@ export default function SettingsPage() {
                                                   </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
+                                                  <DropdownMenuItem
+                                                    onSelect={() =>
+                                                      openProfileEdit(m)
+                                                    }
+                                                  >
+                                                    <IconUser className="size-3.5" />
+                                                    Edit Profile
+                                                  </DropdownMenuItem>
                                                   <DropdownMenuItem
                                                     onSelect={() => {
                                                       setEditingMember(m)
@@ -1292,6 +1391,100 @@ export default function SettingsPage() {
               {updatingRoleFor === editingMember?.user_id ? "Saving…" : "Save"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Admin Edit Profile Dialog ─────────────────────────────────── */}
+      <Dialog
+        open={!!profileEditTarget}
+        onOpenChange={(open) => {
+          if (!open) setProfileEditTarget(null)
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+            <DialogDescription>{profileEditTarget?.email}</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleProfileSave}>
+            <div className="space-y-5 py-2">
+              {/* Avatar */}
+              <div className="flex justify-center">
+                <label className="group relative cursor-pointer">
+                  <Avatar className="h-20 w-20">
+                    <AvatarImage src={profileAvatarUrl} />
+                    <AvatarFallback className="text-lg">
+                      {[profileFirstName, profileSurname]
+                        .filter(Boolean)
+                        .map((w) => w[0])
+                        .join("")
+                        .slice(0, 2)
+                        .toUpperCase() || (
+                        <IconUser className="size-6 text-muted-foreground" />
+                      )}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                    {profileUploading ? (
+                      <span className="text-[10px] text-white">…</span>
+                    ) : (
+                      <>
+                        <CameraIcon className="size-5 text-white" />
+                        <span className="mt-0.5 text-[10px] text-white">
+                          Edit
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    disabled={profileUploading}
+                    onChange={handleProfileAvatarUpload}
+                  />
+                </label>
+              </div>
+
+              {/* Name */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="profile-first-name">First Name</Label>
+                  <Input
+                    id="profile-first-name"
+                    value={profileFirstName}
+                    onChange={(e) => setProfileFirstName(e.target.value)}
+                    placeholder="First name"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="profile-surname">Surname</Label>
+                  <Input
+                    id="profile-surname"
+                    value={profileSurname}
+                    onChange={(e) => setProfileSurname(e.target.value)}
+                    placeholder="Surname"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setProfileEditTarget(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={profileSaving || profileUploading}
+              >
+                {profileSaving ? "Saving…" : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </>
