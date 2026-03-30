@@ -14,6 +14,10 @@ import { ThemeProvider } from "~/components/theme-provider"
 import { RouterLoadingOverlay } from "~/components/router-loading-overlay"
 import "./app.css"
 
+export const links: Route.LinksFunction = () => [
+  { rel: "icon", type: "image/jpeg", href: "/BPC-Logo.jpg" },
+]
+
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
