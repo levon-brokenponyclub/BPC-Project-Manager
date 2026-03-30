@@ -128,3 +128,29 @@
     @apply font-sans;
   }
 }
+
+@layer components {
+  .cn-toast {
+    @apply border bg-card text-card-foreground;
+  }
+
+  .cn-toast-type {
+    @apply border-l-2;
+  }
+
+  .cn-toast-success {
+    @apply border-l-green-500/60;
+  }
+
+  .cn-toast-info {
+    @apply border-l-blue-500/60;
+  }
+
+  .cn-toast-warning {
+    @apply border-l-amber-500/60;
+  }
+
+  .cn-toast-error {
+    @apply border-l-red-500/60;
+  }
+}

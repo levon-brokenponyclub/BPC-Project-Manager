@@ -17,7 +17,6 @@ import {
   FieldDescription,
   FieldError,
   FieldGroup,
-  FieldLabel,
 } from "~/components/ui/field"
 import { Input } from "~/components/ui/input"
 import { supabase } from "~/lib/supabase"
@@ -66,25 +65,24 @@ export function LoginForm({
           <form onSubmit={handleSubmit}>
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
                   id="email"
                   name="email"
                   type="email"
                   placeholder="email@example.com"
+                  aria-label="Email"
                   required
                   autoComplete="email"
                   className="h-10 rounded"
                 />
               </Field>
               <Field>
-                <div className="flex items-center">
-                  <FieldLabel htmlFor="password">Password</FieldLabel>
-                </div>
                 <Input
                   id="password"
                   name="password"
                   type="password"
+                  placeholder="Password"
+                  aria-label="Password"
                   required
                   autoComplete="current-password"
                   className="h-10 rounded"

@@ -9,12 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card"
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "~/components/ui/field"
+import { Field, FieldError, FieldGroup } from "~/components/ui/field"
 import { Input } from "~/components/ui/input"
 import { supabase } from "~/lib/supabase"
 
@@ -159,12 +154,12 @@ export default function AuthInvitePage() {
               <form className="mt-4" onSubmit={handleSetPassword}>
                 <FieldGroup>
                   <Field>
-                    <FieldLabel htmlFor="new-password">New password</FieldLabel>
                     <Input
                       id="new-password"
                       type="password"
                       required
                       placeholder="New password"
+                      aria-label="New password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="h-10 rounded"
@@ -172,14 +167,12 @@ export default function AuthInvitePage() {
                   </Field>
 
                   <Field>
-                    <FieldLabel htmlFor="confirm-password">
-                      Confirm password
-                    </FieldLabel>
                     <Input
                       id="confirm-password"
                       type="password"
                       required
                       placeholder="Confirm password"
+                      aria-label="Confirm password"
                       value={confirm}
                       onChange={(e) => setConfirm(e.target.value)}
                       className="h-10 rounded"

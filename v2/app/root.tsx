@@ -36,7 +36,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           disableTransitionOnChange
         >
           <TooltipProvider>{children}</TooltipProvider>
-          <Toaster richColors closeButton />
+          <Toaster closeButton />
         </ThemeProvider>
         <ScrollRestoration />
         <Scripts />
