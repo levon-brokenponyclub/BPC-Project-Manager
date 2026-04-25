@@ -2824,7 +2824,7 @@ export function DesignaliCreative({
   const handleSignOut = () => supabase.auth.signOut();
 
   const [progress, setProgress] = useState(0);
-  const [notifications, setNotifications] = useState(5);
+  const [notifications, setNotifications] = useState(0);
   const [activeTab, setActiveTab] = useState("home");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -3670,7 +3670,7 @@ export function DesignaliCreative({
                 <img
                   src="/BPC-Logo.jpg"
                   alt="BPC Logo"
-                  className="w-full h-full rounded-2xl object-cover"
+                  className="w-full h-full object-cover"
                 />
               </div>
               <div>
