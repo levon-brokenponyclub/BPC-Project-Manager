@@ -1877,9 +1877,7 @@ function ProjectDetailPanel({
                 <DateInput
                   value={editDueDate}
                   onChange={setEditDueDate}
-                  className="h-10"
-                />
-                  className="rounded-2xl"
+                  className="h-10 rounded-2xl"
                 />
               </div>
               <div className="space-y-2">
