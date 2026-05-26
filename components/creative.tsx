@@ -67,7 +67,7 @@ import {
   type AttachedFile,
 } from "@/components/rich-text-editor";
 import {
-  supabase,
+  getSupabaseClient,
   fetchProjects,
   createProject,
   updateProject as dbUpdateProject,
@@ -2853,6 +2853,7 @@ export function DesignaliCreative({
 }: {
   userName?: string;
 }) {
+  const supabase = getSupabaseClient();
   const userInitials = userName
     .split(" ")
     .map((n) => n[0])

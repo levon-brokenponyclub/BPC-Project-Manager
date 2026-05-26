@@ -1,9 +1,21 @@
-import { createClient } from "@supabase/supabase-js"
+import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""
+const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ""
 
-export const supabase = createClient(url, key)
+export const isSupabaseConfigured = Boolean(url && key)
+
+const supabaseClient = isSupabaseConfigured ? createClient(url, key) : null
+
+export function getSupabaseClient(): SupabaseClient {
+  if (!supabaseClient) {
+    throw new Error(
+      "Supabase environment variables are missing. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+    )
+  }
+
+  return supabaseClient
+}
 
 // ---- Types matching DB schema ----
 
@@ -53,6 +65,7 @@ export type DbProjectFile = {
 // ---- Project queries ----
 
 export async function fetchProjects() {
+  const supabase = getSupabaseClient()
   const { data, error } = await supabase
     .from("projects")
     .select("*")
@@ -62,6 +75,7 @@ export async function fetchProjects() {
 }
 
 export async function createProject(project: Omit<DbProject, "id" | "created_at">) {
+  const supabase = getSupabaseClient()
   const { data, error } = await supabase
     .from("projects")
     .insert(project)
@@ -75,6 +89,7 @@ export async function createProject(project: Omit<DbProject, "id" | "created_at"
 }
 
 export async function updateProjectProgress(id: string, progress: number) {
+  const supabase = getSupabaseClient()
   const { error } = await supabase
     .from("projects")
     .update({ progress })
@@ -85,6 +100,7 @@ export async function updateProjectProgress(id: string, progress: number) {
 // ---- Task queries ----
 
 export async function fetchTasks(projectId: string) {
+  const supabase = getSupabaseClient()
   const { data, error } = await supabase
     .from("tasks")
     .select("*, task_files(*)")
@@ -95,26 +111,31 @@ export async function fetchTasks(projectId: string) {
 }
 
 export async function deleteProject(id: string) {
+  const supabase = getSupabaseClient()
   const { error } = await supabase.from("projects").delete().eq("id", id)
   if (error) throw error
 }
 
 export async function deleteTask(id: string) {
+  const supabase = getSupabaseClient()
   const { error } = await supabase.from("tasks").delete().eq("id", id)
   if (error) throw error
 }
 
 export async function updateProject(id: string, patch: Partial<Omit<DbProject, "id" | "created_at">>) {
+  const supabase = getSupabaseClient()
   const { error } = await supabase.from("projects").update(patch).eq("id", id)
   if (error) throw error
 }
 
 export async function updateTask(id: string, patch: Partial<Omit<DbTask, "id" | "created_at" | "task_files">>) {
+  const supabase = getSupabaseClient()
   const { error } = await supabase.from("tasks").update(patch).eq("id", id)
   if (error) throw error
 }
 
 export async function createTask(task: Omit<DbTask, "id" | "created_at" | "task_files">) {
+  const supabase = getSupabaseClient()
   const { data, error } = await supabase
     .from("tasks")
     .insert(task)
@@ -125,6 +146,7 @@ export async function createTask(task: Omit<DbTask, "id" | "created_at" | "task_
 }
 
 export async function createTaskFile(file: Omit<DbTaskFile, "id"> & { url?: string }) {
+  const supabase = getSupabaseClient()
   const { data, error } = await supabase.from("task_files").insert(file).select("id").single()
   if (error) throw error
   return data as { id: string }
@@ -133,6 +155,7 @@ export async function createTaskFile(file: Omit<DbTaskFile, "id"> & { url?: stri
 // ---- Project file queries ----
 
 export async function fetchProjectFiles(projectId: string) {
+  const supabase = getSupabaseClient()
   const { data, error } = await supabase
     .from("project_files")
     .select("*")
@@ -143,6 +166,7 @@ export async function fetchProjectFiles(projectId: string) {
 }
 
 export async function createProjectFile(file: Omit<DbProjectFile, "id">) {
+  const supabase = getSupabaseClient()
   const { data, error } = await supabase
     .from("project_files")
     .insert(file)
@@ -153,11 +177,13 @@ export async function createProjectFile(file: Omit<DbProjectFile, "id">) {
 }
 
 export async function deleteProjectFile(id: string) {
+  const supabase = getSupabaseClient()
   const { error } = await supabase.from("project_files").delete().eq("id", id)
   if (error) throw error
 }
 
 export async function deleteTaskFile(id: string) {
+  const supabase = getSupabaseClient()
   const { error } = await supabase.from("task_files").delete().eq("id", id)
   if (error) throw error
 }
@@ -165,6 +191,7 @@ export async function deleteTaskFile(id: string) {
 // ---- Storage uploads ----
 
 export async function uploadTaskAsset(file: File, taskId?: string): Promise<string> {
+  const supabase = getSupabaseClient()
   const ext = file.name.split(".").pop() ?? "bin"
   const path = `${taskId ?? "draft"}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
   const { error } = await supabase.storage.from("task-assets").upload(path, file, { upsert: false })
@@ -174,6 +201,7 @@ export async function uploadTaskAsset(file: File, taskId?: string): Promise<stri
 }
 
 export async function deleteTaskAsset(url: string) {
+  const supabase = getSupabaseClient()
   // Extract path from public URL
   const marker = "/task-assets/"
   const idx = url.indexOf(marker)
@@ -185,6 +213,7 @@ export async function deleteTaskAsset(url: string) {
 // ---- Avatar / profile ----
 
 export async function fetchProfile(userId: string): Promise<{ avatar_url: string | null; full_name: string | null } | null> {
+  const supabase = getSupabaseClient()
   const { data, error } = await supabase
     .from("profiles")
     .select("avatar_url, full_name")
@@ -195,6 +224,7 @@ export async function fetchProfile(userId: string): Promise<{ avatar_url: string
 }
 
 export async function uploadAvatar(file: File, userId: string): Promise<string> {
+  const supabase = getSupabaseClient()
   const ext = file.name.split(".").pop() ?? "jpg"
   const path = `${userId}/avatar.${ext}`
   const { error } = await supabase.storage
@@ -207,6 +237,7 @@ export async function uploadAvatar(file: File, userId: string): Promise<string> 
 }
 
 export async function updateProfileAvatar(userId: string, avatarUrl: string) {
+  const supabase = getSupabaseClient()
   const { error } = await supabase
     .from("profiles")
     .update({ avatar_url: avatarUrl, updated_at: new Date().toISOString() })
@@ -224,6 +255,7 @@ export type DbTaskActivity = {
 }
 
 export async function fetchTaskActivity(taskId: string) {
+  const supabase = getSupabaseClient()
   const { data, error } = await supabase
     .from("task_activity")
     .select("*")
@@ -234,6 +266,7 @@ export async function fetchTaskActivity(taskId: string) {
 }
 
 export async function createTaskActivity(entry: Omit<DbTaskActivity, "id" | "created_at">) {
+  const supabase = getSupabaseClient()
   const { data, error } = await supabase
     .from("task_activity")
     .insert(entry)

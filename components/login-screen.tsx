@@ -1,21 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseClient } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function LoginScreen() {
+type LoginScreenProps = {
+  disabledReason?: string;
+};
+
+export function LoginScreen({ disabledReason }: LoginScreenProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const isDisabled = Boolean(disabledReason) || loading;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (disabledReason) return;
+
     setError(null);
     setLoading(true);
+    const supabase = getSupabaseClient();
     const { error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -36,6 +44,10 @@ export function LoginScreen() {
           <p className="text-sm text-muted-foreground">Project Manager</p>
         </div>
 
+        {disabledReason && (
+          <p className="text-sm text-destructive">{disabledReason}</p>
+        )}
+
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -46,7 +58,7 @@ export function LoginScreen() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              disabled={loading}
+              disabled={isDisabled}
             />
           </div>
 
@@ -59,7 +71,7 @@ export function LoginScreen() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              disabled={loading}
+              disabled={isDisabled}
             />
           </div>
 
@@ -67,7 +79,7 @@ export function LoginScreen() {
             <p className="text-sm text-destructive">{error}</p>
           )}
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full" disabled={isDisabled}>
             {loading ? "Signing in…" : "Sign in"}
           </Button>
         </form>

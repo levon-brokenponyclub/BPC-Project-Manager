@@ -2,15 +2,22 @@
 
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { DesignaliCreative } from "@/components/creative";
 import { LoginScreen } from "@/components/login-screen";
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(isSupabaseConfigured);
 
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      return;
+    }
+
+    const supabase = getSupabaseClient();
+
     supabase.auth.getSession().then(async ({ data }) => {
       if (data.session) {
         const { error } = await supabase.auth.getUser();
@@ -39,7 +46,17 @@ export default function Home() {
 
   if (loading) return null;
 
-  if (!user) return <LoginScreen />;
+  if (!user) {
+    return (
+      <LoginScreen
+        disabledReason={
+          isSupabaseConfigured
+            ? undefined
+            : "Supabase environment variables are missing. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel."
+        }
+      />
+    );
+  }
 
   const userName =
     user.user_metadata?.full_name ||
