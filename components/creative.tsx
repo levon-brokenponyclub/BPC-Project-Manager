@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useState } from "react";
+import React, { Fragment, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Label as PieLabel, Pie, PieChart, Cell } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
@@ -387,6 +387,7 @@ type Project = {
   files: number;
   tasks: ProjectTask[];
   uploadedFiles: ProjectFile[];
+  archived?: boolean;
 };
 
 const projectTaskGroups: ProjectTaskGroup[] = [
@@ -746,6 +747,23 @@ const taskPriorityOptions: Exclude<ProjectTask["priority"], "-">[] = [
   "Normal",
 ];
 
+function DateInput({ value, onChange, className }: { value: string; onChange: (v: string) => void; className?: string }) {
+  const ref = React.useRef<HTMLInputElement>(null);
+  return (
+    <input
+      ref={ref}
+      type="date"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onClick={() => { try { (ref.current as any)?.showPicker(); } catch {} }}
+      className={cn(
+        "flex h-10 w-full rounded-2xl border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        className,
+      )}
+    />
+  );
+}
+
 function ProjectDetailPanel({
   project,
   tasks,
@@ -756,6 +774,7 @@ function ProjectDetailPanel({
   onTaskDelete,
   onTaskAdd,
   onProjectDelete,
+  onProjectArchive,
   onBack,
   actorName = "Admin",
   defaultOpenEditTaskId,
@@ -770,6 +789,7 @@ function ProjectDetailPanel({
   onTaskDelete: (index: number) => void;
   onTaskAdd: (task: ProjectTask) => void;
   onProjectDelete: () => void;
+  onProjectArchive: (archived: boolean) => void;
   onBack: () => void;
   actorName?: string;
   defaultOpenEditTaskId?: string | null;
@@ -911,13 +931,13 @@ function ProjectDetailPanel({
       try {
         const saved = await createTask({
           project_id: project.id,
-          workspace_id: project.workspace_id,
-          title: newTask.name,
+          name: newTask.name,
           description: newTask.description ?? null,
           status: newTask.status,
-          due_date: addTaskDueDate || null,
+          due_date: addTaskDueDate || "-",
           priority: newTask.priority,
-        } as any);
+          date_added: today,
+        });
         newTask.id = saved.id;
         // Persist attached files (upload to storage, store URL)
         const savedFiles: ProjectFile[] = [];
@@ -946,9 +966,10 @@ function ProjectDetailPanel({
         }
         if (savedFiles.length > 0) newTask.files = savedFiles;
       } catch (e) {
-        console.error(e);
+        const msg = (e as any)?.message || (e as any)?.details || JSON.stringify(e);
+        console.error("createTask failed:", msg);
+        toast.error(`Failed to save task: ${msg}`);
       }
-    } else if (addTaskFiles.length > 0) {
       newTask.files = addTaskFiles.map((f) => ({
         name: f.name,
         size: f.size,
@@ -977,7 +998,7 @@ function ProjectDetailPanel({
     setEditName(project.name);
     setEditDescription(project.description);
     const date = new Date(project.dueDate);
-    const formatted = date.toISOString().split("T")[0];
+    const formatted = !isNaN(date.getTime()) ? date.toISOString().split("T")[0] : "";
     setEditDueDate(formatted);
     setEditProgress(String(project.progress));
     setEditProjectOpen(true);
@@ -1223,12 +1244,12 @@ function ProjectDetailPanel({
     if (original.id) {
       try {
         await dbUpdateTask(original.id, {
-          title: updated.name,
+          name: updated.name,
           description: updated.description ?? null,
           status: updated.status,
           priority: updated.priority,
-          due_date: editTaskDueDate || null,
-        } as any);
+          due_date: editTaskDueDate || "-",
+        });
       } catch (e) {
         console.error(e);
         toast.error("Failed to save task.");
@@ -1276,6 +1297,19 @@ function ProjectDetailPanel({
     onTaskDelete(index);
   };
 
+  const handleArchiveProject = async () => {
+    const newArchived = !project.archived;
+    if (project.id) {
+      try {
+        await dbUpdateProject(project.id, { archived: newArchived } as any);
+      } catch (e) {
+        console.error(e);
+        return;
+      }
+    }
+    onProjectArchive(newArchived);
+  };
+
   const handleDeleteProject = async () => {
     if (project.id) {
       try {
@@ -1293,8 +1327,8 @@ function ProjectDetailPanel({
       <div className="grid gap-0 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="p-6 md:p-8">
           <div className="mb-4 flex flex-wrap items-center gap-2">
-            <Badge className={cn("rounded-xl", projectStatusClass)}>
-              {projectStatusLabel}
+            <Badge className={cn("rounded-xl", project.archived ? "bg-muted text-muted-foreground" : projectStatusClass)}>
+              {project.archived ? "Archived" : projectStatusLabel}
             </Badge>
             <Badge variant="outline" className="rounded-xl">
               Due {project.dueDate}
@@ -1317,6 +1351,15 @@ function ProjectDetailPanel({
                   onClick={openEditProject}
                 >
                   <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="rounded-2xl"
+                  title={project.archived ? "Unarchive project" : "Archive project"}
+                  onClick={handleArchiveProject}
+                >
+                  <Archive className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="ghost"
@@ -1831,11 +1874,11 @@ function ProjectDetailPanel({
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="ep-due">Due date</Label>
-                <Input
-                  id="ep-due"
-                  type="date"
+                <DateInput
                   value={editDueDate}
-                  onChange={(e) => setEditDueDate(e.target.value)}
+                  onChange={setEditDueDate}
+                  className="h-10"
+                />
                   className="rounded-2xl"
                 />
               </div>
@@ -1980,12 +2023,10 @@ function ProjectDetailPanel({
                 <Label className="text-xs text-muted-foreground">
                   Due date
                 </Label>
-                <Input
-                  id="at-due"
-                  type="date"
+                <DateInput
                   value={addTaskDueDate}
-                  onChange={(e) => setAddTaskDueDate(e.target.value)}
-                  className="rounded-2xl bg-background h-8 text-sm"
+                  onChange={setAddTaskDueDate}
+                  className="bg-background h-8 text-sm"
                 />
               </div>
               <div className="space-y-2">
@@ -2478,12 +2519,10 @@ function ProjectDetailPanel({
                     </div>
                     <div className="space-y-1.5">
                       <p className="text-sm font-medium">Due date</p>
-                      <Input
-                        id="et-due"
-                        type="date"
+                      <DateInput
                         value={editTaskDueDate}
-                        onChange={(e) => setEditTaskDueDate(e.target.value)}
-                        className="rounded-2xl h-10"
+                        onChange={setEditTaskDueDate}
+                        className="h-10"
                       />
                     </div>
                   </div>
@@ -2832,6 +2871,14 @@ export function DesignaliCreative({
     {},
   );
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
+  const [isGlobalNewTaskOpen, setIsGlobalNewTaskOpen] = useState(false);
+  const [globalTaskName, setGlobalTaskName] = useState("");
+  const [globalTaskDescription, setGlobalTaskDescription] = useState("");
+  const [globalTaskProjectId, setGlobalTaskProjectId] = useState("");
+  const [globalTaskStatus, setGlobalTaskStatus] = useState<ProjectTask["status"]>("Todo");
+  const [globalTaskPriority, setGlobalTaskPriority] = useState<Exclude<ProjectTask["priority"], "-">>("Medium");
+  const [globalTaskDueDate, setGlobalTaskDueDate] = useState("");
+  const [globalTaskFiles, setGlobalTaskFiles] = useState<File[]>([]);
   const [isProjectDrawerOpen, setIsProjectDrawerOpen] = useState(false);
   const [projectFilter, setProjectFilter] = useState<
     | "all"
@@ -2840,6 +2887,7 @@ export function DesignaliCreative({
     | "in-progress"
     | "in-review"
     | "completed"
+    | "archived"
   >("all");
   const [projectSearch, setProjectSearch] = useState("");
   const [fileFilter, setFileFilter] = useState<
@@ -2860,7 +2908,7 @@ export function DesignaliCreative({
     useState("");
   const [settingsFirstName, setSettingsFirstName] = useState(() => userName.split(" ")[0] ?? "");
   const [settingsLastName, setSettingsLastName] = useState(() => userName.split(" ").slice(1).join(" ") ?? "");
-  const [settingsEmail, setSettingsEmail] = useState("levongravett@gmail.com");
+  const [settingsEmail, setSettingsEmail] = useState("");
   const [settingsCurrentPassword, setSettingsCurrentPassword] = useState("");
   const [settingsNewPassword, setSettingsNewPassword] = useState("");
   const [settingsConfirmPassword, setSettingsConfirmPassword] = useState("");
@@ -2984,6 +3032,7 @@ export function DesignaliCreative({
             description: r.description,
             progress: r.progress,
             dueDate: r.due_date,
+            archived: r.archived ?? false,
             members: 0,
             files: 0,
             tasks: [],
@@ -3007,9 +3056,10 @@ export function DesignaliCreative({
   // Load user profile (avatar) on mount
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      const userId = data?.user?.id;
-      if (!userId) return;
-      fetchProfile(userId).then((profile) => {
+      const user = data?.user;
+      if (!user) return;
+      if (user.email) setSettingsEmail(user.email);
+      fetchProfile(user.id).then((profile) => {
         if (profile?.avatar_url) setSettingsAvatarUrl(profile.avatar_url);
       });
     });
@@ -3192,6 +3242,8 @@ export function DesignaliCreative({
   };
 
   const filteredProjects = projectList.filter((p) => {
+    if (projectFilter === "archived") return !!p.archived;
+    if (p.archived) return false;
     const matchesSearch =
       !projectSearch ||
       p.name.toLowerCase().includes(projectSearch.toLowerCase()) ||
@@ -3539,8 +3591,8 @@ export function DesignaliCreative({
                         className="ml-auto rounded-full px-2 py-0.5 text-xs"
                       >
                         {item.dynamicType === "projects"
-                          ? projectList.length
-                          : projectList.flatMap((p) => p.tasks ?? []).length}
+                          ? projectList.filter((p) => !p.archived).length
+                          : projectList.filter((p) => !p.archived).flatMap((p) => p.tasks ?? []).length}
                       </Badge>
                     )}
                     {(item.dynamicType || item.items) && (
@@ -3558,7 +3610,7 @@ export function DesignaliCreative({
                       <div className="mt-1 ml-6 space-y-1 border-l pl-3">
 
                         {/* Projects: list each project by name */}
-                        {item.dynamicType === "projects" && projectList.map((p) => (
+                        {item.dynamicType === "projects" && projectList.filter((p) => !p.archived).map((p) => (
                           <button
                             key={p.id ?? p.name}
                             onClick={() => {
@@ -3573,7 +3625,7 @@ export function DesignaliCreative({
 
                         {/* Tasks: group all tasks by status across all projects */}
                         {item.dynamicType === "tasks" && (() => {
-                          const allTasks = projectList.flatMap((p) => p.tasks ?? []);
+                          const allTasks = projectList.filter((p) => !p.archived).flatMap((p) => p.tasks ?? []);
                           const groups: Record<string, number> = {};
                           allTasks.forEach((t) => {
                             groups[t.status] = (groups[t.status] ?? 0) + 1;
@@ -3721,8 +3773,8 @@ export function DesignaliCreative({
                         className="ml-auto rounded-full px-2 py-0.5 text-xs"
                       >
                         {item.dynamicType === "projects"
-                          ? projectList.length
-                          : projectList.flatMap((p) => p.tasks ?? []).length}
+                          ? projectList.filter((p) => !p.archived).length
+                          : projectList.filter((p) => !p.archived).flatMap((p) => p.tasks ?? []).length}
                       </Badge>
                     )}
                     {(item.dynamicType || item.items) && (
@@ -3740,7 +3792,7 @@ export function DesignaliCreative({
                       <div className="mt-1 ml-6 space-y-1 border-l pl-3">
 
                         {/* Projects: list each project by name */}
-                        {item.dynamicType === "projects" && projectList.map((p) => (
+                        {item.dynamicType === "projects" && projectList.filter((p) => !p.archived).map((p) => (
                           <button
                             key={p.id ?? p.name}
                             onClick={() => {
@@ -3755,7 +3807,7 @@ export function DesignaliCreative({
 
                         {/* Tasks: group all tasks by status across all projects */}
                         {item.dynamicType === "tasks" && (() => {
-                          const allTasks = projectList.flatMap((p) => p.tasks ?? []);
+                          const allTasks = projectList.filter((p) => !p.archived).flatMap((p) => p.tasks ?? []);
                           const groups: Record<string, number> = {};
                           allTasks.forEach((t) => {
                             groups[t.status] = (groups[t.status] ?? 0) + 1;
@@ -4053,6 +4105,17 @@ export function DesignaliCreative({
               </TabsList>
               <div className="hidden md:flex gap-2">
                 <Button
+                  variant="outline"
+                  className="rounded-2xl"
+                  onClick={() => {
+                    setGlobalTaskProjectId(projectList.filter((p) => !p.archived)[0]?.id ?? "");
+                    setIsGlobalNewTaskOpen(true);
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Task
+                </Button>
+                <Button
                   className="rounded-2xl"
                   onClick={() => setIsCreateProjectOpen(true)}
                 >
@@ -4075,7 +4138,7 @@ export function DesignaliCreative({
                   {(() => {
                     const today = new Date();
                     const todayStr = today.toLocaleDateString("en-AU", { day: "2-digit", month: "short", year: "numeric" }).replace(",", "");
-                    const allTasksFlat = projectList.flatMap((p) => p.tasks ?? []);
+                    const allTasksFlat = projectList.filter((p) => !p.archived).flatMap((p) => p.tasks ?? []);
                     const activeTasks = allTasksFlat.filter((t) => t.status !== "Complete");
                     const dueTodayCount = activeTasks.filter((t) => {
                       if (!t.dueDate || t.dueDate === "-") return false;
@@ -4181,7 +4244,7 @@ export function DesignaliCreative({
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           {projectList
-                            .filter((p) => p.progress < 100)
+                            .filter((p) => !p.archived && p.progress < 100)
                             .slice(0, 3)
                             .map((project, index) => (
                               <motion.div
@@ -5187,6 +5250,18 @@ export function DesignaliCreative({
                         Completed
                       </Button>
                     )}
+                    {projectList.some((p) => p.archived) && (
+                      <Button
+                        variant={
+                          projectFilter === "archived" ? "default" : "outline"
+                        }
+                        className="rounded-2xl"
+                        onClick={() => setProjectFilter("archived")}
+                      >
+                        <Archive className="mr-2 h-4 w-4" />
+                        Archived
+                      </Button>
+                    )}
                     <div className="flex-1"></div>
                     <div className="relative w-full md:w-auto mt-3 md:mt-0">
                       <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -5213,7 +5288,9 @@ export function DesignaliCreative({
                                 ? "Awaiting Client Projects"
                                 : projectFilter === "todo"
                                   ? "Todo Projects"
-                                  : "All Projects"}
+                                  : projectFilter === "archived"
+                                    ? "Archived Projects"
+                                    : "All Projects"}
                         {filteredProjects.length > 0 && (
                           <span className="ml-2 text-base font-normal text-muted-foreground">
                             ({filteredProjects.length})
@@ -5229,7 +5306,7 @@ export function DesignaliCreative({
                       ) : (
                         filteredProjects.map((project) => (
                           <motion.div
-                            key={project.name}
+                            key={project.id ?? project.name}
                             whileHover={{ scale: 1.02, y: -5 }}
                             whileTap={{ scale: 0.98 }}
                           >
@@ -5240,9 +5317,9 @@ export function DesignaliCreative({
                                     <CardTitle>{project.name}</CardTitle>
                                     <Badge
                                       variant="outline"
-                                      className={`rounded-xl ${projectStatusClass[getProjectStatus(project)]}`}
+                                      className={`rounded-xl ${project.archived ? "bg-muted text-muted-foreground border-muted" : projectStatusClass[getProjectStatus(project)]}`}
                                     >
-                                      {getProjectStatus(project)}
+                                      {project.archived ? "Archived" : getProjectStatus(project)}
                                     </Badge>
                                   </div>
                                   <Badge
@@ -5690,11 +5767,15 @@ export function DesignaliCreative({
                             <Button
                               className="rounded-2xl px-6"
                               onClick={async () => {
-                                const { error } = await supabase.auth.updateUser({
-                                  email: settingsEmail,
+                                const { data: { user } } = await supabase.auth.getUser();
+                                const payload: { email?: string; data: { full_name: string } } = {
                                   data: { full_name: `${settingsFirstName} ${settingsLastName}`.trim() },
-                                });
-                                if (error) toast.error("Failed to update profile.");
+                                };
+                                if (settingsEmail && settingsEmail !== user?.email) {
+                                  payload.email = settingsEmail;
+                                }
+                                const { error } = await supabase.auth.updateUser(payload);
+                                if (error) toast.error(error.message ?? "Failed to update profile.");
                                 else toast.success("Profile updated.");
                               }}
                             >
@@ -5795,6 +5876,170 @@ export function DesignaliCreative({
           </Tabs>
         </main>
       </div>
+
+      {/* Global New Task Drawer */}
+      <Drawer open={isGlobalNewTaskOpen} onOpenChange={(open) => {
+        setIsGlobalNewTaskOpen(open);
+        if (!open) {
+          setGlobalTaskName("");
+          setGlobalTaskDescription("");
+          setGlobalTaskStatus("Todo");
+          setGlobalTaskPriority("Medium");
+          setGlobalTaskDueDate("");
+          setGlobalTaskFiles([]);
+        }
+      }}>
+        <DrawerContent className="max-h-[90vh]">
+          <div className="grid grid-cols-[1fr_380px] min-h-[520px]">
+            {/* Left — project + name + description */}
+            <div className="flex flex-col p-6 gap-4">
+              <DrawerHeader className="p-0">
+                <DrawerTitle>New Task</DrawerTitle>
+                <DrawerDescription>Create a task and assign it to a project.</DrawerDescription>
+              </DrawerHeader>
+              <div className="space-y-2">
+                <Label>Project</Label>
+                <Select value={globalTaskProjectId} onValueChange={setGlobalTaskProjectId}>
+                  <SelectTrigger className="rounded-2xl">
+                    <SelectValue placeholder="Select project" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {projectList.filter((p) => !p.archived).map((p) => (
+                      <SelectItem key={p.id ?? p.name} value={p.id ?? p.name}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Task name</Label>
+                <Input
+                  className="rounded-2xl"
+                  placeholder="Enter task name…"
+                  value={globalTaskName}
+                  onChange={(e) => setGlobalTaskName(e.target.value)}
+                />
+              </div>
+              <div className="flex-1 space-y-2">
+                <Label>Description</Label>
+                <RichTextEditor
+                  value={globalTaskDescription}
+                  onChange={setGlobalTaskDescription}
+                  placeholder="Task details…"
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button
+                  className="rounded-2xl"
+                  disabled={!globalTaskName.trim() || !globalTaskProjectId}
+                  onClick={async () => {
+                    const today = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+                    const newTask: ProjectTask = {
+                      name: globalTaskName.trim(),
+                      description: globalTaskDescription || undefined,
+                      status: globalTaskStatus,
+                      priority: globalTaskPriority,
+                      dateAdded: today,
+                      dueDate: globalTaskDueDate
+                        ? new Date(globalTaskDueDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+                        : "-",
+                    };
+                    try {
+                      const saved = await createTask({
+                        project_id: globalTaskProjectId,
+                        name: newTask.name,
+                        description: newTask.description ?? null,
+                        status: newTask.status,
+                        due_date: globalTaskDueDate || "-",
+                        priority: newTask.priority,
+                        date_added: today,
+                      });
+                      newTask.id = saved.id;
+                      for (const f of globalTaskFiles) {
+                        try {
+                          const url = await uploadTaskAsset(f, saved.id);
+                          await createTaskFile({ task_id: saved.id, name: f.name, size: f.size, type: f.type, uploaded_at: today, url });
+                        } catch {}
+                      }
+                      toast.success("Task created.");
+                    } catch (e) {
+                      toast.error("Failed to create task.");
+                      return;
+                    }
+                    setProjectList((prev) => prev.map((p) =>
+                      p.id === globalTaskProjectId ? { ...p, tasks: [...p.tasks, newTask] } : p
+                    ));
+                    setIsGlobalNewTaskOpen(false);
+                  }}
+                >
+                  Add Task
+                </Button>
+                <DrawerClose asChild>
+                  <Button variant="outline" className="rounded-2xl">Cancel</Button>
+                </DrawerClose>
+              </div>
+            </div>
+            {/* Right — status, priority, due date */}
+            <div className="flex flex-col border-l bg-muted/30 p-5 gap-4 overflow-y-auto">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Status</Label>
+                <Select value={globalTaskStatus} onValueChange={(v) => setGlobalTaskStatus(v as ProjectTask["status"])}>
+                  <SelectTrigger className="rounded-2xl bg-background h-8 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent className="rounded-2xl">
+                    {taskStatusOptions.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Priority</Label>
+                <Select value={globalTaskPriority} onValueChange={(v) => setGlobalTaskPriority(v as Exclude<ProjectTask["priority"], "-">)}>
+                  <SelectTrigger className="rounded-2xl bg-background h-8 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent className="rounded-2xl">
+                    {taskPriorityOptions.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Due date</Label>
+                <DateInput
+                  value={globalTaskDueDate}
+                  onChange={setGlobalTaskDueDate}
+                  className="bg-background text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">
+                  Files {globalTaskFiles.length > 0 && `(${globalTaskFiles.length})`}
+                </Label>
+                {globalTaskFiles.length > 0 && (
+                  <div className="space-y-1.5">
+                    {globalTaskFiles.map((f, i) => (
+                      <div key={i} className="flex items-center justify-between rounded-2xl border border-dashed bg-background px-3 py-2 text-sm">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Paperclip className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                          <span className="truncate text-xs">{f.name}</span>
+                          <span className="text-xs text-muted-foreground shrink-0">{(f.size / 1024).toFixed(0)} KB</span>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 rounded-lg shrink-0"
+                          onClick={() => setGlobalTaskFiles((prev) => prev.filter((_, idx) => idx !== i))}>
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-muted-foreground/30 bg-background px-4 py-3 text-sm text-muted-foreground transition hover:border-primary/50 hover:bg-muted/10">
+                  <Upload className="h-4 w-4" />
+                  <span>Attach files</span>
+                  <input type="file" multiple className="hidden" onChange={(e) => {
+                    setGlobalTaskFiles((prev) => [...prev, ...Array.from(e.target.files ?? [])]);
+                    e.target.value = "";
+                  }} />
+                </label>
+              </div>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       <Drawer
         open={isCreateProjectOpen}
@@ -6701,6 +6946,14 @@ export function DesignaliCreative({
                 onProjectDelete={() => {
                   setProjectList((prev) =>
                     prev.filter((p) => p.id !== selectedProject.id),
+                  );
+                  setIsProjectDrawerOpen(false);
+                }}
+                onProjectArchive={(archived) => {
+                  const updated = { ...selectedProject, archived };
+                  setSelectedProject(updated);
+                  setProjectList((prev) =>
+                    prev.map((p) => (p.id === updated.id ? updated : p)),
                   );
                   setIsProjectDrawerOpen(false);
                 }}

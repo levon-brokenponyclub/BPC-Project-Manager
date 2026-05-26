@@ -14,14 +14,14 @@ export type DbProject = {
   description: string
   progress: number
   due_date: string
+  archived?: boolean
   created_at: string
 }
 
 export type DbTask = {
   id: string
   project_id: string
-  title: string
-  name?: string // alias kept for compat
+  name: string
   description: string | null
   status: string
   date_added?: string

@@ -11,12 +11,26 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null);
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (data.session) {
+        const { error } = await supabase.auth.getUser();
+        if (error) {
+          await supabase.auth.signOut();
+          setUser(null);
+        } else {
+          setUser(data.session.user);
+        }
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "TOKEN_REFRESHED" && !session) {
+        supabase.auth.signOut();
+        return;
+      }
       setUser(session?.user ?? null);
     });
 
